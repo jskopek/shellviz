@@ -1,8 +1,7 @@
-import socketserver
+import asyncio
 import socket
-import sys
 import threading
-import http.server
+from urllib.parse import urlparse
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -19,56 +18,108 @@ class Server:
     def __init__(self, port):
         self.port = port
         self.content = ""
-        self._start_server()  # Automatically start the server in a separate thread
+        self.websocket_clients = set()
+
+        # Start the asyncio event loop in a new thread
+        self.loop = asyncio.new_event_loop()
+        self.server_thread = threading.Thread(target=self._start_servers)
+        self.server_thread.start()
 
     def get_url(self):
         local_ip = get_local_ip()
         return f"http://{local_ip}:{self.port}"
 
+    def get_websocket_url(self):
+        local_ip = get_local_ip()
+        return f"ws://{local_ip}:{self.port + 1}"  # WebSocket server on a different port
+
     def send_data(self, data):
+        # Schedule send data in the event loop
         self.content += data
+        asyncio.run_coroutine_threadsafe(self._notify_clients(data), self.loop)
 
-    def _start_server(self):
-        # Define the request handler with access to the instance content
-        server_instance = self
+    def _start_servers(self):
+        asyncio.set_event_loop(self.loop)
+        # Run servers concurrently in the event loop
+        self.loop.run_until_complete(self.start_servers())
+        self.loop.run_forever()
 
-        class CustomHandler(http.server.SimpleHTTPRequestHandler):
-            def do_GET(self):
-                self.send_response(200)
-                self.send_header("Content-type", "text/plain")
-                self.end_headers()
-                self.wfile.write(server_instance.content.encode())
+    async def start_servers(self):
+        # Start HTTP server
+        await asyncio.start_server(self.handle_http, '0.0.0.0', self.port)
+        print(f"Serving HTTP on {self.get_url()}")
 
-        def serve_forever():
-            # Create the socket manually and bind it
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                sock.bind(("", self.port))
-                # Pass the pre-bound socket to TCPServer
-                with socketserver.TCPServer(("", self.port), CustomHandler, bind_and_activate=False) as httpd:
-                    httpd.socket = sock  # Assign the manually configured socket
-                    httpd.server_activate()  # Activate the server manually
-                    print(f"Serving on {self.get_url()}")
-                    try:
-                        httpd.serve_forever()
-                    except KeyboardInterrupt:
-                        print("\nServer is shutting down.")
-                    finally:
-                        httpd.server_close()  # Ensure the server is fully closed
+        # Start WebSocket server
+        websocket_server = await asyncio.start_server(self.handle_websocket, '0.0.0.0', self.port + 1)
+        print(f"Serving WebSocket on {self.get_websocket_url()}")
 
-        # Start the server in a new thread
-        self.server_thread = threading.Thread(target=serve_forever)
-        self.server_thread.daemon = True
-        self.server_thread.start()
+    async def handle_http(self, reader, writer):
+        # Simple HTTP response with content
+        request = await reader.read(1024)
+        request_line = request.decode().splitlines()[0]
+        method, path, _ = request_line.split()
+        
+        if method == 'GET' and path == '/':
+            response = (
+                "HTTP/1.1 200 OK\r\n"
+                "Content-Type: text/plain\r\n"
+                f"Content-Length: {len(self.content)}\r\n"
+                "\r\n" +
+                self.content
+            )
+        else:
+            response = "HTTP/1.1 404 Not Found\r\n\r\n"
+
+        writer.write(response.encode())
+        await writer.drain()
+        writer.close()
+        await writer.wait_closed()
+
+    async def handle_websocket(self, reader, writer):
+        # WebSocket handshake (simplified)
+        request = await reader.read(1024)
+        headers = request.decode().splitlines()
+        if any(h.startswith("Sec-WebSocket-Key:") for h in headers):
+            response = (
+                "HTTP/1.1 101 Switching Protocols\r\n"
+                "Upgrade: websocket\r\n"
+                "Connection: Upgrade\r\n"
+                "\r\n"
+            )
+            writer.write(response.encode())
+            await writer.drain()
+            
+            # Add to clients
+            self.websocket_clients.add(writer)
+            print("WebSocket client connected")
+            
+            try:
+                while not writer.is_closing():
+                    await asyncio.sleep(10)  # Keep connection open
+            finally:
+                self.websocket_clients.remove(writer)
+                print("WebSocket client disconnected")
+        else:
+            writer.close()
+            await writer.wait_closed()
+
+    async def _notify_clients(self, message):
+        if self.websocket_clients:
+            message_data = message.encode()
+            for client in list(self.websocket_clients):
+                try:
+                    client.write(message_data)
+                    await client.drain()
+                except (asyncio.IncompleteReadError, ConnectionResetError):
+                    self.websocket_clients.remove(client)
 
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if sys.argv[1] else 5544
+    server = Server(5544)
+    print("Server started. Use `server.send_data('hello world')` to send data.")
 
-    # Instantiate the Server object as described
-    server = Server(port)
-    print(server.get_url())
     try:
         while True:
-            server.send_data(input("Enter data: "))
+            data = input("Enter data: ")
+            server.send_data(data)
     except KeyboardInterrupt:
         print("\nExiting main program.")
