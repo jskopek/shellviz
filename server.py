@@ -1,7 +1,7 @@
 import asyncio
 import socket
 import threading
-from urllib.parse import urlparse
+import websockets
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -19,11 +19,16 @@ class Server:
         self.port = port
         self.content = ""
         self.websocket_clients = set()
-
-        # Start the asyncio event loop in a new thread
+        
+        # Start the asyncio event loop in a new background thread
         self.loop = asyncio.new_event_loop()
-        self.server_thread = threading.Thread(target=self._start_servers)
+        self.server_thread = threading.Thread(target=self._start_event_loop)
         self.server_thread.start()
+
+    def _start_event_loop(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_until_complete(self.start_servers())
+        self.loop.run_forever()
 
     def get_url(self):
         local_ip = get_local_ip()
@@ -31,18 +36,12 @@ class Server:
 
     def get_websocket_url(self):
         local_ip = get_local_ip()
-        return f"ws://{local_ip}:{self.port + 1}"  # WebSocket server on a different port
+        return f"ws://{local_ip}:{self.port + 1}"  # WebSocket on a different port
 
     def send_data(self, data):
-        # Schedule send data in the event loop
+        # Schedule send_data in the event loop
         self.content += data
         asyncio.run_coroutine_threadsafe(self._notify_clients(data), self.loop)
-
-    def _start_servers(self):
-        asyncio.set_event_loop(self.loop)
-        # Run servers concurrently in the event loop
-        self.loop.run_until_complete(self.start_servers())
-        self.loop.run_forever()
 
     async def start_servers(self):
         # Start HTTP server
@@ -50,22 +49,57 @@ class Server:
         print(f"Serving HTTP on {self.get_url()}")
 
         # Start WebSocket server
-        websocket_server = await asyncio.start_server(self.handle_websocket, '0.0.0.0', self.port + 1)
+        websocket_server = await websockets.serve(self.handle_websocket, '0.0.0.0', self.port + 1)
         print(f"Serving WebSocket on {self.get_websocket_url()}")
 
+        # Keep the WebSocket server running
+        await websocket_server.wait_closed()
+
     async def handle_http(self, reader, writer):
-        # Simple HTTP response with content
+        # Serve a simple HTML page with WebSocket client JavaScript
         request = await reader.read(1024)
         request_line = request.decode().splitlines()[0]
         method, path, _ = request_line.split()
-        
+
         if method == 'GET' and path == '/':
+            html_content = """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>WebSocket Client</title>
+            </head>
+            <body>
+                <h1>WebSocket Updates</h1>
+                <div id="messages"></div>
+                
+                <script>
+                    const ws = new WebSocket("ws://" + window.location.hostname + ":" + (parseInt(window.location.port) + 1 || 5545));
+                    
+                    ws.onmessage = function(event) {
+                        const messageDiv = document.createElement("div");
+                        messageDiv.textContent = event.data;
+                        document.getElementById("messages").appendChild(messageDiv);
+                    };
+
+                    ws.onopen = function() {
+                        console.log("Connected to WebSocket server");
+                    };
+
+                    ws.onclose = function() {
+                        console.log("WebSocket connection closed");
+                    };
+                </script>
+            </body>
+            </html>
+            """
             response = (
                 "HTTP/1.1 200 OK\r\n"
-                "Content-Type: text/plain\r\n"
-                f"Content-Length: {len(self.content)}\r\n"
+                "Content-Type: text/html\r\n"
+                f"Content-Length: {len(html_content)}\r\n"
                 "\r\n" +
-                self.content
+                html_content
             )
         else:
             response = "HTTP/1.1 404 Not Found\r\n\r\n"
@@ -75,43 +109,26 @@ class Server:
         writer.close()
         await writer.wait_closed()
 
-    async def handle_websocket(self, reader, writer):
-        # WebSocket handshake (simplified)
-        request = await reader.read(1024)
-        headers = request.decode().splitlines()
-        if any(h.startswith("Sec-WebSocket-Key:") for h in headers):
-            response = (
-                "HTTP/1.1 101 Switching Protocols\r\n"
-                "Upgrade: websocket\r\n"
-                "Connection: Upgrade\r\n"
-                "\r\n"
-            )
-            writer.write(response.encode())
-            await writer.drain()
-            
-            # Add to clients
-            self.websocket_clients.add(writer)
-            print("WebSocket client connected")
-            
-            try:
-                while not writer.is_closing():
-                    await asyncio.sleep(10)  # Keep connection open
-            finally:
-                self.websocket_clients.remove(writer)
-                print("WebSocket client disconnected")
-        else:
-            writer.close()
-            await writer.wait_closed()
+    async def handle_websocket(self, websocket, path):
+        # Register the client and keep connection open to receive and send messages
+        self.websocket_clients.add(websocket)
+        print("WebSocket client connected")
+
+        try:
+            async for message in websocket:
+                print(f"Received message from client: {message}")
+                # Here, echo the message back to the client or handle it differently
+                await websocket.send(f"Server received: {message}")
+        except websockets.ConnectionClosed:
+            print("WebSocket client disconnected")
+        finally:
+            # Unregister the client on disconnect
+            self.websocket_clients.remove(websocket)
 
     async def _notify_clients(self, message):
+        # Send a message to all connected WebSocket clients
         if self.websocket_clients:
-            message_data = message.encode()
-            for client in list(self.websocket_clients):
-                try:
-                    client.write(message_data)
-                    await client.drain()
-                except (asyncio.IncompleteReadError, ConnectionResetError):
-                    self.websocket_clients.remove(client)
+            await asyncio.gather(*(client.send(message) for client in self.websocket_clients if client.open))
 
 if __name__ == "__main__":
     server = Server(5544)
