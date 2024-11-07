@@ -12,14 +12,10 @@ function App() {
 	}
 
 	useEffect(() => {
-		setEntries((entries) => {
-			const newEntry = {
-				id: Date.now(),
-				data: [[Math.random()]],
-				visualization: 'raw'
-			}
-			return [newEntry];
-		})
+		// Initialize entries from existing server values
+		if (window.__INITIAL_ENTRIES__) {
+			setEntries(window.__INITIAL_ENTRIES__);
+		}
 	}, [])
 
 	// set up websocket connection
@@ -37,17 +33,13 @@ function App() {
 			};
 
 			ws.onmessage = function (event) {
-				const messageDiv = document.createElement("div");
-				messageDiv.textContent = event.data;
-				document.getElementById("messages").appendChild(messageDiv);
+				const entry = JSON.parse(event.data)
 
 				setEntries((entries) => {
-					const newEntry = {
-						id: Date.now(),
-						data: event.data,
-						visualization: 'raw'
-					};
-					return [...entries, newEntry];
+					// Update the entry if it already exists, otherwise add it
+					const entryMap = new Map(entries.map(e => [e.id, e]));
+					entryMap.set(entry.id, entry);
+					return Array.from(entryMap.values());
 				});
 			};
 

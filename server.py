@@ -3,12 +3,14 @@ import atexit
 import threading
 import time
 import struct
+import json
 from utils_html import parse_request, write_404, write_file, get_local_ip, print_qr
 from utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
 
 class Server:
-    def __init__(self, content='', host="0.0.0.0", port=5544):
-        self.content = content
+    def __init__(self, value=None, port=5544, host="0.0.0.0"):
+        self.entries = []
+        self._initial_value = value # if an initial value is provided, it will be visualized once the server is started
 
         self.host = host
         self.port = port
@@ -22,6 +24,7 @@ class Server:
         atexit.register(self.shutdown)  # Register cleanup at program exit
         self.start()
 
+
     # -- Threading methods --
     def start(self):
         self.http_server_task = self.loop.create_task(self.start_http_server()) # runs `start_server` asynchronously and stores the task object in `http_server_task` so it can be canclled on `shutdown`
@@ -30,9 +33,10 @@ class Server:
         threading.Thread(target=self._run_event_loop, daemon=True).start()  # Run loop in background thread; daemon=True ensures that the thread is killed when the main thread exits
 
     def _run_event_loop(self):
-        # run initial visualization command if initial content is provided
-        if self.content:
-            self.visualize(self.content)
+        # run initial visualization command if initial entries is provided
+        if self._initial_value:
+            self.visualize(self._initial_value)
+            self._initial_value = None
 
         asyncio.set_event_loop(self.loop) # set this thread's event loop to the main event loop
         self.loop.run_forever() # keep the event loop running
@@ -79,7 +83,7 @@ class Server:
     async def handle_http(self, reader, writer):
         request = await parse_request(reader)
         if request.path == '/':
-            await write_file(writer, 'client/public/index.html', {'messages': self.content})
+            await write_file(writer, 'client/public/index.html', {'entries': json.dumps(self.entries)})
         elif request.path.startswith('/static'):
             await write_file(writer, 'client/build' + request.path)
         else:
@@ -113,15 +117,30 @@ class Server:
             writer.close()
             await writer.wait_closed()
 
-    async def message_websocket_clients(self, data):
+    async def message_websocket_clients(self, entry):
+        value = json.dumps(entry)
         for writer in self.websocket_clients:
-            await send_websocket_message(writer, data)
+            await send_websocket_message(writer, value)
 
     # -- / WebSocket server methods --
 
-    def visualize(self, data):
-        self.content += '<div>' + data + '</div>'
-        asyncio.run_coroutine_threadsafe(self.message_websocket_clients(data), self.loop)
+    def visualize(self, value, id: str = None):
+        # wrap data in a dictionary with an id
+        entry = {
+            'id': id or str(time.time()),
+            'data': value
+        }
+
+        # update content if matching id is found, otherwise append new data
+        for i, item in enumerate(self.entries):
+            if item['id'] == entry['id']:
+                self.entries[i] = entry
+                break
+        else:
+            self.entries.append(entry)
+
+        # send new entry to all clients via websocket
+        asyncio.run_coroutine_threadsafe(self.message_websocket_clients(entry), self.loop)
 
 
 # Usage example
