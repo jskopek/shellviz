@@ -1,4 +1,5 @@
-from asyncio import StreamWriter
+from asyncio import StreamReader, StreamWriter
+from dataclasses import dataclass
 import mimetypes
 import os
 import socket
@@ -18,6 +19,22 @@ def get_local_ip():
     finally:
         s.close()
     return IP
+
+
+@dataclass
+class HttpRequest:
+    method: str = ""
+    path: str = ""
+
+
+async def parse_request(reader: StreamReader) -> HttpRequest:
+    """
+    Returns an HttpRequest instance with data from the provided StreamReader instance initiated from an `asyncio.start_server` request
+    """
+    request = await reader.read(1024)
+    request_line = request.decode().splitlines()[0]
+    method, path, _ = request_line.split()
+    return HttpRequest(method, path)
 
 
 async def write_html(writer: StreamWriter, html: str) -> None:
@@ -43,6 +60,17 @@ async def write_html(writer: StreamWriter, html: str) -> None:
     writer.close()
     await writer.wait_closed()
 
+async def write_404(writer: StreamWriter) -> None:
+    """
+    Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a 404 response
+    """
+
+    response = "HTTP/1.1 404 Not Found\r\n\r\n".encode()
+    writer.write(response)
+    await writer.drain()
+    writer.close()
+    await writer.wait_closed()
+
 
 async def write_file(writer: StreamWriter, file_path: str, template_context: Optional[dict] = None) -> None:
     """
@@ -55,10 +83,7 @@ async def write_file(writer: StreamWriter, file_path: str, template_context: Opt
             write_file(writer, 'index.html')
     """
     if not os.path.isfile(file_path):
-        response = "HTTP/1.1 404 Not Found\r\n\r\n"
-        writer.write(response.encode())
-        writer.close()
-        return
+        return await write_404(writer)
 
     content_type, _ = mimetypes.guess_type(file_path)
     content_type = content_type or "application/octet-stream"
@@ -66,14 +91,14 @@ async def write_file(writer: StreamWriter, file_path: str, template_context: Opt
         file_content = f.read()
 
     if template_context:
-        file_content = file_content.format(**template_context).encode()
+        file_content = file_content.format(**template_context)
 
     response = (
         f"HTTP/1.1 200 OK\r\n"
         f"Content-Type: {content_type}\r\n"
         f"Content-Length: {len(file_content)}\r\n"
-        "\r\n"
-    ).encode() + file_content
+        "\r\n" + file_content
+    ).encode()
 
     writer.write(response)
     writer.close()
