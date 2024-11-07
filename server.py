@@ -1,4 +1,6 @@
 import asyncio
+import mimetypes
+import os
 import socket
 import threading
 import websockets
@@ -61,52 +63,45 @@ class Server:
         request_line = request.decode().splitlines()[0]
         method, path, _ = request_line.split()
 
+        # Serve `index.html` with messages inserted if path is "/"
         if method == 'GET' and path == '/':
-            # Serve the HTML page with the JavaScript <script> tag
-            html_content = f"""
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>WebSocket Client</title>
-            </head>
-            <body>
-                <h1>WebSocket Updates</h1>
-                <div id="messages">
-                    {''.join(f'<div>{line}</div>' for line in self.content.splitlines())}
-                </div>
-                
-                <script src="/script.js"></script>
-            </body>
-            </html>
-            """
-            response = (
-                "HTTP/1.1 200 OK\r\n"
-                "Content-Type: text/html\r\n"
-                f"Content-Length: {len(html_content)}\r\n"
-                "\r\n" +
-                html_content
-            )
-        elif method == 'GET' and path == '/script.js':
-            # Serve the JavaScript file
             try:
-                with open("script.js", "r") as f:
-                    js_content = f.read()
+                with open("client/build/static/index.html", "r") as f:
+                    html_content = f.read()
+                # Insert messages content into the {messages} placeholder
+                messages_html = ''.join(f'<div>{line}</div>' for line in self.content.splitlines())
+                html_content = html_content.replace("{messages}", messages_html)
+                
                 response = (
                     "HTTP/1.1 200 OK\r\n"
-                    "Content-Type: application/javascript\r\n"
-                    f"Content-Length: {len(js_content)}\r\n"
+                    "Content-Type: text/html\r\n"
+                    f"Content-Length: {len(html_content)}\r\n"
                     "\r\n" +
-                    js_content
-                )
+                    html_content
+                ).encode()
             except FileNotFoundError:
                 response = "HTTP/1.1 404 Not Found\r\n\r\n"
+        elif method == 'GET' and path.startswith('/static/'):
+            # Serve files from the client/build/static directory
+            file_path = os.path.join("client/build", path[1:])  # Remove the leading `/` in path
+            if os.path.isfile(file_path):
+                content_type, _ = mimetypes.guess_type(file_path)
+                content_type = content_type or "application/octet-stream"
+                with open(file_path, "rb") as f:
+                    file_content = f.read()
+                response = (
+                    f"HTTP/1.1 200 OK\r\n"
+                    f"Content-Type: {content_type}\r\n"
+                    f"Content-Length: {len(file_content)}\r\n"
+                    "\r\n"
+                ).encode() + file_content
+            else:
+                response = "HTTP/1.1 404 Not Found\r\n\r\n".encode()
         else:
             # 404 Not Found for any other paths
-            response = "HTTP/1.1 404 Not Found\r\n\r\n"
+            response = "HTTP/1.1 404 Not Found\r\n\r\n".encode()
 
-        writer.write(response.encode())
+        writer.write(response)
         await writer.drain()
         writer.close()
         await writer.wait_closed()

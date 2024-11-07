@@ -1,0 +1,118 @@
+/* styles/globals.css */
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+// @import "leaflet/dist/leaflet.css";
+@import "tailwindcss/utilities";
+
+
+
+body.dark {
+  /* background-color: #f8f6f6; */
+  background: no-repeat radial-gradient(35.62% 51.83% at 84.03% 6.71%, #9747FF 0%, #000 100%) #000;
+  background-repeat: no-repeat;
+  // background-image: radial-gradient(45.62% 71.83% at 84.03% 6.71%, #9747FF 0%, #000 100%);
+  background-color: #000;
+  color: #fff;
+
+
+  .prose {
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    a,
+    code,
+    strong {
+      @apply text-white;
+    }
+
+    @apply text-white;
+  }
+}
+
+.star {
+  width: 160px;
+  height: 160px;
+  position: absolute;
+  top: 50px;
+  right: 0;
+  z-index: 1;
+
+
+  pointer-events: none;
+  // background-color: red;
+  border-radius: 344px;
+  box-shadow: 0px 0px 22px 13px rgba(151, 71, 255, 0.78);
+  animation: pulse 8s ease-out infinite;
+  animation-delay: 2s;
+}
+
+.star-delay-1 {
+  animation-delay: 2.4s;
+}
+
+.star-delay-2 {
+  animation-delay: 2.4s;
+}
+
+@keyframes pulse {
+  0% {
+    // background-color: #9747ff;
+    opacity: 0
+  }
+
+  50% {
+    opacity: 0.3
+  }
+
+  100% {
+
+    transform: rotate3d(1, 1, 1, 45deg);
+    transform: scale(10.2);
+    opacity: 0 // background-color: black;
+  }
+}
+
+#map {
+  height: 280px;
+}
+
+/* Mainly added for markdown links */
+a {
+  /* @apply underline text-blue-600 hover:text-blue-800 visited:text-purple-600; */
+}
+
+.content-text {
+  h1 {
+    @apply text-4xl font-bold mb-4;
+  }
+
+  h2 {
+    @apply text-2xl font-bold mb-2;
+  }
+}
+
+
+/* animation */
+.animate-rotate {
+  animation: rotate 4s infinite;
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(180deg);
+  }
+
+  100% {
+    transform: rotate(180deg);
+
+  }
+}
