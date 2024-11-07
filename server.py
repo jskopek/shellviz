@@ -3,7 +3,7 @@ import atexit
 import threading
 import time
 import struct
-from utils_html import parse_request, write_404, write_file, get_local_ip
+from utils_html import parse_request, write_404, write_file, get_local_ip, print_qr
 from utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
 
 class Server:
@@ -67,6 +67,12 @@ class Server:
         server = await asyncio.start_server(self.handle_http, self.host, self.port)  # start the tcp server on the specified host and port
         print(f'Serving on http://{get_local_ip()}:{self.port}')
 
+        try:
+            # if qrcode module is installed, output a QR code with the server's URL; fail silently if the package is not included
+            print_qr(f'http://{get_local_ip()}:{self.port}')
+        except ImportError:
+            pass
+
         async with server:
             await server.serve_forever() # server will run indefinitely until the method's task is `.cancel()`ed
 
@@ -118,19 +124,17 @@ class Server:
         asyncio.run_coroutine_threadsafe(self.message_websocket_clients(data), self.loop)
 
 
-
-
 # Usage example
 if __name__ == "__main__":
     # Start server instance
     s = Server()
 
-    while True:
-        try:
-            content = input("Enter content: ")
-            s.visualize(content)
-        except KeyboardInterrupt:
-            break
+    # while True:
+    #     try:
+    #         content = input("Enter content: ")
+    #         s.visualize(content)
+    #     except KeyboardInterrupt:
+    #         break
 
     # i = 0
     # while True:
@@ -138,3 +142,10 @@ if __name__ == "__main__":
     #     s2.visualize(f'another server message {i}')
     #     i += 1
     #     time.sleep(3)
+
+
+    time.sleep(2)
+    s.visualize('welcome to the server')
+    time.sleep(2)
+    s.visualize('another message')
+    time.sleep(2)

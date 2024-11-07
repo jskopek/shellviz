@@ -113,3 +113,22 @@ async def write_file(writer: StreamWriter, file_path: str, template_context: Opt
 #     with open(template_path, "r") as f:
 #         html_content = f.read()
 #     return html_content.format(**kwargs)
+
+
+def print_qr(url):
+    """
+    Generates and prints a QR code for the provided `url` in the terminal
+    Requires the `qrcode` package to be installed; will raise an ImportError if not available
+    """
+    import qrcode
+
+    # Step 1: Generate the QR code data
+    qr = qrcode.QRCode(border=1)
+    qr.add_data(url)
+    qr.make(fit=True)
+
+    # Step 2: Convert the QR code matrix into ASCII for terminal display
+    qr_matrix = qr.get_matrix()
+    for row in qr_matrix:
+        line = ''.join(['██' if cell else '  ' for cell in row])
+        print(line)
