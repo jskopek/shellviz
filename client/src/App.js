@@ -13,7 +13,7 @@ function App() {
     setEntries((entries) => {
       const newEntry = {
         id: Date.now(),
-        data: Math.random(),
+        data: [[Math.random()]],
         visualization: 'raw'
       }
       return [newEntry];
