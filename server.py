@@ -2,8 +2,9 @@ import asyncio
 import atexit
 import threading
 import time
-import websockets
+import struct
 from utils_html import parse_request, write_404, write_file, get_local_ip
+from utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
 
 class Server:
     def __init__(self, content='', host="0.0.0.0", port=5544):
@@ -81,30 +82,36 @@ class Server:
 
     # -- WebSocket server methods --
     async def start_websocket_server(self):
-        server = await websockets.serve(self.handle_websocket_connection, self.host, self.port + 1)  # start the websocket server on the specified host and port
-        print(f'Serving on ws://{get_local_ip()}:{self.port + 1}')
+        server = await asyncio.start_server(self.handle_websocket_connection, self.host, self.port + 1)
+        print(f'Serving on ws://{self.host}:{self.port + 1}')
 
         async with server:
-            await server.wait_closed() # server will run indefinitely until the method's task is `.cancel()`ed
-        
-    async def handle_websocket_connection(self, websocket, path):
-        self.websocket_clients.add(websocket)
+            await server.serve_forever()  # server will run indefinitely until the method's task is `.cancel()`ed
+
+    async def handle_websocket_connection(self, reader, writer):
+        # Perform WebSocket handshake
+        await perform_websocket_handshake(reader, writer)
+
+        self.websocket_clients.add(writer)
         try:
-            async for message in websocket:
-                # print(f"Received message from client: {message}")
-                pass
-        except websockets.ConnectionClosed:
-            # Client disconnected normally, so we simply remove them
-            self.websocket_clients.remove(websocket)
+            while True:
+                message = await receive_websocket_message(reader)
+                if message is None:
+                    break  # Connection was closed
+                # Process the message as needed (e.g., log, process, respond, etc.)
+        except Exception as e:
+            print(f"WebSocket error: {e}")
         finally:
             # Ensure the client is removed from the set even if another exception occurs
-            self.websocket_clients.remove(websocket)
+            self.websocket_clients.discard(writer)
+            writer.close()
+            await writer.wait_closed()
 
     async def message_websocket_clients(self, data):
-        for websocket in self.websocket_clients:
-            await websocket.send(data)
+        for writer in self.websocket_clients:
+            await send_websocket_message(writer, data)
+
     # -- / WebSocket server methods --
-    
 
     def visualize(self, data):
         self.content += '<div>' + data + '</div>'
