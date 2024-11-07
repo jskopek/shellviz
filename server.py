@@ -56,13 +56,14 @@ class Server:
         await websocket_server.wait_closed()
 
     async def handle_http(self, reader, writer):
-        # Serve a simple HTML page with WebSocket client JavaScript
+        # Parse request to handle HTML and JavaScript files
         request = await reader.read(1024)
         request_line = request.decode().splitlines()[0]
         method, path, _ = request_line.split()
 
         if method == 'GET' and path == '/':
-            html_content = """
+            # Serve the HTML page with the JavaScript <script> tag
+            html_content = f"""
             <!DOCTYPE html>
             <html lang="en">
             <head>
@@ -72,25 +73,11 @@ class Server:
             </head>
             <body>
                 <h1>WebSocket Updates</h1>
-                <div id="messages"></div>
+                <div id="messages">
+                    {''.join(f'<div>{line}</div>' for line in self.content.splitlines())}
+                </div>
                 
-                <script>
-                    const ws = new WebSocket("ws://" + window.location.hostname + ":" + (parseInt(window.location.port) + 1 || 5545));
-                    
-                    ws.onmessage = function(event) {
-                        const messageDiv = document.createElement("div");
-                        messageDiv.textContent = event.data;
-                        document.getElementById("messages").appendChild(messageDiv);
-                    };
-
-                    ws.onopen = function() {
-                        console.log("Connected to WebSocket server");
-                    };
-
-                    ws.onclose = function() {
-                        console.log("WebSocket connection closed");
-                    };
-                </script>
+                <script src="/script.js"></script>
             </body>
             </html>
             """
@@ -101,7 +88,22 @@ class Server:
                 "\r\n" +
                 html_content
             )
+        elif method == 'GET' and path == '/script.js':
+            # Serve the JavaScript file
+            try:
+                with open("script.js", "r") as f:
+                    js_content = f.read()
+                response = (
+                    "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: application/javascript\r\n"
+                    f"Content-Length: {len(js_content)}\r\n"
+                    "\r\n" +
+                    js_content
+                )
+            except FileNotFoundError:
+                response = "HTTP/1.1 404 Not Found\r\n\r\n"
         else:
+            # 404 Not Found for any other paths
             response = "HTTP/1.1 404 Not Found\r\n\r\n"
 
         writer.write(response.encode())
