@@ -1,4 +1,3 @@
-
 # Shellviz
 
 ![shellviz](https://github.com/jskopek/shellviz-next/blob/main/public/icon.png).
