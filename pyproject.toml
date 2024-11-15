@@ -4,6 +4,11 @@ version = "0.3.1"
 description = ""
 authors = ["Jean-Marc Skopek <jskopek@gmail.com>"]
 readme = "README.md"
+include = [
+    "shellviz/build/index.html",
+    "shellviz/build/static/js/main.js",
+    "shellviz/build/static/css/main.css",
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
