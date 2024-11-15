@@ -2,12 +2,12 @@ import asyncio
 import atexit
 import threading
 import time
-import struct
 import json
-from utils_html import parse_request, write_404, write_file, get_local_ip, print_qr
-from utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
+from .utils_html import parse_request, send_request, write_200, write_404, write_file, get_local_ip, print_qr
+from .utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
+import socket
 
-class Server:
+class Shellviz:
     def __init__(self, port=5544, show_url=True):
         self.entries = []  # store a list of all existing entries; client will show these entries on page load
         self.pending_entries = []  # store a list of all pending entries that have yet to be sent via websocket connection
@@ -16,6 +16,9 @@ class Server:
 
         self.port = port
 
+        # check if a server is already running on the specified port
+        self.existing_server_found = True if send_request('/api/running', port=port) else False
+
         self.loop = asyncio.new_event_loop() # the event loop that is attached to the thread created for this instance; new `create_task` async methods are added to the loop
         self.http_server_task = None # keeps track of http server task that is triggered by the asyncio.create_task method so it can be cancelled on `shutdown`
         self.websocket_server_task = None # keeps track of the websocket server task that is triggered by the asyncio.create_task method so it can be cancelled on `shutdown`
@@ -23,7 +26,10 @@ class Server:
         self.websocket_clients = set() # set of all connected websocket clients
 
         atexit.register(self.shutdown)  # Register cleanup at program exit
-        self.start()
+
+        # start the server if no existing server is found; if an existing server found, we will send requests to it instead
+        if not self.existing_server_found:
+            self.start()
 
 
     # -- Threading methods --
@@ -75,9 +81,24 @@ class Server:
     async def handle_http(self, reader, writer):
         request = await parse_request(reader)
         if request.path == '/':
-            await write_file(writer, 'client/public/index.html', {'entries': json.dumps(self.entries)})
+            # listen for request to root webpage
+            await write_file(writer, 'build/index.html', {'entries': json.dumps(self.entries)})
         elif request.path.startswith('/static'):
-            await write_file(writer, 'client/build' + request.path)
+            # listen to requests for client js/css
+            await write_file(writer, 'build' + request.path)
+        elif request.path == '/api/running':
+            # listen for requests to check if a server is running on the specified port
+            await write_200(writer)
+        elif request.path == '/api/entry' and request.method == 'POST':
+            # listen to requests to add new content
+            entry_instance = json.loads(request.body)
+
+            data = entry_instance.get('data')
+            if data:
+                self.send(data, id=entry_instance.get('id'))
+                await write_200(writer)
+            else:
+                await write_404(writer)
         else:
             await write_404(writer)
     # -- / HTTP server methods --
@@ -133,6 +154,11 @@ class Server:
             'data': value
         }
 
+        # if an existing server is found, send the data to that server via api
+        if self.existing_server_found:
+            send_request('/api/entry', entry, self.port, 'POST')
+            return
+
         # update content if matching id is found, otherwise append new data
         for i, item in enumerate(self.entries):
             if item['id'] == entry['id']:
@@ -155,39 +181,10 @@ class Server:
             time.sleep(0.1)
         
     def print_url(self):
-        print(f'Serving on http://{get_local_ip()}:{self.port}')
+        print(f'Shellviz serving on http://{get_local_ip()}:{self.port}')
 
         try:
             # if qrcode module is installed, output a QR code with the server's URL; fail silently if the package is not included
             print_qr(f'http://{get_local_ip()}:{self.port}')
         except ImportError:
             pass
-
-
-
-# Usage example
-if __name__ == "__main__":
-    # Start server instance
-    # s = Server()
-
-    # while True:
-    #     try:
-    #         content = input("Enter content: ")
-    #         s.send(content)
-    #     except KeyboardInterrupt:
-    #         break
-
-    # import random
-    # i = 0
-    # while True:
-    #     s.send(f'message {i}')
-    #     s.send(random.random(), id='progress')
-    #     # s2.send(f'another server message {i}')
-    #     i += 1
-    #     time.sleep(5)
-
-
-    s = Server()
-    s.send('another message')
-    s.send('a third message')
-    s.wait()
