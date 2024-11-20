@@ -3,6 +3,9 @@ import atexit
 import threading
 import time
 import json
+from typing import Optional
+
+from shellviz.utils import append_data
 from .utils_html import parse_request, send_request, write_200, write_404, write_file, get_local_ip, print_qr
 from .utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
 import socket
@@ -89,13 +92,12 @@ class Shellviz:
         elif request.path == '/api/running':
             # listen for requests to check if a server is running on the specified port
             await write_200(writer)
-        elif request.path == '/api/entry' and request.method == 'POST':
+        elif request.path == '/api/send' and request.method == 'POST':
             # listen to requests to add new content
-            entry_instance = json.loads(request.body)
+            entry = json.loads(request.body)
 
-            data = entry_instance.get('data')
-            if data:
-                self.send(data, id=entry_instance.get('id'))
+            if entry.get('data'):
+                self.send(entry['data'], id=entry.get('id'), append=entry.get('append'), visualization=entry.get('visualization'))
                 await write_200(writer)
             else:
                 await write_404(writer)
@@ -147,16 +149,24 @@ class Shellviz:
 
     # -- / WebSocket server methods --
 
-    def send(self, value, id: str = None, wait: bool=False):
+    def send(self, value, id: str = None, visualization: Optional[str] = None, append: bool = False, wait: bool = False):
+        id = id or str(time.time())
+        existing_entry_index = next((i for i, item in enumerate(self.entries) if item['id'] == id), None)
+
+        if existing_entry_index is not None and append:
+            value = append_data(self.entries[existing_entry_index]['data'], value)
+        
         # wrap data in a dictionary with an id
         entry = {
-            'id': id or str(time.time()),
-            'data': value
+            'id': id,
+            'data': value,
+            'visualization': visualization
         }
 
         # if an existing server is found, send the data to that server via api
         if self.existing_server_found:
-            send_request('/api/entry', entry, self.port, 'POST')
+            entry['append'] = append # add the append status to the entry
+            send_request('/api/send', entry, self.port, 'POST')
             return
 
         # update content if matching id is found, otherwise append new data
