@@ -35,6 +35,12 @@ function App() {
 			ws.onmessage = function (event) {
 				const entry = JSON.parse(event.data)
 
+				if(entry.data == '___clear___'){
+					// if a special ___clear___ event is sent, empty the messages
+					setEntries([]);
+					return;
+				}
+
 				setEntries((entries) => {
 					// Update the entry if it already exists, otherwise add it
 					const entryMap = new Map(entries.map(e => [e.id, e]));

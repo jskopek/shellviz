@@ -176,6 +176,10 @@ class Shellviz:
         if wait:
             self.wait()
     
+    def clear(self):
+        self.send(value='___clear___')
+        self.entries = []
+    
     def wait(self):
         while self.pending_entries:
             time.sleep(0.1)
