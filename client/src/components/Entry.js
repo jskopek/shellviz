@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faDownload } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
 import Views from "./views";
 
@@ -8,15 +8,14 @@ const Entry = ({ data, id, visualization, onDelete }) => {
   const availableViews = Views.filter((view) => view.evaluator(data))
   const initialViewName = availableViews.find((view) => view.name === visualization) ? visualization : availableViews[0].name;
   const [selectedViewName, setSelectedViewName] = useState(initialViewName);
-  const View = availableViews.find((view) => view.name === selectedViewName).component;
+  const View = availableViews.find((view) => view.name === selectedViewName);
 
   return (
     <div className="bg-white border border-gray-200 shadow-md">
       <div className="flex justify-between mt-3 mb-3 px-4">
         <div className="flex gap-2">
           {availableViews.map(({ name, label, icon }) => {
-            const className = `text-gray-400 hover:text-gray-500 ${name === selectedViewName ? "text-gray-500" : ""
-              }`;
+            const className = `text-gray-400 hover:text-gray-500 ${name === selectedViewName ? "text-gray-500" : ""}`;
             return (
               <button
                 key={name}
@@ -30,15 +29,18 @@ const Entry = ({ data, id, visualization, onDelete }) => {
             );
           })}
         </div>
-        <button
-          className="text-gray-400 hover:text-gray-500"
-          onClick={() => onDelete()}
-          type="button"
-        >
-          <FontAwesomeIcon icon={faXmark} height="20" width="20" />
-        </button>
+        <div className="flex gap-2">
+          {View.download && (
+            <button onClick={() => View.download({ data })} className="text-gray-400 hover:text-gray-500" title="Download File">
+              <FontAwesomeIcon icon={faDownload} height="20" width="20" />
+            </button>
+          )}
+          <button onClick={() => onDelete()} className="text-gray-400 hover:text-gray-500">
+            <FontAwesomeIcon icon={faXmark} height="20" width="20" />
+          </button>
+        </div>
       </div>
-      {<View data={data} />}
+      {<View.component data={data} />}
     </div>
   );
 };
