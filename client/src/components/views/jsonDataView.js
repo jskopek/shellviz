@@ -1,7 +1,6 @@
 import { JsonViewer } from "@textea/json-viewer";
 import { parseJSON } from "../../utils/dataValidator";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCode, faDownload } from "@fortawesome/free-solid-svg-icons";
+import { faCode } from "@fortawesome/free-solid-svg-icons";
 import { isJSONObject, isArrayOfJSONObjects, isArrayOfArrays } from "../../utils/dataValidator";
 
 // view for JSON data

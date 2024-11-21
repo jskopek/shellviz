@@ -1,5 +1,4 @@
 import ReactMarkdown from "react-markdown";
-import _ from "underscore";
 import { faFileWord } from "@fortawesome/free-solid-svg-icons";
 
 export const MarkdownView =

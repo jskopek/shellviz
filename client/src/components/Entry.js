@@ -4,11 +4,12 @@ import { useState } from "react";
 import Views from "./views";
 
 
-const Entry = ({ data, id, visualization, onDelete }) => {
-  const availableViews = Views.filter((view) => view.evaluator(data))
-  const initialViewName = availableViews.find((view) => view.name === visualization) ? visualization : availableViews[0].name;
-  const [selectedViewName, setSelectedViewName] = useState(initialViewName);
+const Entry = ({ data, id, view: viewName, onDelete }) => {
+  const availableViews = Views.filter((view) => view.evaluator(data));
+  viewName = availableViews.find((view) => view.name === viewName) ? viewName : availableViews[0].name;
+  const [selectedViewName, setSelectedViewName] = useState(viewName);
   const View = availableViews.find((view) => view.name === selectedViewName);
+  const ViewComponent = View.component;
 
   return (
     <div className="bg-white border border-gray-200 shadow-md">
@@ -40,7 +41,7 @@ const Entry = ({ data, id, visualization, onDelete }) => {
           </button>
         </div>
       </div>
-      {<View.component data={data} />}
+      {<ViewComponent data={data} />}
     </div>
   );
 };

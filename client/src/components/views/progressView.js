@@ -1,4 +1,3 @@
-import _ from "underscore";
 import { faBarsProgress } from "@fortawesome/free-solid-svg-icons";
 
 export const ProgressView = {

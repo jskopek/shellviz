@@ -7,7 +7,7 @@ import { AreaChartView } from "./areaChartView";
 import { NumberDataView } from "./numberDataView";
 import { ProgressView } from "./progressView";
 
-export default [
+const views = [
   JsonDataView,
   // MapView, // issues with loading this
   MarkdownView,
@@ -18,3 +18,4 @@ export default [
   ProgressView,
   RawDataView
 ];
+export default views;

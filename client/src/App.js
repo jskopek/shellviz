@@ -4,7 +4,6 @@ import Entry from './components/Entry';
 
 function App() {
 	const [entries, setEntries] = useState([]);
-	const [retryInterval, setRetryInterval] = useState(1000);  // Initial retry interval for websocket
 
 	const [status, setStatus] = useState('connecting') // 'connecting', 'connected', 'updating', 'error'
 	function deleteEntry({ entry, setEntries }) {
@@ -22,6 +21,7 @@ function App() {
 	useEffect(() => {
 		let ws;
 		let retryTimeout;
+		let retryInterval = 1000;  // Initial retry interval for websocket
 
 		const connectWebSocket = () => {
 			setStatus('connecting');
@@ -31,14 +31,14 @@ function App() {
 
 			ws.onopen = function () {
 				// console.log("Connected to WebSocket server");
-				setRetryInterval(1000);  // Reset the retry interval on a successful connection
+				retryInterval = 1000;  // Reset the retry interval on a successful connection
 				setStatus('connected');
 			};
 
 			ws.onmessage = function (event) {
 				const entry = JSON.parse(event.data)
 
-				if(entry.data == '___clear___'){
+				if(entry.data === '___clear___'){
 					// if a special ___clear___ event is sent, empty the messages
 					setEntries([]);
 					return;
@@ -56,7 +56,7 @@ function App() {
 				// console.log("WebSocket connection closed. Reconnecting...");
 				// Retry with an increasing delay (exponential backoff)
 				retryTimeout = setTimeout(() => {
-					setRetryInterval(prev => Math.min(prev * 2, 30000));  // Max delay of 30 seconds
+					retryInterval = Math.min(retryInterval * 2, 10000);  // Double the retry interval, with a max of 10 seconds
 					connectWebSocket();
 				}, retryInterval);
 				setStatus('connecting');
@@ -93,7 +93,7 @@ function App() {
 		if (atBottom) {
 			window.scrollTo(0, document.body.scrollHeight);
 		}
-	}, [entries]);
+	}, [entries, atBottom]);
 
 	return (
 		<main className="">
@@ -112,7 +112,7 @@ function App() {
 							key={entry.id}
 							id={entry.id}
 							data={entry.data}
-							visualization={entry.visualization}
+							view={entry.view}
 							onDelete={() => deleteEntry({ entry, setEntries })}
 						>
 							{entry}
