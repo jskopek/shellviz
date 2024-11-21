@@ -32,25 +32,22 @@ module.exports = {
                 apply: (compiler) => {
                     compiler.hooks.done.tap('RemoveUnwantedFiles', () => {
                         const buildPath = path.resolve(__dirname, '../shellviz/build/static');
+
+                        const removeUnwantedFiles = (dirPath, fileCondition) => {
+                            if (fs.existsSync(dirPath)) {
+                                fs.readdirSync(dirPath).forEach(file => {
+                                    if (fileCondition(file)) {
+                                        fs.unlinkSync(path.join(dirPath, file));
+                                    }
+                                });
+                            }
+                        };
+
                         const jsPath = path.join(buildPath, 'js');
+                        removeUnwantedFiles(jsPath, file => file.endsWith('.map') || file.includes('.chunk'));
+
                         const cssPath = path.join(buildPath, 'css');
-
-                        // Remove unnecessary files after build
-                        if (fs.existsSync(jsPath)) {
-                            fs.readdirSync(jsPath).forEach(file => {
-                                if (file.endsWith('.map') || file.includes('.chunk')) {
-                                    fs.unlinkSync(path.join(jsPath, file));
-                                }
-                            });
-                        }
-
-                        if (fs.existsSync(cssPath)) {
-                            fs.readdirSync(cssPath).forEach(file => {
-                                if (file.endsWith('.map') || file.includes('.chunk')) {
-                                    fs.unlinkSync(path.join(cssPath, file));
-                                }
-                            });
-                        }
+                        removeUnwantedFiles(cssPath, file => file.endsWith('.map') || file.includes('.chunk'));
                     });
                 },
             },
