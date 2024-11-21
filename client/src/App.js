@@ -6,7 +6,7 @@ function App() {
 	const [entries, setEntries] = useState([]);
 	const [retryInterval, setRetryInterval] = useState(1000);  // Initial retry interval for websocket
 
-	const status = 'connecting';
+	const [status, setStatus] = useState('connecting') // 'connecting', 'connected', 'updating', 'error'
 	function deleteEntry({ entry, setEntries }) {
 		setEntries((entries) => entries.filter((e) => e.id !== entry.id));
 	}
@@ -24,12 +24,15 @@ function App() {
 		let retryTimeout;
 
 		const connectWebSocket = () => {
-			console.log('Attempting to connect to WebSocket');
-			ws = new WebSocket("ws://" + window.location.hostname + ":" + (parseInt(window.location.port) + 1 || 5545));
+			setStatus('connecting');
+			// console.log('Attempting to connect to WebSocket');
+			const port = parseInt(new URLSearchParams(window.location.search).get('port')) || (parseInt(window.location.port) + 1 || 5545)
+			ws = new WebSocket("ws://" + window.location.hostname + ":" + port);
 
 			ws.onopen = function () {
-				console.log("Connected to WebSocket server");
+				// console.log("Connected to WebSocket server");
 				setRetryInterval(1000);  // Reset the retry interval on a successful connection
+				setStatus('connected');
 			};
 
 			ws.onmessage = function (event) {
@@ -50,16 +53,18 @@ function App() {
 			};
 
 			ws.onclose = function () {
-				console.log("WebSocket connection closed. Reconnecting...");
+				// console.log("WebSocket connection closed. Reconnecting...");
 				// Retry with an increasing delay (exponential backoff)
 				retryTimeout = setTimeout(() => {
 					setRetryInterval(prev => Math.min(prev * 2, 30000));  // Max delay of 30 seconds
 					connectWebSocket();
 				}, retryInterval);
+				setStatus('connecting');
 			};
 
 			ws.onerror = function (error) {
-				console.error("WebSocket error:", error);
+				setStatus('error');
+				// console.error("WebSocket error:", error);
 				ws.close();
 			};
 		};
