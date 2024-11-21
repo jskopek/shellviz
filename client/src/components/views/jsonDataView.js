@@ -13,7 +13,7 @@ export const JsonDataView = {
   
   evaluator: (value) => isJSONObject(value) || isArrayOfJSONObjects(value) || isArrayOfArrays(value),
   component: ({ data }) => (
-    <div className="bg-black">
+    <div className="bg-light px-1">
       <JsonViewer value={parseJSON(data)} theme="auto" rootName={false} />
     </div>
   ),

@@ -11,7 +11,7 @@ export const RawDataView = {
       data = JSON.stringify(data, null, 2);
     }
     return (
-      <p className="bg-gray-100 py-2 font-mono whitespace-pre overflow-x-auto">
+      <p className="bg-gray-100 py-2 px-2 font-mono whitespace-pre overflow-x-auto">
         {data}
       </p>
     );

@@ -8,7 +8,7 @@ export const NumberDataView = {
   evaluator: (value) => isNumeric(value),
   component: ({ data }) => {
     const newValue = data.toLocaleString();
-    const className = `text-gray-700 text-center py-2 ${newValue.length > 25 ? "text-1xl" : "text-3xl"
+    const className = `text-gray-700 text-center py-3 ${newValue.length > 25 ? "text-1xl" : "text-3xl"
       }`;
     const style = {
       backgroundImage:

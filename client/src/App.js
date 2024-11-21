@@ -96,7 +96,7 @@ function App() {
 	}, [entries]);
 
 	return (
-		<main className="bg-neutral-100">
+		<main className="">
 			{/* center image using tailwind */}
 			<div className="flex items-center max-w-4xl mx-auto px-4 pt-2">
 				<div className={`w-4 h-4 rounded-full  bg-${{ 'connecting': 'blue', 'connected': 'green', 'updating': 'yellow', 'error': 'red' }[status]}-500 shadow ms-auto`} title={status}>
