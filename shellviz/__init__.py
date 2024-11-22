@@ -2,7 +2,7 @@ import asyncio
 import atexit
 import threading
 import time
-import json
+import json as jsonFn
 from typing import Optional
 
 from shellviz.utils import append_data
@@ -76,7 +76,8 @@ class Shellviz:
         server = await asyncio.start_server(self.handle_http, '0.0.0.0', self.port)  # start the tcp server on the specified host and port
 
         if self.show_url:
-            self.print_url()
+            self.show_url()
+            self.show_qr_code(warn_on_import_error=False)
 
         async with server:
             await server.serve_forever() # server will run indefinitely until the method's task is `.cancel()`ed
@@ -85,7 +86,7 @@ class Shellviz:
         request = await parse_request(reader)
         if request.path == '/':
             # listen for request to root webpage
-            await write_file(writer, 'build/index.html', {'entries': json.dumps(self.entries)})
+            await write_file(writer, 'build/index.html', {'entries': jsonFn.dumps(self.entries)})
         elif request.path.startswith('/static'):
             # listen to requests for client js/css
             await write_file(writer, 'build' + request.path)
@@ -94,10 +95,10 @@ class Shellviz:
             await write_200(writer)
         elif request.path == '/api/send' and request.method == 'POST':
             # listen to requests to add new content
-            entry = json.loads(request.body)
+            entry = jsonFn.loads(request.body)
 
             if entry.get('data'):
-                self.send(entry['data'], id=entry.get('id'), append=entry.get('append'), visualization=entry.get('visualization'))
+                self.send(entry['data'], id=entry.get('id'), append=entry.get('append'), view=entry.get('view'))
                 await write_200(writer)
             else:
                 await write_404(writer)
@@ -143,13 +144,13 @@ class Shellviz:
 
         while self.pending_entries:
             entry = self.pending_entries.pop(0)
-            value = json.dumps(entry)
+            value = jsonFn.dumps(entry)
             for writer in self.websocket_clients:
                 await send_websocket_message(writer, value)
 
     # -- / WebSocket server methods --
 
-    def send(self, value, id: str = None, visualization: Optional[str] = None, append: bool = False, wait: bool = False):
+    def send(self, value, id: str = None, view: Optional[str] = None, append: bool = False, wait: bool = False):
         id = id or str(time.time())
         existing_entry_index = next((i for i, item in enumerate(self.entries) if item['id'] == id), None)
 
@@ -160,7 +161,7 @@ class Shellviz:
         entry = {
             'id': id,
             'data': value,
-            'visualization': visualization
+            'view': view
         }
 
         # if an existing server is found, send the data to that server via api
@@ -192,13 +193,15 @@ class Shellviz:
     
     def wait(self):
         while self.pending_entries:
-            time.sleep(0.1)
+            time.sleep(0.01)
         
-    def print_url(self):
+    def show_url(self):
         print(f'Shellviz serving on http://{get_local_ip()}:{self.port}')
 
+    def show_qr_code(self, warn_on_import_error=True):
         try:
             # if qrcode module is installed, output a QR code with the server's URL; fail silently if the package is not included
             print_qr(f'http://{get_local_ip()}:{self.port}')
         except ImportError:
-            pass
+            if warn_on_import_error:
+                print(f'The `qcode` package (available via `pip install qrcode`) is required to show the QR code')
