@@ -9,6 +9,8 @@ const Entry = ({ data, id, view: viewName, onDelete }) => {
   viewName = availableViews.find((view) => view.name === viewName) ? viewName : availableViews[0].name;
   const [selectedViewName, setSelectedViewName] = useState(viewName);
   const View = availableViews.find((view) => view.name === selectedViewName);
+  const [showAllViews, setShowAllViews] = useState(false);
+
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
@@ -20,21 +22,38 @@ const Entry = ({ data, id, view: viewName, onDelete }) => {
   return (
     <div className="bg-white border border-gray-200 shadow-md">
       <div className="flex justify-between mt-3 mb-3 px-4">
-        <div className="flex gap-2">
-          {availableViews.map(({ name, label, icon }) => {
-            const className = `text-gray-400 hover:text-gray-500 ${name === selectedViewName ? "text-gray-500" : ""}`;
-            return (
-              <button
-                key={name}
-                className={className}
-                onClick={() => setSelectedViewName(name)}
-                title={label}
-                type="button"
-              >
-                <FontAwesomeIcon icon={icon} height="20" width="20" />
-              </button>
-            );
-          })}
+        <div
+          className="flex gap-2 relative overflow-hidden rounded-md hover:bg-gray-100 transition-all duration-300 p-2"
+          onMouseEnter={() => setShowAllViews(true)}
+          onMouseLeave={() => setShowAllViews(false)}
+        >
+          <div className="flex gap-2 transition-all duration-300">
+            {availableViews.map(({ name, label, icon }, index) => {
+              const isSelected = name === selectedViewName;
+              const visibilityClass = showAllViews
+                ? "translate-x-0 opacity-100"
+                : isSelected
+                  ? "translate-x-0 opacity-100"
+                  : "-translate-x-10 opacity-0";
+              const className = `text-gray-400 hover:text-gray-500 ${isSelected ? "text-gray-500" : ""} ${visibilityClass} transition-transform transition-opacity duration-300 ease-out`;
+
+              return (
+                <button
+                  key={name}
+                  className={className}
+                  onClick={() => setSelectedViewName(name)}
+                  title={label}
+                  type="button"
+                  style={{
+                    transitionDelay: `${index * 50}ms`, // Staggered effect
+                    display: isSelected || showAllViews ? "inline-flex" : "none",
+                  }}
+                >
+                  <FontAwesomeIcon icon={icon} height="20" width="20" />
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="flex gap-2 items-center">
           {View.download && (
