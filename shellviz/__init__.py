@@ -205,3 +205,12 @@ class Shellviz:
         except ImportError:
             if warn_on_import_error:
                 print(f'The `qcode` package (available via `pip install qrcode`) is required to show the QR code')
+
+    # -- Convenience methods for quickly sending data with a specific view --
+    def table(self, data, id: Optional[str] = None): self.send(data, id=id, view='table')
+    def json(self, data, id: Optional[str] = None): self.send(data, id=id, view='json')
+    def markdown(self, data, id: Optional[str] = None): self.send(data, id=id, view='markdown')
+    def progress(self, data, id: Optional[str] = None): self.send(data, id=id, view='progress')
+    def pie(self, data, id: Optional[str] = None): self.send(data, id=id, view='pie')
+    def number(self, data, id: Optional[str] = None): self.send(data, id=id, view='number')
+    def area(self, data, id: Optional[str] = None): self.send(data, id=id, view='area')
