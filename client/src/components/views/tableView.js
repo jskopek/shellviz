@@ -88,7 +88,11 @@ export const TableView = {
       </div>
     );
   },
-  download: ({ data }) => {
+  download: (data) => {
     csvDownload({ data });
+  },
+  search: (data, searchQuery) => {
+      const filteredRegExp = new RegExp(searchQuery, 'i');
+      return _.filter(data, (dict) => _.values(dict).join(' ').match(filteredRegExp));
   }
 }
