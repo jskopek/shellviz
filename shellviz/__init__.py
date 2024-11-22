@@ -75,6 +75,7 @@ class Shellviz:
     async def start_http_server(self):
         server = await asyncio.start_server(self.handle_http, '0.0.0.0', self.port)  # start the tcp server on the specified host and port
 
+        if self.show_url_on_start:
             self.show_url()
             self.show_qr_code(warn_on_import_error=False)
 
@@ -217,3 +218,34 @@ class Shellviz:
     def bar(self, data, id: Optional[str] = None): self.send(data, id=id, view='bar')
     def card(self, data, id: Optional[str] = None): self.send(data, id=id, view='card')
     def location(self, data, id: Optional[str] = None): self.send(data, id=id, view='location')
+    def raw(self, data, id: Optional[str] = None): self.send(data, id=id, view='raw')
+    
+
+
+# Global instance of Shellviz
+_global_shellviz_instance = None
+def _global_shellviz():
+    global _global_shellviz_instance
+    if not _global_shellviz_instance:
+        print("Shellviz: No instance found. Creating new instance.")
+        _global_shellviz_instance = Shellviz()
+    return _global_shellviz_instance
+
+# Convenience methods for quickly interacting with a global shellviz instance
+def send(data, id: Optional[str] = None): _global_shellviz().send(data, id=id, view='text')
+def clear(): _global_shellviz().clear()
+def show_url(): _global_shellviz().show_url()
+def show_qr_code(): _global_shellviz().show_qr_code()
+
+def log(data, id: Optional[str] = None): _global_shellviz().log(data, id=id)
+def table(data, id: Optional[str] = None): _global_shellviz().table(data, id=id)
+def json(data, id: Optional[str] = None): _global_shellviz().json(data, id=id)
+def markdown(data, id: Optional[str] = None): _global_shellviz().markdown(data, id=id)
+def progress(data, id: Optional[str] = None): _global_shellviz().progress(data, id=id)
+def pie(data, id: Optional[str] = None): _global_shellviz().pie(data, id=id)
+def number(data, id: Optional[str] = None): _global_shellviz().number(data, id=id)
+def area(data, id: Optional[str] = None): _global_shellviz().area(data, id=id)
+def bar(data, id: Optional[str] = None): _global_shellviz().bar(data, id=id)
+def card(data, id: Optional[str] = None): _global_shellviz().card(data, id=id)
+def location(data, id: Optional[str] = None): _global_shellviz().location(data, id=id)
+def raw(data, id: Optional[str] = None): _global_shellviz().raw(data, id=id)
