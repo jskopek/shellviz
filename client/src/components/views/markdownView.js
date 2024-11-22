@@ -7,8 +7,8 @@ export const MarkdownView =
   label: "Markdown",
   icon: faFileWord,
   evaluator: (value) => typeof value == 'string',
-  component: ({ data }) => (
     <ReactMarkdown className="bg-gray-200 font-mono p-4 rounded-md whitespace-pre overflow-x-auto ">
+  Component: ({ data }) => (
       {data}
     </ReactMarkdown>
   )

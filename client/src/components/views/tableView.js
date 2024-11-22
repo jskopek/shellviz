@@ -10,7 +10,7 @@ export const TableView = {
   label: "Table",
   icon: faTableList,
   evaluator: (value) => isArrayOfJSONObjects(value) || isArrayOfArrays(value) || isJSONObject(value),
-  component: ({ data }) => {
+  Component: ({ data }) => {
     if (isJSONObject(data)) {
       // if data is an object, convert it to an array of key-value pairs
       data = Object.entries(data).map(([key, value]) => ({ key, value }));

@@ -5,7 +5,7 @@ export const ProgressView = {
   label: "Progress",
   icon: faBarsProgress,
   evaluator: (value) => parsePercentage(value) !== null,
-  component: ({ data }) => (
+  Component: ({ data }) => (
     <ProgressBar progress={parsePercentage(data)} />
   )
 }

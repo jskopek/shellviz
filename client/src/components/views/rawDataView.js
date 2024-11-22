@@ -6,7 +6,7 @@ export const RawDataView = {
   label: "Raw Data",
   icon: faFile,
   evaluator: () => true,
-  component: ({ data }) => {
+  Component: ({ data }) => {
     if (typeof data !== 'string') {
       data = JSON.stringify(data, null, 2);
     }

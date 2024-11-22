@@ -34,7 +34,7 @@ export const PieChartView = {
   label: "Pie Chart",
   icon: faChartPie,
   evaluator: (value) => isValidPieChartData(value),
-  component: ({ data }) => {
+  Component: ({ data }) => {
     const pieChartData = getPieChartData(data);
     return (
       <div className="h-96 bg-gray-200 p-4 rounded-md">

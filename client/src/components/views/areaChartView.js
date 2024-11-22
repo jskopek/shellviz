@@ -31,7 +31,7 @@ export const AreaChartView = {
   lable: "Area Chart",
   icon: faChartArea,
   evaluator: (value) => isValidAreaChartData(value),
-  component: ({ data }) => {
+  Component: ({ data }) => {
     const areaChartData = getAreaChartData(data);
     return (
       <div className="h-96 bg-gray-200 p-4 rounded-md">

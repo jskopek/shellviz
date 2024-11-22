@@ -9,7 +9,6 @@ const Entry = ({ data, id, view: viewName, onDelete }) => {
   viewName = availableViews.find((view) => view.name === viewName) ? viewName : availableViews[0].name;
   const [selectedViewName, setSelectedViewName] = useState(viewName);
   const View = availableViews.find((view) => view.name === selectedViewName);
-  const ViewComponent = View.component;
 
   return (
     <div className="bg-white border border-gray-200 shadow-md">
@@ -41,7 +40,7 @@ const Entry = ({ data, id, view: viewName, onDelete }) => {
           </button>
         </div>
       </div>
-      {<ViewComponent data={data} />}
+      {<View.Component data={data} />}
     </div>
   );
 };

@@ -6,7 +6,7 @@ export const NumberDataView = {
   label: "Number",
   icon: faHashtag,
   evaluator: (value) => isNumeric(value),
-  component: ({ data }) => {
+  Component: ({ data }) => {
     const newValue = data.toLocaleString();
     const className = `text-gray-700 text-center py-3 ${newValue.length > 25 ? "text-1xl" : "text-3xl"
       }`;

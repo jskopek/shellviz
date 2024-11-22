@@ -9,9 +9,9 @@ export const JsonDataView = {
   name: "json",
   label: "JSON",
   icon: faCode,
-  
+
   evaluator: (value) => isJSONObject(value) || isArrayOfJSONObjects(value) || isArrayOfArrays(value),
-  component: ({ data }) => (
+  Component: ({ data }) => (
     <div className="bg-light px-1">
       <JsonViewer value={parseJSON(data)} theme="auto" rootName={false} />
     </div>
