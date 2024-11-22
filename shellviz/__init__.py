@@ -15,7 +15,7 @@ class Shellviz:
         self.entries = []  # store a list of all existing entries; client will show these entries on page load
         self.pending_entries = []  # store a list of all pending entries that have yet to be sent via websocket connection
 
-        self.show_url = show_url # whether to show the server's URL in the console
+        self.show_url_on_start = show_url # whether to show the server's URL in the console
 
         self.port = port
 
@@ -75,7 +75,6 @@ class Shellviz:
     async def start_http_server(self):
         server = await asyncio.start_server(self.handle_http, '0.0.0.0', self.port)  # start the tcp server on the specified host and port
 
-        if self.show_url:
             self.show_url()
             self.show_qr_code(warn_on_import_error=False)
 
@@ -217,3 +216,4 @@ class Shellviz:
     def area(self, data, id: Optional[str] = None): self.send(data, id=id, view='area')
     def bar(self, data, id: Optional[str] = None): self.send(data, id=id, view='bar')
     def card(self, data, id: Optional[str] = None): self.send(data, id=id, view='card')
+    def location(self, data, id: Optional[str] = None): self.send(data, id=id, view='location')

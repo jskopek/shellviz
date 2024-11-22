@@ -7,13 +7,13 @@ import { AreaChartView } from "./areaChartView";
 import { PieChartView } from "./pieChartView";
 import { NumberDataView } from "./numberDataView";
 import { ProgressView } from "./progressView";
+import { LocationView } from "./locationView";
 import { CardView } from "./cardView";
 import { LogView } from "./logView";
 
 const views = [
   LogView,
   JsonDataView,
-  // MapView, // issues with loading this
   MarkdownView,
   TableView,
   CardView,
@@ -22,6 +22,7 @@ const views = [
   PieChartView,
   NumberDataView,
   ProgressView,
+  LocationView,
   RawDataView
 ];
 export default views;

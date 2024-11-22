@@ -4,6 +4,7 @@
 @import "tailwindcss/utilities";
 // @import "leaflet/dist/leaflet.css";
 @import "tailwindcss/utilities";
+@import "leaflet/dist/leaflet.css";
 
 
 
@@ -75,10 +76,6 @@ body.dark {
     transform: scale(10.2);
     opacity: 0 // background-color: black;
   }
-}
-
-#map {
-  height: 280px;
 }
 
 /* Mainly added for markdown links */
