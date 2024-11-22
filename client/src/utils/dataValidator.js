@@ -21,7 +21,25 @@ export const parseJSON = (dataStr) => {
   }
 };
 
-export const isValidJson = (json) => parseJSON(json) !== null;
+export const isValidJson = (json) => {
+  if (typeof json === "object" && json !== null) {
+    // If it's already an object, it's valid JSON
+    return true;
+  }
+
+  if (typeof json === "string") {
+    try {
+      // If it's a string, attempt to parse it as JSON
+      const parsed = JSON.parse(json);
+      return typeof parsed === "object" && parsed !== null;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // All other types (e.g., numbers, booleans, etc.) are invalid JSON
+  return false;
+};
 
 export const isJSONObject = (data) => {
   const jsonData = parseJSON(data);
@@ -137,9 +155,21 @@ export const isValidWeakLocation = (data) =>
 
 export const isValidLocation = (data) => {
   const jsonData = parseJSON(data);
-  return isValidStrongLocation(jsonData) || isValidWeakLocation(jsonData);
-};
 
+  // Check if the data is a valid single strong/weak location
+  if (isValidStrongLocation(jsonData) || isValidWeakLocation(jsonData)) {
+    return true;
+  }
+
+  // Check if the data is an array of valid locations
+  if (_.isArray(jsonData)) {
+    return _.every(jsonData, (location) =>
+      isValidStrongLocation(location) || isValidWeakLocation(location)
+    );
+  }
+
+  return false;
+};
 /*
  ************************************************************
  * Pie Chart Related functions

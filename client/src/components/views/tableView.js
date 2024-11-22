@@ -39,8 +39,6 @@ export const TableView = {
     );
 
 
-
-
     return (
       <div className="font-mono rounded-md whitespace-pre overflow-x-auto relative max-h-screen ">
         <div className="flow-root">
@@ -53,7 +51,7 @@ export const TableView = {
                       <th
                         key={header}
                         scope="col"
-                        className="py-3.5 pl-4 pr-3 text-sm font-semibold text-gray-900 sm:pl-0 uppercase cursor-pointer"
+                        className="pb-1 px-3 text-left text-sm font-semibold text-gray-900 uppercase cursor-pointer"
                         onClick={() => sortBy === header ? setSortByReverse(!sortByReverse) : setSortBy(header)}
                       >
                         {header}
@@ -73,7 +71,7 @@ export const TableView = {
                         <td
                           // eslint-disable-next-line react/no-array-index-key
                           key={cellIndex}
-                          className="whitespace-nowrap py-1 pl-3 pr-3 text-sm font-medium text-gray-900"
+                          className="whitespace-nowrap py-1 px-3 text-sm font-medium text-gray-900"
                         >
                           {cell}
                         </td>
