@@ -8,8 +8,10 @@ import { PieChartView } from "./pieChartView";
 import { NumberDataView } from "./numberDataView";
 import { ProgressView } from "./progressView";
 import { CardView } from "./cardView";
+import { LogView } from "./logView";
 
 const views = [
+  LogView,
   JsonDataView,
   // MapView, // issues with loading this
   MarkdownView,

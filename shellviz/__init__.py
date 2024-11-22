@@ -208,6 +208,7 @@ class Shellviz:
 
     # -- Convenience methods for quickly sending data with a specific view --
     def table(self, data, id: Optional[str] = None): self.send(data, id=id, view='table')
+    def log(self, data, id: Optional[str] = None): self.send([(data, time.time())], id=id or 'log', append=True, view='log')
     def json(self, data, id: Optional[str] = None): self.send(data, id=id, view='json')
     def markdown(self, data, id: Optional[str] = None): self.send(data, id=id, view='markdown')
     def progress(self, data, id: Optional[str] = None): self.send(data, id=id, view='progress')
