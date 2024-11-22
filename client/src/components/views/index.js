@@ -2,8 +2,9 @@ import { RawDataView } from "./rawDataView";
 import { TableView } from "./tableView";
 import { JsonDataView } from "./jsonDataView";
 import { MarkdownView } from "./markdownView";
-import { PieChartView } from "./pieChartView";
+import { BarChartView } from "./barChartView";
 import { AreaChartView } from "./areaChartView";
+import { PieChartView } from "./pieChartView";
 import { NumberDataView } from "./numberDataView";
 import { ProgressView } from "./progressView";
 
@@ -13,6 +14,7 @@ const views = [
   MarkdownView,
   TableView,
   PieChartView,
+  BarChartView,
   AreaChartView,
   NumberDataView,
   ProgressView,

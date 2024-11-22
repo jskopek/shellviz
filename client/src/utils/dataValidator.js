@@ -223,7 +223,7 @@ export const isValidPieChartData = (data) => {
   ]
 */
 
-export const isValidGroupedBarData = (data) => {
+export const isValidBarChartData = (data) => {
   const jsonData = parseJSON(data);
   return (
     isArrayOfJSONObjects(jsonData) &&

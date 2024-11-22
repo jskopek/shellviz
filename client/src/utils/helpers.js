@@ -114,18 +114,18 @@ const getAllAggregationKeys = (data) => {
   return numericOrBooleanKeys;
 };
 
-export const getGroupedBarChartData = (data, key) => {
+export const getBarChartData = (data, key) => {
   const aggregationKeys = getAllAggregationKeys(data);
   const currentKey = key || aggregationKeys[0];
 
   const groupedData = _.countBy(_.pluck(data, currentKey));
   const groupedKeys = _.keys(groupedData);
-  const groupedBarData = _.map(groupedData, (value, groupKey) => ({
+  const barChartData = _.map(groupedData, (value, groupKey) => ({
     [currentKey]: groupKey,
     [groupKey]: value,
   }));
 
-  return [aggregationKeys, groupedKeys, groupedBarData];
+  return [aggregationKeys, groupedKeys, barChartData];
 };
 
 /**

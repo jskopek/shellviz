@@ -214,3 +214,4 @@ class Shellviz:
     def pie(self, data, id: Optional[str] = None): self.send(data, id=id, view='pie')
     def number(self, data, id: Optional[str] = None): self.send(data, id=id, view='number')
     def area(self, data, id: Optional[str] = None): self.send(data, id=id, view='area')
+    def bar(self, data, id: Optional[str] = None): self.send(data, id=id, view='bar')

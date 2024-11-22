@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { ResponsiveBar } from "@nivo/bar";
-import { getGroupedBarChartData } from "../../utils/helpers";
-import { faBarChart } from "@fortawesome/free-solid-svg-icons";
+import { getBarChartData } from "../../utils/helpers";
+import { faChartSimple } from "@fortawesome/free-solid-svg-icons";
+import { isValidBarChartData } from "../../utils/dataValidator";
 
 // API: https://nivo.rocks/bar/
 // To display the pie chart, we need to pass in the data as an array of objects
@@ -45,33 +46,33 @@ const DataSelectorWidget = ({ options, selected, changeHandler }) => (
   </div>
 );
 
-export const GroupedBarView = {
-  name: "groupedBar",
-  label: "Grouped Bar Chart",
-  icon: faBarChart,
-  evaluator: (value) => isValidGroupedBarData(value),
-  view: ({ data }) => {
+export const BarChartView = {
+  name: "bar",
+  label: "Bar Chart",
+  icon: faChartSimple,
+  evaluator: (value) => isValidBarChartData(value),
+  Component: ({ data }) => {
     const [chartState, setChartState] = useState({});
 
     useEffect(() => {
-      const [aggrKeys, keys, groupedBarData] = getGroupedBarChartData(data);
+      const [aggrKeys, keys, barChartData] = getBarChartData(data);
       setChartState({
         selected: aggrKeys[0],
         aggregationKeys: aggrKeys,
         groupedKeys: keys,
-        dataToDisplay: groupedBarData,
+        dataToDisplay: barChartData,
       });
     }, []);
 
     const handleChange = (e) => {
       const newValue = e.target.value;
       // eslint-disable-next-line no-unused-vars
-      const [_, keys, groupedBarData] = getGroupedBarChartData(data, newValue);
+      const [_, keys, barChartData] = getBarChartData(data, newValue);
       setChartState({
         ...chartState,
         selected: newValue,
         groupedKeys: keys,
-        dataToDisplay: groupedBarData,
+        dataToDisplay: barChartData,
       });
     };
 
