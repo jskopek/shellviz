@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "shellviz"
-version = "0.3.2"
+version = "0.4.0"
 description = ""
 authors = ["Jean-Marc Skopek <jskopek@gmail.com>"]
 readme = "README.md"
@@ -15,6 +15,9 @@ python = "^3.9"
 
 [tool.poetry.scripts]
 shellviz = "shellviz.cli:cli"  # Command = Module:Function
+
+[tool.poetry.group.dev.dependencies]
+requests = "^2.32.3"
 
 [build-system]
 requires = ["poetry-core"]

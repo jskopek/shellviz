@@ -27,17 +27,17 @@ def test_profiling():
         s.send([{
             'time': time.time() - t0,
             'label': 'Step 1',
-        }], id=id, visualization='table')
+        }], id=id, view='table')
         time.sleep(random.random() * 2)
         s.send([{
             'time': time.time() - t0,
             'label': 'Step 2'
-        }], id=id, visualization='table', append=True)
+        }], id=id, view='table', append=True)
         time.sleep(random.random() * 2)
         s.send([{
             'time': time.time() - t0,
             'label': 'Step 3'
-        }], id=id, visualization='table', append=True)
+        }], id=id, view='table', append=True)
 
 
 def test_progress():
@@ -45,6 +45,28 @@ def test_progress():
         s.send(random.random(), id='progress')
         time.sleep(5)
 
+def test_area():
+    s.send([{"x": "0", "y": 179}, {"x": "helicopter", "y": 15}, {"x": "boat", "y": 281}], wait=True)
+    s.send([
+        {
+            "country": "AD",
+            "hot dog": 105,
+            "burger": 129,
+            "sandwich": 37,
+            "kebab": 119,
+            "fries": 53,
+            "donut": 69,
+        },
+        {
+            "country": "AE",
+            "hot dog": 41,
+            "burger": 14,
+            "sandwich": 181,
+            "kebab": 166,
+            "fries": 36,
+            "donut": 105,
+        },
+    ], wait=True)
 
 # Usage example
 if __name__ == "__main__":
@@ -53,6 +75,8 @@ if __name__ == "__main__":
 
     # test_logging()
     # test_content_input()
-    test_profiling()
-    # test_progress()
+    # test_profiling()
+    test_progress()
+
+    # test_area()
 
