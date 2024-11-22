@@ -7,15 +7,17 @@ import { AreaChartView } from "./areaChartView";
 import { PieChartView } from "./pieChartView";
 import { NumberDataView } from "./numberDataView";
 import { ProgressView } from "./progressView";
+import { CardView } from "./cardView";
 
 const views = [
   JsonDataView,
   // MapView, // issues with loading this
   MarkdownView,
   TableView,
-  PieChartView,
+  CardView,
   BarChartView,
   AreaChartView,
+  PieChartView,
   NumberDataView,
   ProgressView,
   RawDataView
