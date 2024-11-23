@@ -2,3 +2,5 @@ __pycache__
 *.pyc
 shellviz/build
 dist
+test*.py
+TODO.md
