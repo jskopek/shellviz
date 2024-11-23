@@ -1,5 +1,5 @@
 import './App.scss';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Entry from './components/Entry';
 
 function App() {
@@ -27,7 +27,7 @@ function App() {
 			setStatus('connecting');
 			// console.log('Attempting to connect to WebSocket');
 			let port = parseInt(new URLSearchParams(window.location.search).get('port')) || (parseInt(window.location.port) + 1 || 5545)
-			if(window.location.port === '3000') {
+			if (window.location.port === '3000') {
 				console.warn('Development port detected (3000). Using default websocket port 5545. To override, add ?port=XXXX to the URL');
 				port = 5545;
 			}
@@ -42,7 +42,7 @@ function App() {
 			ws.onmessage = function (event) {
 				const entry = JSON.parse(event.data)
 
-				if(entry.data === '___clear___'){
+				if (entry.data === '___clear___') {
 					// if a special ___clear___ event is sent, empty the messages
 					setEntries([]);
 					return;
@@ -82,63 +82,77 @@ function App() {
 		};
 	}, []);
 
-	// handle scrolling/ scroll to bottom when new entry is added unless user has scrolled up
+	/* Handle auto-scrolling */
 	const [atBottom, setAtBottom] = useState(true);
+	const isProgrammaticScrollRef = useRef(false);
 	useEffect(() => {
-		// add an event listener for scrolling that sets atBottom if the user can see the bottom of the page
-		window.addEventListener('scroll', () => {
-			const atBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight
-			setAtBottom(atBottom)
-		})
-	}, []);
+		const handleScroll = () => {
+			if (isProgrammaticScrollRef.current) {
+				return; // Ignore scroll events triggered programmatically
+			}
 
-	// if the user is at the bottom of the page, scroll to the bottom when a new entry is added
+			// Check if the user is at the bottom
+			const atBottom =
+				window.innerHeight + window.scrollY >= document.body.scrollHeight - 1; // Add a small tolerance to avoid precision issues
+			setAtBottom(atBottom);
+		};
+
+		// Add event listener for scroll
+		window.addEventListener("scroll", handleScroll);
+
+		return () => {
+			// Cleanup event listener on unmount
+			window.removeEventListener("scroll", handleScroll);
+		};
+	}, []);
 	useEffect(() => {
 		if (atBottom) {
-			window.scrollTo(0, document.body.scrollHeight);
+			isProgrammaticScrollRef.current = true; // Set the flag before programmatic scrolling
+			setTimeout(() => {
+				window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+				isProgrammaticScrollRef.current = false; // Reset the flag after scroll
+			}, 0);
 		}
 	}, [entries, atBottom]);
+	/* / Handle auto-scrolling */
 
 	return (
 		<main className="">
 			{/* center image using tailwind */}
-			<div className="flex items-center max-w-4xl mx-auto px-4 pt-2">
+			<div className="fixed bottom-2 left-2 z-10">
 				<div className={`w-4 h-4 rounded-full  bg-${{ 'connecting': 'blue', 'connected': 'green', 'updating': 'yellow', 'error': 'red' }[status]}-500 shadow ms-auto`} title={status}>
 					<span className="bg-blue-500 bg-green-500 bg-yellow-500" /> {/* ensure all colors are loaded */}
 				</div>
 			</div>
-			<div className="max-w-4xl mx-auto">
+			<div className="">
 				{/* add margins to left right and vertical gap for each entry */}
-				<div className="flex flex-col gap-4 p-4">
+				{entries.map((entry) => (
+					<Entry
+						key={entry.id}
+						id={entry.id}
+						data={entry.data}
+						view={entry.view}
+						onDelete={() => deleteEntry({ entry, setEntries })}
+					>
+						{entry}
+					</Entry>
+				))}
 
-					{entries.map((entry) => (
-						<Entry
-							key={entry.id}
-							id={entry.id}
-							data={entry.data}
-							view={entry.view}
-							onDelete={() => deleteEntry({ entry, setEntries })}
-						>
-							{entry}
-						</Entry>
-					))}
-
-					{!entries.length && (status === 'connecting') && (
-						<div className="flex items-center justify-center my-60">
-							<div className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-orange-500 rounded-full mx-auto" role="status" aria-label="loading">
-								<span className="sr-only">Loading...</span>
-							</div>
+				{!entries.length && (status === 'connecting') && (
+					<div className="flex items-center justify-center h-screen">
+						<div className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-gray-400 rounded-full mx-auto" role="status" aria-label="loading">
+							<span className="sr-only">Loading...</span>
 						</div>
-					)}
+					</div>
+				)}
 
-					{!entries.length && (status === 'connected') && (
-						<div className="flex items-center justify-center text-sm text-gray-500 my-60">
-							Waiting for data...
-						</div>
-					)}
-				</div>
-
+				{!entries.length && (status === 'connected') && (
+					<div className="flex items-center justify-center text-sm text-gray-400 h-screen">
+						Waiting for data...
+					</div>
+				)}
 			</div>
+
 		</main >
 	);
 }
