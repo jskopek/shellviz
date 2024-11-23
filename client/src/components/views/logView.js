@@ -25,9 +25,9 @@ export const LogView = {
     });
 
     return (
-      <div className="bg-gray-100 py-2 px-2 font-mono overflow-x-auto">
+      <div className="bg-gray-50 py-2 px-2 font-mono overflow-x-auto">
         {formattedData.map(({ value, relativeTime, timestamp }, index) => (
-          <div key={index} className="py-1 border-b last:border-none flex justify-between items-center">
+          <div key={index} className="py-1 border-b last:border-none flex justify-between items-center text-sm">
             <span>{value}</span>
             <span className="text-xs text-gray-500 whitespace-pre" title={localDate(timestamp)}>{relativeTime}</span>
           </div>

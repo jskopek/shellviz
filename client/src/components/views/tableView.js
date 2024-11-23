@@ -40,57 +40,51 @@ export const TableView = {
 
 
     return (
-      <div className="font-mono rounded-md whitespace-pre overflow-x-auto relative max-h-screen ">
-        <div className="flow-root">
-          <div className="-mx-4 -my-2 overflow-auto sm:-mx-6 lg:-mx-8">
-            <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead>
-                  <tr>
-                    {headers.map((header) => (
-                      <th
-                        key={header}
-                        scope="col"
-                        className="pb-1 px-3 text-left text-sm font-semibold text-gray-900 uppercase cursor-pointer"
-                        onClick={() => sortBy === header ? setSortByReverse(!sortByReverse) : setSortBy(header)}
+        <div className="min-w-full py-2 align-middle overflow-x-auto max-w-full">
+            <table className="min-w-full divide-y divide-gray-300 font-mono rounded-md whitespace-pre relative">
+              <thead>
+                <tr>
+                  {headers.map((header) => (
+                    <th
+                      key={header}
+                      scope="col"
+                      className="pb-1 px-3 text-left text-sm font-semibold text-gray-900 uppercase cursor-pointer"
+                      onClick={() => sortBy === header ? setSortByReverse(!sortByReverse) : setSortBy(header)}
+                    >
+                      {header}
+                      {sortBy === header ? (sortByReverse ? ' ▼' : ' ▲') : ''}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-300">
+                {rows.map((row, index) => (
+                  <tr
+                    // eslint-disable-next-line react/no-array-index-key
+                    key={index}
+                    className="divide-x divide-gray-300"
+                  >
+                    {row.map((cell, cellIndex) => (
+                      <td
+                        // eslint-disable-next-line react/no-array-index-key
+                        key={cellIndex}
+                        className="whitespace-nowrap py-1 px-3 text-sm font-medium text-gray-900"
                       >
-                        {header}
-                        {sortBy === header ? (sortByReverse ? ' ▼' : ' ▲') : ''}
-                      </th>
+                        {cell}
+                      </td>
                     ))}
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-300">
-                  {rows.map((row, index) => (
-                    <tr
-                      // eslint-disable-next-line react/no-array-index-key
-                      key={index}
-                      className="divide-x divide-gray-300"
-                    >
-                      {row.map((cell, cellIndex) => (
-                        <td
-                          // eslint-disable-next-line react/no-array-index-key
-                          key={cellIndex}
-                          className="whitespace-nowrap py-1 px-3 text-sm font-medium text-gray-900"
-                        >
-                          {cell}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-      </div>
     );
   },
   download: (data) => {
     csvDownload({ data });
   },
   search: (data, searchQuery) => {
-      const filteredRegExp = new RegExp(searchQuery, 'i');
-      return _.filter(data, (dict) => _.values(dict).join(' ').match(filteredRegExp));
+    const filteredRegExp = new RegExp(searchQuery, 'i');
+    return _.filter(data, (dict) => _.values(dict).join(' ').match(filteredRegExp));
   }
 }
