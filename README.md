@@ -1,8 +1,9 @@
 # Shellviz
 
-![shellviz](https://github.com/jskopek/shellviz-next/blob/main/public/icon.png).
-
 Shellviz is a zero-hassle Python tool that transforms your data into dynamic, real-time visualizations you can explore right in your browser. It's lightweight, free, and has no dependencies — just install and start visualizing!
+
+![shellviz](https://github.com/jskopek/shellviz/blob/master/client/public/logo.png).
+
 
 ## 🚀 Features
 
