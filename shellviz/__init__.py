@@ -3,6 +3,7 @@ import atexit
 import threading
 import time
 import json as jsonFn
+from .utils_serialize import to_json_string
 from typing import Optional
 
 from shellviz.utils import append_data
@@ -86,7 +87,7 @@ class Shellviz:
         request = await parse_request(reader)
         if request.path == '/':
             # listen for request to root webpage
-            await write_file(writer, 'build/index.html', {'entries': jsonFn.dumps(self.entries)})
+            await write_file(writer, 'build/index.html', {'entries': to_json_string(self.entries)})
         elif request.path.startswith('/static'):
             # listen to requests for client js/css
             await write_file(writer, 'build' + request.path)
@@ -144,7 +145,7 @@ class Shellviz:
 
         while self.pending_entries:
             entry = self.pending_entries.pop(0)
-            value = jsonFn.dumps(entry)
+            value = to_json_string(entry)
             for writer in self.websocket_clients:
                 await send_websocket_message(writer, value)
 
