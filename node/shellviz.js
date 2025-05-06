@@ -16,14 +16,42 @@ class ShellViz {
         this.port = port;
         this.entries = [];           // everything ever sent
         this.clients = new Set();    // active WS connections
+        this.existingServerFound = false;
 
-        this._startServer(showUrl);
+        // Check if server exists before starting
+        this._checkExistingServer().then(exists => {
+            this.existingServerFound = exists;
+            if (!exists) {
+                this._startServer(showUrl);
+            }
+        });
+    }
+
+    async _checkExistingServer() {
+        try {
+            const response = await fetch(`http://localhost:${this.port}/api/running`);
+            return response.ok;
+        } catch (e) {
+            return false;
+        }
     }
 
     /* public helpers – these mirror the Python names -------------------- */
 
     send(data, { id = null, view = 'log', append = false, wait = false } = {}) {
         id = id || Date.now().toString();
+        
+        // If we're in client mode, send to existing server
+        if (this.existingServerFound) {
+            return fetch(`http://localhost:${this.port}/api/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, data, view, append })
+            }).then(() => {
+                if (wait) return this.wait();
+            });
+        }
+
         const existingEntryIndex = this.entries.findIndex(item => item.id === id);
 
         let value = data;
@@ -139,14 +167,7 @@ class ShellViz {
             }
           });
 
-        const wss = new WebSocketServer({ port: this.port + 1 });
-        wss.on('connection', ws => {
-            this.clients.add(ws);
-            /* replay everything we know so new client gets history */
-            ws.send(JSON.stringify({ kind: 'init', entries: this.entries }));
-            ws.on('close', () => this.clients.delete(ws));
-        });
-
+        // Start HTTP server first
         server.listen(this.port, () => {
             if (showUrl) {
                 const url = `http://localhost:${this.port}/`;
@@ -154,16 +175,27 @@ class ShellViz {
             }
         });
 
-        server.on('error', async err => {
+        // Only start WebSocket server if HTTP server started successfully
+        const wss = new WebSocketServer({ server });
+        wss.on('connection', ws => {
+            this.clients.add(ws);
+            ws.on('close', () => this.clients.delete(ws));
+        });
+
+        // Handle server errors
+        server.on('error', err => {
             if (err.code === 'EADDRINUSE') {
-                // somebody else is already serving – fall back to "client mode"
-                this._post = entry =>
-                    fetch(`http://localhost:${this.port}/api/send`,
-                        {
-                            method: 'POST', 
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(entry)
-                        });
+                console.log('Server already running, switching to client mode');
+                this.existingServerFound = true;
+            } else {
+                throw err;
+            }
+        });
+
+        wss.on('error', err => {
+            if (err.code === 'EADDRINUSE') {
+                console.log('WebSocket server already running, switching to client mode');
+                this.existingServerFound = true;
             } else {
                 throw err;
             }
@@ -194,5 +226,7 @@ module.exports = {
     table: (d, i) => _global().table(d, i),
     markdown: (d, i) => _global().markdown(d, i),
     bar: (d, i) => _global().bar(d, i),
+    Shellviz: () => _global(),
+
     // …export the rest as needed
 };
