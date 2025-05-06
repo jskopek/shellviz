@@ -70,7 +70,7 @@ class ShellViz {
     }
 
     // sugar layers
-    log = (d, i) => this.send(d, { id: i || 'log', view: 'log', append: true });
+    log = (d, i) => this.send([[d, Date.now() / 1000]], { id: i || 'log', view: 'log', append: true });
     json = (d, i) => this.send(d, { id: i, view: 'json', append: false });
     table = (d, i) => this.send(d, { id: i, view: 'table', append: false });
     markdown = (d, i) => this.send(d, { id: i, view: 'markdown', append: false });
