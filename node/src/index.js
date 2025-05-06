@@ -5,10 +5,23 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { WebSocketServer } = require('ws');
+const os = require('os');
 
 const DEFAULT_PORT = 5544;
 
 // -------- core class -------------------------------------------------------
+
+function getLocalIp() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            // Skip internal and non-IPv4 addresses
+            if (iface.internal || iface.family !== 'IPv4') continue;
+            return iface.address;
+        }
+    }
+    return '127.0.0.1'; // Fallback to localhost
+}
 
 class ShellViz {
     constructor({ port = DEFAULT_PORT, showUrl = true } = {}) {
@@ -16,6 +29,7 @@ class ShellViz {
         this.entries = [];           // everything ever sent
         this.clients = new Set();    // active WS connections
         this.existingServerFound = false;
+        this.host = getLocalIp();
 
         // Check if server exists before starting
         this._checkExistingServer().then(exists => {
@@ -28,7 +42,7 @@ class ShellViz {
 
     async _checkExistingServer() {
         try {
-            const response = await fetch(`http://localhost:${this.port}/api/running`);
+            const response = await fetch(`http://${this.host}:${this.port}/api/running`);
             return response.ok;
         } catch (e) {
             return false;
@@ -42,7 +56,7 @@ class ShellViz {
 
         // If we're in client mode, send to existing server
         if (this.existingServerFound) {
-            return fetch(`http://localhost:${this.port}/api/send`, {
+            return fetch(`http://${this.host}:${this.port}/api/send`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id, data, view, append })
@@ -113,7 +127,7 @@ class ShellViz {
 
     _startServer(showUrl) {
         const server = http.createServer((req, res) => {
-            const CLIENT_DIST_PATH = process.env.CLIENT_DIST_PATH || path.join(__dirname);
+            const CLIENT_DIST_PATH = process.env.CLIENT_DIST_PATH || path.join(__dirname, '../dist');
             /* ---------- main page with context ---------------------------- */
             if (req.method === 'GET' && req.url === '/') {
                 const index_template = fs.readFileSync(path.join(CLIENT_DIST_PATH, 'index.html'), 'utf8');
@@ -169,9 +183,9 @@ class ShellViz {
         });
 
         // Start HTTP server first
-        server.listen(this.port, () => {
+        server.listen(this.port, this.host, () => {
             if (showUrl) {
-                const url = `http://localhost:${this.port}/`;
+                const url = `http://${this.host}:${this.port}/`;
                 console.log(`ShellViz server listening on ${url}`);
             }
         });
