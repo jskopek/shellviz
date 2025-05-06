@@ -10,6 +10,7 @@ from shellviz.utils import append_data
 from .utils_html import parse_request, send_request, write_200, write_404, write_file, get_local_ip, print_qr
 from .utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
 import socket
+import os
 
 class Shellviz:
     def __init__(self, port=5544, show_url=True):
@@ -24,8 +25,7 @@ class Shellviz:
         self.existing_server_found = True if send_request('/api/running', port=port) else False
 
         self.loop = asyncio.new_event_loop() # the event loop that is attached to the thread created for this instance; new `create_task` async methods are added to the loop
-        self.http_server_task = None # keeps track of http server task that is triggered by the asyncio.create_task method so it can be cancelled on `shutdown`
-        self.websocket_server_task = None # keeps track of the websocket server task that is triggered by the asyncio.create_task method so it can be cancelled on `shutdown`
+        self.server_task = None # keeps track of http/websocket server task that is triggered by the asyncio.create_task method so it can be cancelled on `shutdown`
 
         self.websocket_clients = set() # set of all connected websocket clients
 
@@ -38,8 +38,7 @@ class Shellviz:
 
     # -- Threading methods --
     def start(self):
-        self.http_server_task = self.loop.create_task(self.start_http_server()) # runs `start_server` asynchronously and stores the task object in `http_server_task` so it can be canclled on `shutdown`
-        self.websocket_server_task = self.loop.create_task(self.start_websocket_server()) # runs `start_server` asynchronously and stores the task object in `http_server_task` so it can be canclled on `shutdown`
+        self.server_task = self.loop.create_task(self.start_server()) # runs `start_server` asynchronously and stores the task object in `server_task` so it can be canclled on `shutdown`
         
         threading.Thread(target=self._run_event_loop, daemon=True).start()  # Run loop in background thread; daemon=True ensures that the thread is killed when the main thread exits
 
@@ -51,10 +50,8 @@ class Shellviz:
         # print("Shutting down server...")
 
         # shuts down the http and websocket servers
-        if self.http_server_task:
-            self.http_server_task.cancel()
-        if self.websocket_server_task:
-            self.websocket_server_task.cancel()
+        if self.server_task:
+            self.server_task.cancel()
 
         def _shutdown_loop():
             # Gather all tasks to ensure they are canceled
@@ -72,17 +69,46 @@ class Shellviz:
         self.shutdown()  # Ensure cleanup if object is deleted
     # -- / threading methods --
 
-    # -- HTTP sever methods --
-    async def start_http_server(self):
-        server = await asyncio.start_server(self.handle_http, '0.0.0.0', self.port)  # start the tcp server on the specified host and port
+    # -- Commands to initialize and handle HTTP & WebSocket connections --
+    async def start_server(self):
+        server = await asyncio.start_server(self.handle_connection, '0.0.0.0', self.port)  # start the tcp server on the specified host and port
 
         if self.show_url_on_start:
             self.show_url()
             self.show_qr_code(warn_on_import_error=False)
 
+        # print(f'Server started on port {self.port}')
+        # print(f'Serving on http://{get_local_ip()}:{self.port}')
+        # print(f'WebSocket available on ws://{get_local_ip()}:{self.port}')
+
         async with server:
             await server.serve_forever() # server will run indefinitely until the method's task is `.cancel()`ed
 
+    async def handle_connection(self, reader, writer):
+        # Peek at the first few bytes to determine if this is a WebSocket connection
+        data = await reader.read(1024)
+        if not data:
+            return
+
+        # Create a new reader that includes the data we already read
+        new_reader = asyncio.StreamReader()
+        new_reader.feed_data(data)
+
+        # Check if this is a WebSocket handshake request
+        if data.startswith(b'GET / HTTP/1.1') and b'Upgrade: websocket' in data:
+            # This is a WebSocket connection
+            # Don't call feed_eof() for WebSocket because we need to keep reading more data
+            # after the handshake (like messages from the client)
+            await self.handle_websocket_connection(new_reader, writer)
+        else:
+            # This is an HTTP connection
+            # Call feed_eof() for HTTP because we've received the complete request
+            # and don't expect any more data from the client
+            new_reader.feed_eof()
+            await self.handle_http(new_reader, writer)
+    # -- / Commands to initialize and handle HTTP & WebSocket connections --
+
+    # -- HTTP sever method --
     async def handle_http(self, reader, writer):
         request = await parse_request(reader)
         if request.path == '/':
@@ -105,17 +131,9 @@ class Shellviz:
                 await write_404(writer)
         else:
             await write_404(writer)
-    # -- / HTTP server methods --
+    # -- / HTTP server method --
 
     # -- WebSocket server methods --
-    async def start_websocket_server(self):
-        server = await asyncio.start_server(self.handle_websocket_connection, '0.0.0.0', self.port + 1)
-
-        # print(f'Serving on ws://{get_local_ip()}:{self.port + 1}')
-
-        async with server:
-            await server.serve_forever()  # server will run indefinitely until the method's task is `.cancel()`ed
-
     async def handle_websocket_connection(self, reader, writer):
         # Perform WebSocket handshake
         await perform_websocket_handshake(reader, writer)
