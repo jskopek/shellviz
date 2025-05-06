@@ -1,6 +1,12 @@
+dist
+TODO.md
+
+
+# JS
+node_modules
+
+# Python
+python/test*.py
+python/test_python_env
 __pycache__
 *.pyc
-shellviz/build
-dist
-test*.py
-TODO.md
