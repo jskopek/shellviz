@@ -5,9 +5,9 @@ description = ""
 authors = ["Jean-Marc Skopek <jskopek@gmail.com>"]
 readme = "README.md"
 include = [
-    "shellviz/build/index.html",
-    "shellviz/build/static/js/main.js",
-    "shellviz/build/static/css/main.css",
+    "shellviz/dist/index.html",
+    "shellviz/dist/static/js/main.js",
+    "shellviz/dist/static/css/main.css",
 ]
 
 [tool.poetry.dependencies]
@@ -22,3 +22,6 @@ requests = "^2.32.3"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.build]
+script = "prepare_dist.py"

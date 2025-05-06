@@ -75,6 +75,48 @@ from shellviz import show_qr_code
 show_qr_code()
 ```
 
+## 📁 Project Structure
+
+The Shellviz project is organized as a **monorepo** that contains:
+
+- A shared **React client** (`/client`) that powers the interactive visualization.
+- A **Python package** (`/python`) published on PyPI.
+- A **Node.js package** (`/node`) published on NPM.
+
+Here’s the recommended folder layout:
+
+```
+/shellviz/                  ← root of the monorepo
+  /client/                  ← React app (shared front-end)
+    /src/
+    /public/
+    /dist/                  ← compiled React build outputs
+    package.json
+    craco.config.js
+
+  /python/                  ← Python package source
+    /shellviz/
+      __init__.py
+      utils_[...].py
+    pyproject.toml
+
+  /node/                    ← Node.js package source
+    /src/
+    package.json
+
+
+  README.md
+  LICENSE
+  .gitignore
+```
+
+### How the pieces fit together:
+- The **React client** is developed and built separately using `npm run build` in the `/client` directory.  
+- The **Python package** lives under `/python`, with its importable code in the `shellviz` subfolder.
+- The **Node.js package** lives under `/node` with its own `src` code and `package.json`.
+
+This structure keeps the front-end, Python, and Node.js code **modular and cleanly separated**, while allowing them to share the same client bundle.
+
 ## 🏗️ Contributing
 
 We welcome contributions! If you encounter issues or have ideas, feel free to submit an issue or pull request on GitHub.
@@ -100,7 +142,7 @@ npm run build
 
 Once this is done, you can compile the package using poetry:
 ```bash
-cd .. # jump to project root
+cd shellviz
 poetry build
 ```
 To install into a local python environment, run the following command:
