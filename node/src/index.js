@@ -7,7 +7,6 @@ const path = require('path');
 const { WebSocketServer } = require('ws');
 
 const DEFAULT_PORT = 5544;
-const INDEX_TEMPLATE = fs.readFileSync(path.join(__dirname, '../client/dist/index.html'), 'utf8');
 
 // -------- core class -------------------------------------------------------
 
@@ -40,7 +39,7 @@ class ShellViz {
 
     send(data, { id = null, view = 'log', append = false, wait = false } = {}) {
         id = id || Date.now().toString();
-        
+
         // If we're in client mode, send to existing server
         if (this.existingServerFound) {
             return fetch(`http://localhost:${this.port}/api/send`, {
@@ -88,13 +87,13 @@ class ShellViz {
         }
     }
 
-    clear() { 
-        this.entries = []; 
-        this._broadcast({ kind: 'clear' }); 
+    clear() {
+        this.entries = [];
+        this._broadcast({ kind: 'clear' });
     }
 
-    wait() { 
-        return new Promise(resolve => setTimeout(resolve, 10)); 
+    wait() {
+        return new Promise(resolve => setTimeout(resolve, 10));
     }
 
     // sugar layers
@@ -114,58 +113,60 @@ class ShellViz {
 
     _startServer(showUrl) {
         const server = http.createServer((req, res) => {
+            const CLIENT_DIST_PATH = process.env.CLIENT_DIST_PATH || path.join(__dirname);
             /* ---------- main page with context ---------------------------- */
             if (req.method === 'GET' && req.url === '/') {
-              const html = renderTemplate(INDEX_TEMPLATE, {
-                entries: JSON.stringify(this.entries)
-              });
-              res.writeHead(200, {'Content-Type':'text/html'})
-                 .end(html);
+                const index_template = fs.readFileSync(path.join(CLIENT_DIST_PATH, 'index.html'), 'utf8');
+                const html = renderTemplate(index_template, {
+                    entries: JSON.stringify(this.entries)
+                });
+                res.writeHead(200, { 'Content-Type': 'text/html' })
+                    .end(html);
             }
-      
+
             /* ---------- static assets (optional) -------------------------- */
             else if (req.method === 'GET' && req.url.startsWith('/static/')) {
-              const filePath = path.join(__dirname, '../client/dist' + req.url);
-              fs.readFile(filePath, (err, data) => {
-                if (err) return res.writeHead(404).end('not found');
-                const ct = { '.js':'text/javascript', '.css':'text/css' }[path.extname(filePath)] || 'application/octet-stream';
-                res.writeHead(200, {'Content-Type': ct}).end(data);
-              });
+                const filePath = path.join(CLIENT_DIST_PATH, req.url);
+                fs.readFile(filePath, (err, data) => {
+                    if (err) return res.writeHead(404).end('not found');
+                    const ct = { '.js': 'text/javascript', '.css': 'text/css' }[path.extname(filePath)] || 'application/octet-stream';
+                    res.writeHead(200, { 'Content-Type': ct }).end(data);
+                });
             }
-      
+
             /* ---------- health check -------------------------------------- */
             else if (req.method === 'GET' && req.url === '/api/running') {
-              res.writeHead(200).end('ok');
+                res.writeHead(200).end('ok');
             }
-      
+
             /* ---------- entry POST endpoint ------------------------------- */
             else if (req.method === 'POST' && req.url === '/api/send') {
-              let body = '';
-              req.on('data', c => body += c)
-                 .on('end', () => {
-                   try {
-                     const entry = JSON.parse(body);
-                     if (entry.data) {
-                       this.send(entry.data, {
-                         id: entry.id,
-                         append: entry.append,
-                         view: entry.view
-                       });
-                       res.writeHead(200).end();
-                     } else {
-                       res.writeHead(404).end('not found');
-                     }
-                   } catch (e) {
-                     res.writeHead(400).end('invalid json');
-                   }
-                 });
+                let body = '';
+                req.on('data', c => body += c)
+                    .on('end', () => {
+                        try {
+                            const entry = JSON.parse(body);
+                            if (entry.data) {
+                                this.send(entry.data, {
+                                    id: entry.id,
+                                    append: entry.append,
+                                    view: entry.view
+                                });
+                                res.writeHead(200).end();
+                            } else {
+                                res.writeHead(404).end('not found');
+                            }
+                        } catch (e) {
+                            res.writeHead(400).end('invalid json');
+                        }
+                    });
             }
-      
+
             /* ---------- fallback ------------------------------------------ */
             else {
-              res.writeHead(404).end('not found');
+                res.writeHead(404).end('not found');
             }
-          });
+        });
 
         // Start HTTP server first
         server.listen(this.port, () => {

@@ -1,14 +1,31 @@
 {
-  "name": "shellviz_node",
-  "version": "1.0.0",
-  "main": "shellviz.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "shellviz",
+  "version": "0.4.2",
+  "description": "Visualization toolkit for shell scripts and command-line tools",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node prepare_dist.cjs",
+    "prepublishOnly": "npm run build",
+    "pack": "mkdir -p build && npm pack --pack-destination=build"
+  },
   "dependencies": {
-    "ws": "^8.18.2"
-  }
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "author": "Jean-Marc Skopek <jskopek@gmail.com>",
+  "license": "MIT"
 }

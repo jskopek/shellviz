@@ -4,6 +4,8 @@ TODO.md
 
 # JS
 node_modules
+node/build
+node/test
 
 # Python
 python/test*.py
