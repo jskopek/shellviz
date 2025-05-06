@@ -91,19 +91,14 @@ async def write_file(writer: StreamWriter, file_path: str, template_context: Opt
     """
     Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a response with the content of the file at `file_path`
     Accepts an optional `template_context` dictionary to replace {placeholders} in the file content
+    `file_path` is an absolute path to the file
 
     e.g.
         server = await asyncio.start_server(self.handle_http, self.host, self.port)
         async def handle_http(self, reader, writer):
-            write_file(writer, 'index.html')
+            write_file(writer, '/tmp/index.html')
     """
 
-
-    # Get the package directory
-    package_dir = os.path.dirname(__file__)  # This assumes the file is within the package directory
-
-    # Construct the absolute path to the file
-    file_path = os.path.join(package_dir, file_path)
 
     if not os.path.isfile(file_path):
         return await write_404(writer)

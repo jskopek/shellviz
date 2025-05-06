@@ -111,12 +111,17 @@ class Shellviz:
     # -- HTTP sever method --
     async def handle_http(self, reader, writer):
         request = await parse_request(reader)
+
+        # Compiled python package will have a `dist` folder in the same directory as the package; this can be overridden by setting the `SHELLVIZ_CLIENT_DIST_PATH` environment variable
+        CLIENT_DIST_PATH = os.environ.get('CLIENT_DIST_PATH', os.path.join(os.path.dirname(__file__), 'dist')) 
+
         if request.path == '/':
             # listen for request to root webpage
-            await write_file(writer, 'build/index.html', {'entries': to_json_string(self.entries)})
+            await write_file(writer, os.path.join(CLIENT_DIST_PATH, 'index.html'), {'entries': to_json_string(self.entries)})
         elif request.path.startswith('/static'):
             # listen to requests for client js/css
-            await write_file(writer, 'build' + request.path)
+            relative_path = request.path.lstrip('/') # strip the leading `/` from the path so it can be joined with the `CLIENT_DIST_PATH`
+            await write_file(writer, os.path.join(CLIENT_DIST_PATH, relative_path))
         elif request.path == '/api/running':
             # listen for requests to check if a server is running on the specified port
             await write_200(writer)
