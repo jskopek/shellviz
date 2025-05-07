@@ -9,7 +9,7 @@
 
 ```
 import { log } from 'shellviz';
-log('hell world')
+log('hello world')
 ```
 
 You can also import other visualizations, and you can choose to import using CommonJS or EJS
@@ -24,6 +24,8 @@ table([
 ]); 
 ```
 
+The package can be importer on both the Node.JS and browser-facing/client side, however due to limitations on the browser-side it can only send data to an existing Shellviz server that has been initialized by the Node.JS or Python library
+
 # Building
 
 To build the package locally:
@@ -37,14 +39,14 @@ npm run build
 
 2. Then build the Node.js package:
 ```bash
-cd ../node
+cd libraries/js
 npm install
 npm run build
 ```
 
 3. To create a local package for testing:
 ```bash
-npm run pack  # Creates shellviz-0.4.2.tgz in the ../build directory
+npm run pack  # Creates shellviz-x.x.x.tgz in the ../build directory
 ```
 
 4. To test locally, you can create a test directory and install the package:
@@ -52,7 +54,7 @@ npm run pack  # Creates shellviz-0.4.2.tgz in the ../build directory
 mkdir test
 cd test
 npm init -y
-npm install ../../build/shellviz-0.4.2.tgz
+npm install ../../build/shellviz-x.x.x.tgz
 ```
 
 5. Create a test file (e.g., `test.js` or `test.mjs`) and run it:
@@ -62,6 +64,13 @@ node test.js
 
 # For ES Modules
 node test.mjs
+```
+
+6. To test in the client side, create a simple React app and import the client
+```bash
+npx create-react-app test-web
+cd test-web
+npm install ../../build/shellviz-x.x.x.tgz
 ```
 
 The package supports both CommonJS and ES Modules, so you can use either `require()` or `import` syntax in your code.
@@ -85,6 +94,7 @@ npm version major  # for breaking changes
 3. Build the package:
 ```bash
 npm run build
+npm run pack
 ```
 
 4. Publish to npm:

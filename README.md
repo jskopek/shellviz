@@ -80,40 +80,25 @@ show_qr_code()
 The Shellviz project is organized as a **monorepo** that contains:
 
 - A shared **React client** (`/client`) that powers the interactive visualization.
-- A **Python package** (`/python`) published on PyPI.
-- A **Node.js package** (`/node`) published on NPM.
+- A **Python package** (`/library/python`) published on PyPI.
+- A **Node.js and JS package** (`/library/js`) published on NPM.
 
-Here’s the recommended folder layout:
+Here’s the folder layout:
 
 ```
 /shellviz/                  ← root of the monorepo
   /client/                  ← React app (shared front-end)
-    /src/
-    /public/
-    /dist/                  ← compiled React build outputs
-    package.json
-    craco.config.js
-
-  /python/                  ← Python package source
-    /shellviz/
-      __init__.py
-      utils_[...].py
-    pyproject.toml
-
-  /node/                    ← Node.js package source
-    /src/
-    package.json
-
-
-  README.md
-  LICENSE
-  .gitignore
+  /libraries/               ← Library packages
+    /python/                ← Python library
+    /js/                    ← JS Library
+      /src/node.js          ← Node.js implementation; includes server and client
+      /src/browser.js       ← Font-end JS implementation; allows for data to be sent to running shellviz server via client-side JS
 ```
 
 ### How the pieces fit together:
 - The **React client** is developed and built separately using `npm run build` in the `/client` directory.  
-- The **Python package** lives under `/python`, with its importable code in the `shellviz` subfolder.
-- The **Node.js package** lives under `/node` with its own `src` code and `package.json`.
+- The **Python package** lives under `/libraries/python`, with its importable code in the `shellviz` subfolder.
+- The **Node.js & JS package** lives under `/libraries/js` with its own `src` code and `package.json`.
 
 This structure keeps the front-end, Python, and Node.js code **modular and cleanly separated**, while allowing them to share the same client bundle.
 
@@ -131,25 +116,6 @@ npm start
 ```
 
 This should launch a live-updating browser window that will listen for traffic on the default Shellviz websocket port
-
-### Build
-Bundling and deploying Shellviz is straightforward. Run the following command to build a compiled version of the Shellviz client that will be placed in the package's `build` folder:
-
-```bash
-cd client
-npm run build
-```
-
-Once this is done, you can compile the package using poetry:
-```bash
-cd shellviz
-poetry build
-```
-To install into a local python environment, run the following command:
-
-```bash
-poetry add --no-cache ~/[path-to-repo]/dist/shellviz-0.x.x-py3-none-any.whl
-```
 
 ## ⚖️ License
 
