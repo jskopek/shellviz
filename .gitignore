@@ -4,12 +4,12 @@ TODO.md
 
 # JS
 node_modules
-node/build
-node/test
-node/test-web
+libraries/js/build
+libraries/js/test
+libraries/js/test-web
 
 # Python
-python/test*.py
-python/test_python_env
+libraries/python/test*.py
+libraries/python/test_python_env
 __pycache__
 *.pyc
