@@ -54,6 +54,9 @@ async def write_html(writer: StreamWriter, html: str) -> None:
     response = (
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: text/html\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+        "Access-Control-Allow-Headers: Content-Type\r\n"
         f"Content-Length: {len(html)}\r\n"
         "\r\n" +
         html
@@ -68,7 +71,13 @@ async def write_response(writer: StreamWriter, status_code: int, status_message:
     """
     Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a response with the provided status code and message
     """
-    response = f"HTTP/1.1 {status_code} {status_message}\r\n\r\n".encode()
+    response = (
+        f"HTTP/1.1 {status_code} {status_message}\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+        "Access-Control-Allow-Headers: Content-Type\r\n"
+        "\r\n"
+    ).encode()
     writer.write(response)
     await writer.drain()
     writer.close()
@@ -86,6 +95,12 @@ async def write_200(writer: StreamWriter) -> None:
     """
     await write_response(writer, 200, "OK")
 
+async def write_cors_headers(writer: StreamWriter) -> None:
+    """
+    Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a response with the CORS headers
+    This enables the client to make cross-origin requests (e.g. via the browser plugin) to the server
+    """
+    await write_response(writer, 200, "OK")
 
 async def write_file(writer: StreamWriter, file_path: str, template_context: Optional[dict] = None) -> None:
     """
@@ -115,6 +130,9 @@ async def write_file(writer: StreamWriter, file_path: str, template_context: Opt
     response = (
         f"HTTP/1.1 200 OK\r\n"
         f"Content-Type: {content_type}\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+        "Access-Control-Allow-Headers: Content-Type\r\n"
         f"Content-Length: {len(file_content)}\r\n"
         "\r\n" + file_content
     ).encode()

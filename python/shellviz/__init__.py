@@ -7,7 +7,7 @@ from .utils_serialize import to_json_string
 from typing import Optional
 
 from shellviz.utils import append_data
-from .utils_html import parse_request, send_request, write_200, write_404, write_file, get_local_ip, print_qr
+from .utils_html import parse_request, send_request, write_200, write_404, write_cors_headers, write_file, get_local_ip, print_qr
 from .utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
 import socket
 import os
@@ -115,7 +115,10 @@ class Shellviz:
         # Compiled python package will have a `dist` folder in the same directory as the package; this can be overridden by setting the `SHELLVIZ_CLIENT_DIST_PATH` environment variable
         CLIENT_DIST_PATH = os.environ.get('CLIENT_DIST_PATH', os.path.join(os.path.dirname(__file__), 'dist')) 
 
-        if request.path == '/':
+        # Handle OPTIONS requests for CORS preflight
+        if request.method == 'OPTIONS':
+            await write_cors_headers(writer)
+        elif request.path == '/':
             # listen for request to root webpage
             await write_file(writer, os.path.join(CLIENT_DIST_PATH, 'index.html'), {'entries': to_json_string(self.entries)})
         elif request.path.startswith('/static'):
