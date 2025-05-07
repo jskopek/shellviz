@@ -1,0 +1,39 @@
+{
+  "name": "shellviz",
+  "version": "0.2.9",
+  "description": "Visualization toolkit for shell scripts and command-line tools",
+  "main": "./dist/node.cjs",
+  "module": "./dist/node.js",
+  "browser": "./dist/browser.mjs",
+  "types": "./dist/node.d.ts",
+  "exports": {
+    ".": {
+      "browser": "./dist/browser.mjs",
+      "import": "./dist/node.mjs",
+      "require": "./dist/node.cjs",
+      "types": "./dist/node.d.ts",
+      "default": "./dist/node.cjs"
+    },
+    "./browser": "./dist/browser.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build:node": "node prepare_dist.cjs",
+    "build:browser": "esbuild ./src/browser.js --bundle --format=esm --platform=browser --outfile=dist/browser.mjs --banner:js=\"/* eslint-disable */\"",
+    "build": "npm run build:node && npm run build:browser",
+    "pack": "npm run build && npm pack --pack-destination=build"
+  },
+  "dependencies": {
+    "qrcode-terminal": "^0.12.0",
+    "shellviz": "file:build/shellviz-0.2.8.tgz",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.4",
+    "typescript": "^5.3.3"
+  },
+  "author": "Jean-Marc Skopek <jskopek@gmail.com>",
+  "license": "MIT"
+}

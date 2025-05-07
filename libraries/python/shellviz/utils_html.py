@@ -54,6 +54,9 @@ async def write_html(writer: StreamWriter, html: str) -> None:
     response = (
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: text/html\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+        "Access-Control-Allow-Headers: Content-Type\r\n"
         f"Content-Length: {len(html)}\r\n"
         "\r\n" +
         html
@@ -68,7 +71,13 @@ async def write_response(writer: StreamWriter, status_code: int, status_message:
     """
     Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a response with the provided status code and message
     """
-    response = f"HTTP/1.1 {status_code} {status_message}\r\n\r\n".encode()
+    response = (
+        f"HTTP/1.1 {status_code} {status_message}\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+        "Access-Control-Allow-Headers: Content-Type\r\n"
+        "\r\n"
+    ).encode()
     writer.write(response)
     await writer.drain()
     writer.close()
@@ -86,24 +95,25 @@ async def write_200(writer: StreamWriter) -> None:
     """
     await write_response(writer, 200, "OK")
 
+async def write_cors_headers(writer: StreamWriter) -> None:
+    """
+    Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a response with the CORS headers
+    This enables the client to make cross-origin requests (e.g. via the browser plugin) to the server
+    """
+    await write_response(writer, 200, "OK")
 
 async def write_file(writer: StreamWriter, file_path: str, template_context: Optional[dict] = None) -> None:
     """
     Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a response with the content of the file at `file_path`
     Accepts an optional `template_context` dictionary to replace {placeholders} in the file content
+    `file_path` is an absolute path to the file
 
     e.g.
         server = await asyncio.start_server(self.handle_http, self.host, self.port)
         async def handle_http(self, reader, writer):
-            write_file(writer, 'index.html')
+            write_file(writer, '/tmp/index.html')
     """
 
-
-    # Get the package directory
-    package_dir = os.path.dirname(__file__)  # This assumes the file is within the package directory
-
-    # Construct the absolute path to the file
-    file_path = os.path.join(package_dir, file_path)
 
     if not os.path.isfile(file_path):
         return await write_404(writer)
@@ -120,6 +130,9 @@ async def write_file(writer: StreamWriter, file_path: str, template_context: Opt
     response = (
         f"HTTP/1.1 200 OK\r\n"
         f"Content-Type: {content_type}\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+        "Access-Control-Allow-Headers: Content-Type\r\n"
         f"Content-Length: {len(file_content)}\r\n"
         "\r\n" + file_content
     ).encode()

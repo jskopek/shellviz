@@ -26,10 +26,10 @@ function App() {
 		const connectWebSocket = () => {
 			setStatus('connecting');
 			// console.log('Attempting to connect to WebSocket');
-			let port = parseInt(new URLSearchParams(window.location.search).get('port')) || (parseInt(window.location.port) + 1 || 5545)
+			let port = parseInt(new URLSearchParams(window.location.search).get('port')) || (parseInt(window.location.port) || 5544)
 			if (window.location.port === '3000') {
-				console.warn('Development port detected (3000). Using default websocket port 5545. To override, add ?port=XXXX to the URL');
-				port = 5545;
+				console.warn('Development port detected (3000). Using default websocket port 5544. To override, add ?port=XXXX to the URL');
+				port = 5544;
 			}
 			ws = new WebSocket("ws://" + window.location.hostname + ":" + port);
 

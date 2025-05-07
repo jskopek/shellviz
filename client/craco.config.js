@@ -10,7 +10,7 @@ module.exports = {
             }
 
             // Change the output directory
-            webpackConfig.output.path = path.resolve(__dirname, '../shellviz/build');
+            webpackConfig.output.path = path.resolve(__dirname, 'dist');
 
             // Set static filenames for JavaScript and CSS
             webpackConfig.output.filename = 'static/js/main.js';
@@ -28,26 +28,38 @@ module.exports = {
             return webpackConfig;
         },
         plugins: [
+            // {
+            //     apply: (compiler) => {
+            //         compiler.hooks.done.tap('RemoveUnwantedFiles', () => {
+            //             const buildPath = path.resolve(__dirname, 'dist/static');
+
+            //             const removeUnwantedFiles = (dirPath, fileCondition) => {
+            //                 if (fs.existsSync(dirPath)) {
+            //                     fs.readdirSync(dirPath).forEach(file => {
+            //                         if (fileCondition(file)) {
+            //                             fs.unlinkSync(path.join(dirPath, file));
+            //                         }
+            //                     });
+            //                 }
+            //             };
+
+            //             const jsPath = path.join(buildPath, 'js');
+            //             removeUnwantedFiles(jsPath, file => file.endsWith('.map') || file.includes('.chunk'));
+
+            //             const cssPath = path.join(buildPath, 'css');
+            //             removeUnwantedFiles(cssPath, file => file.endsWith('.map') || file.includes('.chunk'));
+            //         });
+            //     },
+            // },
             {
                 apply: (compiler) => {
-                    compiler.hooks.done.tap('RemoveUnwantedFiles', () => {
-                        const buildPath = path.resolve(__dirname, '../shellviz/build/static');
-
-                        const removeUnwantedFiles = (dirPath, fileCondition) => {
-                            if (fs.existsSync(dirPath)) {
-                                fs.readdirSync(dirPath).forEach(file => {
-                                    if (fileCondition(file)) {
-                                        fs.unlinkSync(path.join(dirPath, file));
-                                    }
-                                });
-                            }
-                        };
-
-                        const jsPath = path.join(buildPath, 'js');
-                        removeUnwantedFiles(jsPath, file => file.endsWith('.map') || file.includes('.chunk'));
-
-                        const cssPath = path.join(buildPath, 'css');
-                        removeUnwantedFiles(cssPath, file => file.endsWith('.map') || file.includes('.chunk'));
+                    // Removes the `build` folder that is created by default by Create React App
+                    compiler.hooks.done.tap('RemoveBuildFolder', () => {
+                        const buildFolder = path.resolve(__dirname, 'build');
+                        if (fs.existsSync(buildFolder)) {
+                            fs.removeSync(buildFolder);
+                            console.log('Removed build folder after compilation');
+                        }
                     });
                 },
             },
