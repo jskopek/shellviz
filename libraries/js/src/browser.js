@@ -1,5 +1,5 @@
 /* browser/index.js  – chosen automatically by bundlers */
-import Shellviz from './client.js';
+import Shellviz from './browser_client.js';
 
 const client = new Shellviz();
 

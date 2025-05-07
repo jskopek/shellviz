@@ -1,4 +1,4 @@
-const { log, json, table } = require('./src/index.js');
+const { log, json, table } = require('./src/node.js');
 
 // Test the visualization
 log('Hello World');

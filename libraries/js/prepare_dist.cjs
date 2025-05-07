@@ -3,7 +3,7 @@ const path = require('path');
 
 function build() {
     // Get the project root directory
-    const rootDir = path.resolve(__dirname, '..');
+    const rootDir = path.resolve(__dirname, '../..');
     const clientDist = path.join(rootDir, 'client', 'dist');
     const packageDist = path.join(__dirname, 'dist');
 
@@ -35,14 +35,14 @@ function build() {
     });
 
     // Copy the main index.js file as index.cjs
-    const sourceFile = path.join(__dirname, 'src', 'index.js');
-    const cjsFile = path.join(packageDist, 'index.cjs');
+    const sourceFile = path.join(__dirname, 'src', 'node.js');
+    const cjsFile = path.join(packageDist, 'node.cjs');
     fs.mkdirSync(path.dirname(cjsFile), { recursive: true });
     fs.copyFileSync(sourceFile, cjsFile);
 
     // Create ES module wrapper (index.js)
     const esmContent = `// ES Module wrapper for shellviz
-import shellviz from './index.cjs';
+import shellviz from './node.cjs';
 
 export const {
     send,
@@ -57,7 +57,7 @@ export const {
 } = shellviz;
 `;
 
-    fs.writeFileSync(path.join(packageDist, 'index.js'), esmContent);
+    fs.writeFileSync(path.join(packageDist, 'node.js'), esmContent);
 
     // Generate TypeScript declaration file
     const dtsContent = `declare module 'shellviz' {
@@ -72,7 +72,7 @@ export const {
     export function Shellviz(): any;
 }`;
 
-    fs.writeFileSync(path.join(packageDist, 'index.d.ts'), dtsContent);
+    fs.writeFileSync(path.join(packageDist, 'node.d.ts'), dtsContent);
 }
 
 // Run the build
