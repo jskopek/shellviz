@@ -1,7 +1,7 @@
 /* browser/index.js  – chosen automatically by bundlers */
-import ShellVizClient from './client.js';
+import Shellviz from './client.js';
 
-const client = new ShellVizClient();
-client.init();
+const client = new Shellviz();
 
-export const { log, json, table, markdown, bar, clear, wait } = client;
+export default Shellviz;
+export const { table, log, json, markdown, progress, pie, number, area, bar, card, location, raw, clear, wait } = client;

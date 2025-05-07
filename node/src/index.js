@@ -111,12 +111,18 @@ class ShellViz {
     }
 
     // sugar layers
-    log = (d, i) => this.send([[d, Date.now() / 1000]], { id: i || 'log', view: 'log', append: true });
-    json = (d, i) => this.send(d, { id: i, view: 'json', append: false });
-    table = (d, i) => this.send(d, { id: i, view: 'table', append: false });
-    markdown = (d, i) => this.send(d, { id: i, view: 'markdown', append: false });
-    bar = (d, i) => this.send(d, { id: i, view: 'bar', append: false });
-    // ...add the rest as needed
+    table = (data, id=null, append=false) => this.send(data, { id, view: 'table', append });
+    log = (data, id=null, append=true) => this.send([[data, Date.now() / 1000]], { id: id || 'log', view: 'log', append });
+    json = (data, id=null, append=false) => this.send(data, { id: id, view: 'json', append });
+    markdown = (data, id=null, append=false) => this.send(data, { id: id, view: 'markdown', append });
+    progress = (data, id=null, append=false) => this.send(data, { id: id, view: 'progress', append });
+    pie = (data, id=null, append=false) => this.send(data, { id: id, view: 'pie', append });
+    number = (data, id=null, append=false) => this.send(data, { id: id, view: 'number', append });
+    area = (data, id=null, append=false) => this.send(data, { id: id, view: 'area', append });
+    bar = (data, id=null, append=false) => this.send(data, { id: id, view: 'bar', append });
+    card = (data, id=null, append=false) => this.send(data, { id: id, view: 'card', append });
+    location = (data, id=null, append=false) => this.send(data, { id: id, view: 'location', append });
+    raw = (data, id=null, append=false) => this.send(data, { id: id, view: 'raw', append });
 
     /* private ------------------------------------------------------------ */
 
@@ -249,12 +255,17 @@ module.exports = {
     send: (d, o) => _global().send(d, o),
     clear: () => _global().clear(),
     wait: () => _global().wait(),
-    log: (d, i) => _global().log(d, i),
-    json: (d, i) => _global().json(d, i),
-    table: (d, i) => _global().table(d, i),
-    markdown: (d, i) => _global().markdown(d, i),
-    bar: (d, i) => _global().bar(d, i),
+    table: (data, id=null, append=false) => _global().table(data, id, append),
+    log: (data, id=null, append=true) => _global().log(data, id, append),
+    json: (data, id=null, append=false) => _global().json(data, id, append),
+    markdown: (data, id=null, append=false) => _global().markdown(data, id, append),
+    progress: (data, id=null, append=false) => _global().progress(data, id, append),
+    pie: (data, id=null, append=false) => _global().pie(data, id, append),
+    number: (data, id=null, append=false) => _global().number(data, id, append),
+    area: (data, id=null, append=false) => _global().area(data, id, append),
+    bar: (data, id=null, append=false) => _global().bar(data, id, append),
+    card: (data, id=null, append=false) => _global().card(data, id, append),
+    location: (data, id=null, append=false) => _global().location(data, id, append),
+    raw: (data, id=null, append=false) => _global().raw(data, id, append),
     Shellviz: () => _global(),
-
-    // …export the rest as needed
 };

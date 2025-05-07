@@ -1,58 +1,42 @@
 // browser/client.js
-export default class ShellVizClient {
-    constructor(endpoint = `http://${location.hostname}:5544`) {
-      console.log('constructor', endpoint);
-      this.endpoint = endpoint;
-      // this.mode = 'unknown';
-      this.mode = 'remote';
+export default class Shellviz {
+    constructor(port = 5544) {
+      this.endpoint = `http://${location.hostname}:${port}`;
       this.entries = [];
     }
   
-    async init() {
-      console.log('init', this.endpoint);
-      // try {
-      //   const ok = await fetch(`${this.endpoint}/api/running`, { cache:'no-store' });
-      //   this.mode = ok && ok.ok ? 'remote' : 'embedded';
-      // } catch {
-      //   this.mode = 'embedded';
-      // }
-      // if (this.mode === 'embedded') this.mountUi();
-    }
-  
+ 
     /* ---------------- public helpers ---------------- */
   
-    send(data, { id = Date.now().toString(), view='log', append=false } = {}) {
-      // console.log('sending', data, id, view, append);
-      if (this.mode === 'remote') {
-        // console.log('sending to remote', `${this.endpoint}/api/send`, data, id, view, append);
-        return fetch(`${this.endpoint}/api/send`, {
+    async send(data, { id = Date.now().toString(), view='log', append=false } = {}) {
+      try {
+        const response = await fetch(`${this.endpoint}/api/send`, {
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({ id, data, view, append })
         });
+        if (!response.ok) {
+          throw new Error('Failed to send data');
+        }
+      } catch (error) {
+        console.log(data);
+        console.warn('Could not connect to shellviz server');
       }
-      /* Embedded: dispatch custom event so React UI updates */
-      window.dispatchEvent(new CustomEvent('shellviz:entry', {
-        detail:{ id, data, view, append }
-      }));
     }
-    log = (d,i) => this.send([[d,Date.now()/1000]],{id:i||'log',view:'log',append:true});
-    json = (d,i) => this.send(d,{id:i,view:'json'});
-    table = (d,i)=>this.send(d,{id:i,view:'table'});
-  
-    /* ---------------- private ---------------- */
-  
-    mountUi() {
-      if (document.getElementById('__shellviz_root')) return;
-      const host = document.createElement('div');
-      host.id='__shellviz_root';
-      host.style.cssText='all:unset;position:fixed;inset:0;z-index:2147483647;';
-      document.body.appendChild(host);
-  
-      const s = document.createElement('script');
-      s.src='https://unpkg.com/shellviz-react-ui@latest/dist/standalone.js';
-      s.onload = () => window.__shellvizMount?.(host,this.entries);
-      document.body.appendChild(s);
-    }
-  }
-  
+
+    table = (data, id=null, append=false) => this.send(data, { id, view: 'table', append });
+    log = (data, id=null, append=true) => this.send([[data, Date.now() / 1000]], { id: id || 'log', view: 'log', append });
+    json = (data, id=null, append=false) => this.send(data, { id: id, view: 'json', append });
+    markdown = (data, id=null, append=false) => this.send(data, { id: id, view: 'markdown', append });
+    progress = (data, id=null, append=false) => this.send(data, { id: id, view: 'progress', append });
+    pie = (data, id=null, append=false) => this.send(data, { id: id, view: 'pie', append });
+    number = (data, id=null, append=false) => this.send(data, { id: id, view: 'number', append });
+    area = (data, id=null, append=false) => this.send(data, { id: id, view: 'area', append });
+    bar = (data, id=null, append=false) => this.send(data, { id: id, view: 'bar', append });
+    card = (data, id=null, append=false) => this.send(data, { id: id, view: 'card', append });
+    location = (data, id=null, append=false) => this.send(data, { id: id, view: 'location', append });
+    raw = (data, id=null, append=false) => this.send(data, { id: id, view: 'raw', append });
+
+    clear = () => this.send('___clear___');
+    wait = () => new Promise(resolve => setTimeout(resolve, 10));
+}

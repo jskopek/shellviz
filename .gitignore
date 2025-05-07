@@ -6,6 +6,7 @@ TODO.md
 node_modules
 node/build
 node/test
+node/test-web
 
 # Python
 python/test*.py
