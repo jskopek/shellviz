@@ -1,11 +1,12 @@
 // shellviz.js  — v0.1 proof‑of‑concept
-// npm i ws (only runtime dep)
+// npm i ws qrcode-terminal (only runtime deps)
 
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { WebSocketServer } = require('ws');
 const os = require('os');
+const qrcode = require('qrcode-terminal');
 
 const DEFAULT_PORT = 5544;
 
@@ -124,6 +125,20 @@ class ShellViz {
     location = (data, id=null, append=false) => this.send(data, { id: id, view: 'location', append });
     raw = (data, id=null, append=false) => this.send(data, { id: id, view: 'raw', append });
 
+    showUrl() {
+        const url = `http://${this.host}:${this.port}/`;
+        console.log(`ShellViz running on ${url}`);
+    }
+
+    showQrCode() {
+        try {
+            const url = `http://${this.host}:${this.port}/`;
+            qrcode.generate(url, { small: true });
+        } catch (e) {
+            console.log('The `qrcode-terminal` package is required to show the QR code. Install it with: npm install qrcode-terminal');
+        }
+    }
+
     /* private ------------------------------------------------------------ */
 
     _broadcast(msg) {
@@ -204,8 +219,8 @@ class ShellViz {
         // Start HTTP server first
         server.listen(this.port, '0.0.0.0', () => {
             if (showUrl) {
-                const url = `http://${this.host}:${this.port}/`;
-                console.log(`ShellViz server listening on ${url}`);
+                this.showUrl();
+                this.showQrCode();
             }
         });
 
@@ -255,6 +270,8 @@ module.exports = {
     send: (d, o) => _global().send(d, o),
     clear: () => _global().clear(),
     wait: () => _global().wait(),
+    showUrl: () => _global().showUrl(),
+    showQrCode: () => _global().showQrCode(),
     table: (data, id=null, append=false) => _global().table(data, id, append),
     log: (data, id=null, append=true) => _global().log(data, id, append),
     json: (data, id=null, append=false) => _global().json(data, id, append),

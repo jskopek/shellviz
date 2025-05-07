@@ -223,7 +223,7 @@ class Shellviz:
             time.sleep(0.01)
         
     def show_url(self):
-        print(f'Shellviz serving on http://{get_local_ip()}:{self.port}')
+        print(f'Shellviz running on http://{get_local_ip()}:{self.port}')
 
     def show_qr_code(self, warn_on_import_error=True):
         try:
