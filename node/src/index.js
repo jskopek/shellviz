@@ -127,6 +127,19 @@ class ShellViz {
 
     _startServer(showUrl) {
         const server = http.createServer((req, res) => {
+            // Add CORS headers to all responses
+            // This enables the client to make cross-origin requests (e.g. via the browser plugin) to the server
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+            res.setHeader('Access-Control-Max-Age', '86400');
+
+            if (req.method === 'OPTIONS') {
+                // OPTIONS requests are used to check if the server is running and to get the CORS headers
+                res.writeHead(204).end();
+                return;
+            }
+
             const CLIENT_DIST_PATH = process.env.CLIENT_DIST_PATH || path.join(__dirname, '../dist');
             /* ---------- main page with context ---------------------------- */
             if (req.method === 'GET' && req.url === '/') {
@@ -183,7 +196,7 @@ class ShellViz {
         });
 
         // Start HTTP server first
-        server.listen(this.port, this.host, () => {
+        server.listen(this.port, '0.0.0.0', () => {
             if (showUrl) {
                 const url = `http://${this.host}:${this.port}/`;
                 console.log(`ShellViz server listening on ${url}`);
