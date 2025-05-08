@@ -1,6 +1,6 @@
 {
   "name": "shellviz",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "Visualization toolkit for shell scripts and command-line tools",
   "main": "./dist/node.cjs",
   "module": "./dist/node.js",
@@ -27,7 +27,6 @@
   },
   "dependencies": {
     "qrcode-terminal": "^0.12.0",
-    "shellviz": "file:build/shellviz-0.2.8.tgz",
     "ws": "^8.16.0"
   },
   "devDependencies": {
