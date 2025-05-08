@@ -5,7 +5,7 @@ from pathlib import Path
 def build():
     """Poetry build hook that prepares the dist directory with all necessary files."""
     # Get the project root directory
-    root_dir = Path(__file__).parent.parent
+    root_dir = Path(__file__).parent.parent.parent
     client_dist = root_dir / "client" / "dist"
     package_dir = root_dir / "python" / "shellviz" / "dist"
     
