@@ -1,6 +1,10 @@
 from debug_toolbar.panels import Panel
+from django.template import engines
+from django.conf import settings
 from . import _global_shellviz
 from .utils_html import get_local_ip
+import importlib.resources as resources
+import os
 
 class ShellvizPanel(Panel):
     """
@@ -14,7 +18,6 @@ class ShellvizPanel(Panel):
     ]
     """
     title = 'Shellviz'
-    template = 'shellviz/debug_toolbar_panel.html'
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32,3 +35,12 @@ class ShellvizPanel(Panel):
             'shellviz_url': f'http://{get_local_ip()}:{self.shellviz.port}',
             'entries': self.shellviz.entries
         }) 
+
+    @property
+    def content(self):
+        # Read the template from the installed package location
+        with resources.files('shellviz').joinpath('templates/shellviz/debug_toolbar_panel.html').open('r') as f:
+            template_string = f.read()
+        template = engines['django'].from_string(template_string)
+        context = self.get_stats()
+        return template.render(context)
