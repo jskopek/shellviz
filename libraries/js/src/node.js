@@ -161,7 +161,10 @@ class ShellViz {
                 return;
             }
 
-            const CLIENT_DIST_PATH = process.env.CLIENT_DIST_PATH || path.join(__dirname, '../dist');
+            // Get the path to the shellviz package; this can be overridden by the CLIENT_DIST_PATH environment variable
+            const shellvizDistPath = path.dirname(require.resolve('shellviz'));
+            const CLIENT_DIST_PATH = process.env.CLIENT_DIST_PATH || shellvizDistPath;
+
             /* ---------- main page with context ---------------------------- */
             if (req.method === 'GET' && req.url === '/') {
                 const index_template = fs.readFileSync(path.join(CLIENT_DIST_PATH, 'index.html'), 'utf8');
