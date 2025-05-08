@@ -26,6 +26,33 @@ table([
 
 The package can be importer on both the Node.JS and browser-facing/client side, however due to limitations on the browser-side it can only send data to an existing Shellviz server that has been initialized by the Node.JS or Python library
 
+
+Basic Client-Side Usage:
+
+```html
+<script src="https://unpkg.com/shellviz"></script>
+<script>
+const { log } = shellviz;
+log('hello from the browser');
+</script>
+```
+
+Or via Module:
+
+```html
+<script type="module">
+    import Shellviz from 'https://unpkg.com/shellviz/dist/browser.mjs';
+    const s = new Shellviz()
+    s.log('hello world')
+
+    // or
+
+    import { log, json } from 'https://unpkg.com/shellviz/dist/browser.mjs'
+    log('hello world')
+</script>
+```
+
+
 # Building
 
 To build the package locally:
