@@ -60,6 +60,18 @@ LOGGING = {
 }
 ```
 
+## Django Debug Toolbar
+
+Shellviz can be configured to launch as a tab in the Django Debug Toolbar
+
+```python
+DEBUG_TOOLBAR_PANELS = [
+    #...
+    'shellviz.django_debug_toolbar.ShellvizPanel'
+    #...
+]
+```
+
 # Build
 Bundling and deploying Shellviz is straightforward. Run the following command to build a compiled version of the Shellviz client that will be placed in the package's `build` folder:
 
@@ -78,4 +90,3 @@ To install into a local python environment, run the following command:
 ```bash
 poetry add --no-cache ~/[path-to-repo]/dist/shellviz-0.x.x-py3-none-any.whl
 ```
-
