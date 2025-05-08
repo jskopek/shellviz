@@ -22,7 +22,7 @@ log('my first shellviz command')
 table([("Alice", 25, 5.6), ("Bob", 30, 5.9)])
 json({"name": "Alice", "age": 25, "height": 5.6})
 ```
-Open the generated URL in your browser, and you’ll see your data visualized instantly.
+Open the generated URL in your browser, and you'll see your data visualized instantly.
 
 ## Advanced Usage
 
@@ -73,18 +73,25 @@ DEBUG_TOOLBAR_PANELS = [
 ```
 
 # Build
-Bundling and deploying Shellviz is straightforward. Run the following command to build a compiled version of the Shellviz client that will be placed in the package's `build` folder:
+
+Bundling and deploying Shellviz is straightforward. To automate the process of building the client, copying the necessary files, and compiling the Python package, use the provided `build_with_latest_client.py` script:
 
 ```bash
-cd client
-npm run build
+# From the libraries/python directory:
+python build_with_latest_client.py
 ```
 
-Once this is done, you can compile the package using poetry:
+This script will:
+1. Build the Shellviz client (runs `npm install` and `npm run build` in the client directory)
+2. Copy the built client files into the Python package
+3. Build the Python package using Poetry
+
+Once this is done, you can publish the package to PyPI:
+
 ```bash
-cd libraries/python
-poetry build
+poetry publish
 ```
+
 To install into a local python environment, run the following command:
 
 ```bash
