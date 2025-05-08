@@ -3,6 +3,7 @@ import atexit
 import threading
 import time
 import json as jsonFn
+import logging
 from .utils_serialize import to_json_string
 from typing import Optional
 
@@ -11,6 +12,9 @@ from .utils_html import parse_request, send_request, write_200, write_404, write
 from .utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
 import socket
 import os
+
+# Configure logging to silence specific warnings
+logging.getLogger('asyncio').setLevel(logging.ERROR)
 
 class Shellviz:
     def __init__(self, port=5544, show_url=True):
@@ -99,7 +103,11 @@ class Shellviz:
             # This is a WebSocket connection
             # Don't call feed_eof() for WebSocket because we need to keep reading more data
             # after the handshake (like messages from the client)
-            await self.handle_websocket_connection(new_reader, writer)
+            try:
+                await self.handle_websocket_connection(new_reader, writer)
+            except BrokenPipeError:
+                # This is a normal occurrence when the client disconnects; ignore it
+                pass
         else:
             # This is an HTTP connection
             # Call feed_eof() for HTTP because we've received the complete request
@@ -172,8 +180,27 @@ class Shellviz:
         while self.pending_entries:
             entry = self.pending_entries.pop(0)
             value = to_json_string(entry)
+            disconnected_clients = set()
+            
             for writer in self.websocket_clients:
-                await send_websocket_message(writer, value)
+                try:
+                    await send_websocket_message(writer, value)
+                except (ConnectionResetError, BrokenPipeError, ConnectionError):
+                    # Client disconnected, mark for removal
+                    disconnected_clients.add(writer)
+                except Exception as e:
+                    # Log other errors but don't crash
+                    print(f"Error sending WebSocket message: {e}")
+                    disconnected_clients.add(writer)
+            
+            # Remove disconnected clients
+            self.websocket_clients -= disconnected_clients
+            for writer in disconnected_clients:
+                try:
+                    writer.close()
+                    await writer.wait_closed()
+                except Exception:
+                    pass
 
     # -- / WebSocket server methods --
 
