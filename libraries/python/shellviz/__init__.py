@@ -305,7 +305,7 @@ _global_shellviz_instance = None
 def _global_shellviz():
     global _global_shellviz_instance
     if not _global_shellviz_instance:
-        print("Shellviz: No instance found. Creating new instance.")
+        # print("Shellviz: No instance found. Creating new instance.")
         _global_shellviz_instance = Shellviz()
     return _global_shellviz_instance
 
