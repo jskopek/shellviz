@@ -139,6 +139,12 @@ class Shellviz:
         elif request.path == '/api/running':
             # listen for requests to check if a server is running on the specified port
             await write_200(writer)
+        elif request.path.startswith('/api/delete'):
+            # listen for requests to delete an entry
+            entry_id = request.path.split('/')[-1]
+            self.entries = [entry for entry in self.entries if entry['id'] != entry_id]
+            await write_200(writer)
+            await write_200(writer)
         elif request.path == '/api/send' and request.method == 'POST':
             # listen to requests to add new content
             entry = jsonFn.loads(request.body)

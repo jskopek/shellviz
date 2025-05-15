@@ -16,6 +16,7 @@ function App() {
 	const [status, setStatus] = useState('connecting') // 'connecting', 'connected', 'updating', 'error'
 	function deleteEntry({ entry, setEntries }) {
 		setEntries((entries) => entries.filter((e) => e.id !== entry.id));
+		fetch(`http://${hostname}:${port}/api/delete/${entry.id}`, { method: 'DELETE', });
 	}
 
 	useEffect(() => {

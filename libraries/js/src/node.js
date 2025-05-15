@@ -195,6 +195,12 @@ class ShellViz {
                 res.writeHead(200).end('ok');
             }
 
+            /* ---------- delete entry -------------------------------------- */
+            else if (req.method === 'DELETE' && req.url.startsWith('/api/delete/')) {
+                const entryId = req.url.split('/').pop();
+                this.entries = this.entries.filter(entry => entry.id !== entryId);
+                res.writeHead(200).end();
+            }
             /* ---------- entry POST endpoint ------------------------------- */
             else if (req.method === 'POST' && req.url === '/api/send') {
                 let body = '';
