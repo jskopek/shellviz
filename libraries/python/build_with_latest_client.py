@@ -19,7 +19,7 @@ def run_client_build():
 def copy_client_files():
     root_dir = Path(__file__).parent.parent.parent
     client_dist = root_dir / "client" / "dist"
-    package_dir = root_dir / "python" / "shellviz" / "dist"
+    package_dir = root_dir / "libraries" / "python" / "shellviz" / "dist"
     required_files = [
         "index.html",
         "static/js/main.js",
@@ -29,6 +29,7 @@ def copy_client_files():
     for file in required_files:
         src = client_dist / file
         dst = package_dir / file
+        print(f"Copying {src} to {dst}")
         if not src.exists():
             missing.append(str(src))
             continue
