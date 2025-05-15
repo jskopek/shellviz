@@ -217,37 +217,44 @@ class Shellviz:
     # -- / WebSocket server methods --
 
     def send(self, value, id: str = None, view: Optional[str] = None, append: bool = False, wait: bool = False):
-        id = id or str(time.time())
-        existing_entry_index = next((i for i, item in enumerate(self.entries) if item['id'] == id), None)
-
-        if existing_entry_index is not None and append:
-            value = append_data(self.entries[existing_entry_index]['data'], value)
-        
-        # wrap data in a dictionary with an id
-        entry = {
-            'id': id,
-            'data': value,
-            'view': view
-        }
-
-        # if an existing server is found, send the data to that server via api
         if self.existing_server_found:
-            entry['append'] = append # add the append status to the entry
-            send_request('/api/send', entry, self.port, 'POST')
+            send_request('/api/send', {
+                'id': id,
+                'data': value,
+                'view': view,
+                'append': append
+            }, self.port, 'POST')
             return
 
-        # update content if matching id is found, otherwise append new data
-        for i, item in enumerate(self.entries):
-            if item['id'] == entry['id']:
-                self.entries[i] = entry
-                break
+
+        existing_entry_index = next((i for i, item in enumerate(self.entries) if item['id'] == id), None) if id else -1
+        if existing_entry_index >= 0:
+            if append:
+                # if an existing entry is found and append is true, append the new data to the existing entry
+                value = append_data(self.entries[existing_entry_index]['data'], value)
+            self.entries[existing_entry_index]['data'] = value
+            self.entries[existing_entry_index]['view'] = view
+
+            # add to list of pending entries that should be sent the client via websocket
+            entry = self.entries[existing_entry_index]
+
         else:
-            self.entries.append(entry)
+            id = id or str(time.time())
+            entry = {
+                'id': id,
+                'data': value,
+                'view': view,
+            }
 
-        # add to list of pending entries that should be sent the client via websocket
+            if value == '___clear___':
+                # don't store clear requests in the entries list; we only want to send them to the client via websocket
+                pass
+            else:
+                # store the entry in the entries list
+                self.entries.append(entry)
+
+        # add to list of pending entries that should be sent the client via websocket and send them to the client via websocket
         self.pending_entries.append(entry)
-
-        # send pending entries to all clients via websocket
         asyncio.run_coroutine_threadsafe(self.send_pending_entries_to_websocket_clients(), self.loop)
 
         if wait:
@@ -309,15 +316,15 @@ def show_url(): _global_shellviz().show_url()
 def show_qr_code(): _global_shellviz().show_qr_code()
 def wait(): _global_shellviz().wait()
 
-def log(data, id: Optional[str] = None, append: bool = True): _global_shellviz().log(data, id=id)
-def table(data, id: Optional[str] = None, append: bool = False): _global_shellviz().table(data, id=id)
-def json(data, id: Optional[str] = None, append: bool = False): _global_shellviz().json(data, id=id)
-def markdown(data, id: Optional[str] = None, append: bool = False): _global_shellviz().markdown(data, id=id)
-def progress(data, id: Optional[str] = None, append: bool = False): _global_shellviz().progress(data, id=id)
-def pie(data, id: Optional[str] = None, append: bool = False): _global_shellviz().pie(data, id=id)
-def number(data, id: Optional[str] = None, append: bool = False): _global_shellviz().number(data, id=id)
-def area(data, id: Optional[str] = None, append: bool = False): _global_shellviz().area(data, id=id)
-def bar(data, id: Optional[str] = None, append: bool = False): _global_shellviz().bar(data, id=id)
-def card(data, id: Optional[str] = None, append: bool = False): _global_shellviz().card(data, id=id)
-def location(data, id: Optional[str] = None, append: bool = False): _global_shellviz().location(data, id=id)
-def raw(data, id: Optional[str] = None, append: bool = False): _global_shellviz().raw(data, id=id)
+def log(data, id: Optional[str] = None, append: bool = True): _global_shellviz().log(data, id=id, append=append)
+def table(data, id: Optional[str] = None, append: bool = False): _global_shellviz().table(data, id=id, append=append)
+def json(data, id: Optional[str] = None, append: bool = False): _global_shellviz().json(data, id=id, append=append)
+def markdown(data, id: Optional[str] = None, append: bool = False): _global_shellviz().markdown(data, id=id, append=append)
+def progress(data, id: Optional[str] = None, append: bool = False): _global_shellviz().progress(data, id=id, append=append)
+def pie(data, id: Optional[str] = None, append: bool = False): _global_shellviz().pie(data, id=id, append=append)
+def number(data, id: Optional[str] = None, append: bool = False): _global_shellviz().number(data, id=id, append=append)
+def area(data, id: Optional[str] = None, append: bool = False): _global_shellviz().area(data, id=id, append=append)
+def bar(data, id: Optional[str] = None, append: bool = False): _global_shellviz().bar(data, id=id, append=append)
+def card(data, id: Optional[str] = None, append: bool = False): _global_shellviz().card(data, id=id, append=append)
+def location(data, id: Optional[str] = None, append: bool = False): _global_shellviz().location(data, id=id, append=append)
+def raw(data, id: Optional[str] = None, append: bool = False): _global_shellviz().raw(data, id=id, append=append)

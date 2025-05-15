@@ -23,6 +23,17 @@ function getLocalIp() {
     }
     return '127.0.0.1'; // Fallback to localhost
 }
+function appendData(existingData, data) {
+    if (Array.isArray(existingData) && Array.isArray(data)) {
+        return [...existingData, ...data];
+    } else if (typeof existingData === 'string' && typeof data === 'string') {
+        return existingData + data;
+    } else if (typeof existingData === 'object' && typeof data === 'object') {
+        return { ...existingData, ...data };
+    } else {
+        return [existingData, data];
+    }
+}
 
 class ShellViz {
     constructor({ port = DEFAULT_PORT, showUrl = true } = {}) {
@@ -53,8 +64,6 @@ class ShellViz {
     /* public helpers – these mirror the Python names -------------------- */
 
     send(data, { id = null, view = 'log', append = false, wait = false } = {}) {
-        id = id || Date.now().toString();
-
         // If we're in client mode, send to existing server
         if (this.existingServerFound) {
             return fetch(`http://${this.host}:${this.port}/api/send`, {
@@ -66,32 +75,30 @@ class ShellViz {
             });
         }
 
-        const existingEntryIndex = this.entries.findIndex(item => item.id === id);
+        const existingEntryIndex = id ? this.entries.findIndex(item => item.id === id) : -1;
 
-        let value = data;
-        if (existingEntryIndex !== -1 && append) {
-            const existingData = this.entries[existingEntryIndex].data;
-            if (Array.isArray(existingData) && Array.isArray(data)) {
-                value = [...existingData, ...data];
-            } else if (typeof existingData === 'string' && typeof data === 'string') {
-                value = existingData + data;
-            } else if (typeof existingData === 'object' && typeof data === 'object') {
-                value = { ...existingData, ...data };
-            }
-        }
 
-        const entry = {
-            id,
-            data: value,
-            view,
-            append
-        };
 
-        // Update or append the entry
-        if (existingEntryIndex !== -1) {
-            this.entries[existingEntryIndex] = entry;
+
+        let entry;
+        if (existingEntryIndex >= 0) {
+            const value = append ? appendData(this.entries[existingEntryIndex].data, data) : data;
+            this.entries[existingEntryIndex].data = value;
+            this.entries[existingEntryIndex].view = view;
+            entry = this.entries[existingEntryIndex];
         } else {
-            this.entries.push(entry);
+            id = id || Date.now().toString();
+            entry = {
+                id,
+                data,
+                view,
+                append
+            };
+            if (data === '___clear___') {
+                // don't store clear requests in the entries list; we only want to send them to the client via websocket
+            } else {
+                this.entries.push(entry);
+            }
         }
 
         // Broadcast to all clients
@@ -116,18 +123,17 @@ class ShellViz {
     }
 
     // sugar layers
-    table = (data, id=null, append=false) => this.send(data, { id, view: 'table', append });
-    log = (data, id=null, append=true) => this.send([[data, Date.now() / 1000]], { id: id || 'log', view: 'log', append });
-    json = (data, id=null, append=false) => this.send(data, { id: id, view: 'json', append });
-    markdown = (data, id=null, append=false) => this.send(data, { id: id, view: 'markdown', append });
-    progress = (data, id=null, append=false) => this.send(data, { id: id, view: 'progress', append });
-    pie = (data, id=null, append=false) => this.send(data, { id: id, view: 'pie', append });
-    number = (data, id=null, append=false) => this.send(data, { id: id, view: 'number', append });
-    area = (data, id=null, append=false) => this.send(data, { id: id, view: 'area', append });
-    bar = (data, id=null, append=false) => this.send(data, { id: id, view: 'bar', append });
-    card = (data, id=null, append=false) => this.send(data, { id: id, view: 'card', append });
-    location = (data, id=null, append=false) => this.send(data, { id: id, view: 'location', append });
-    raw = (data, id=null, append=false) => this.send(data, { id: id, view: 'raw', append });
+    table = (data, id=null, append=false) => { this.send(data, { id, view: 'table', append }); }
+    json = (data, id=null, append=false) => { this.send(data, { id, view: 'json', append }); }
+    markdown = (data, id=null, append=false) => { this.send(data, { id, view: 'markdown', append }); }
+    progress = (data, id=null, append=false) => { this.send(data, { id, view: 'progress', append }); }
+    pie = (data, id=null, append=false) => { this.send(data, { id, view: 'pie', append }); }
+    number = (data, id=null, append=false) => { this.send(data, { id, view: 'number', append }); }
+    area = (data, id=null, append=false) => { this.send(data, { id, view: 'area', append }); }
+    bar = (data, id=null, append=false) => { this.send(data, { id, view: 'bar', append }); }
+    card = (data, id=null, append=false) => { this.send(data, { id, view: 'card', append }); }
+    location = (data, id=null, append=false) => { this.send(data, { id, view: 'location', append }); }
+    raw = (data, id=null, append=false) => { this.send(data, { id, view: 'raw', append }); }
 
     showUrl() {
         const url = `http://${this.host}:${this.port}/`;
@@ -212,6 +218,7 @@ class ShellViz {
                 this.send('___clear___');
                 res.writeHead(200).end();
             }
+
             /* ---------- entry POST endpoint ------------------------------- */
             else if (req.method === 'POST' && req.url === '/api/send') {
                 let body = '';
