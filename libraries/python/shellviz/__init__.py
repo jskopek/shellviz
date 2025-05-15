@@ -4,7 +4,7 @@ import threading
 import time
 import json as jsonFn
 import logging
-from .utils_serialize import to_json_string
+from .utils_serialize import to_json_string, to_json_safe
 from typing import Optional
 
 from shellviz.utils import append_data
@@ -286,7 +286,6 @@ class Shellviz:
 
     # -- Convenience methods for quickly sending data with a specific view --
     def table(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='table', append=append)
-    def log(self, data, id: Optional[str] = None, append: bool = True): self.send([(data, time.time())], id=id or 'log', view='log', append=append)
     def json(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='json', append=append)
     def markdown(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='markdown', append=append)
     def progress(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='progress', append=append)
@@ -297,7 +296,12 @@ class Shellviz:
     def card(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='card', append=append)
     def location(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='location', append=append)
     def raw(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='raw', append=append)
-    
+    def log(self, data, id: Optional[str] = None, append: bool = True): 
+        data = str(to_json_safe(data)) # convert the data to a string so it can be appended to the log
+        id = id or 'log' #  if an id is provided use it, but if not use 'log' so we can append all logs to the same entry
+        value = [(data, time.time())] # create the log entry; a tuple of (data, timestamp) in a list that can be appended to an existing log entry
+        self.send(value, id=id, view='log', append=append)
+   
 
 
 # Global instance of Shellviz

@@ -5,35 +5,12 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { WebSocketServer } = require('ws');
-const os = require('os');
 const qrcode = require('qrcode-terminal');
-
+const { getLocalIp, appendData, toJsonSafe } = require('./utils');
 const DEFAULT_PORT = 5544;
 
 // -------- core class -------------------------------------------------------
 
-function getLocalIp() {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-        for (const iface of interfaces[name]) {
-            // Skip internal and non-IPv4 addresses
-            if (iface.internal || iface.family !== 'IPv4') continue;
-            return iface.address;
-        }
-    }
-    return '127.0.0.1'; // Fallback to localhost
-}
-function appendData(existingData, data) {
-    if (Array.isArray(existingData) && Array.isArray(data)) {
-        return [...existingData, ...data];
-    } else if (typeof existingData === 'string' && typeof data === 'string') {
-        return existingData + data;
-    } else if (typeof existingData === 'object' && typeof data === 'object') {
-        return { ...existingData, ...data };
-    } else {
-        return [existingData, data];
-    }
-}
 
 class ShellViz {
     constructor({ port = DEFAULT_PORT, showUrl = true } = {}) {
@@ -76,9 +53,6 @@ class ShellViz {
         }
 
         const existingEntryIndex = id ? this.entries.findIndex(item => item.id === id) : -1;
-
-
-
 
         let entry;
         if (existingEntryIndex >= 0) {
@@ -134,6 +108,12 @@ class ShellViz {
     card = (data, id=null, append=false) => { this.send(data, { id, view: 'card', append }); }
     location = (data, id=null, append=false) => { this.send(data, { id, view: 'location', append }); }
     raw = (data, id=null, append=false) => { this.send(data, { id, view: 'raw', append }); }
+    log = (data, id=null, append=true) => {
+        data = toJsonSafe(data); // convert the data to a string so it can be appended to the log
+        id = id || 'log'; // if an id is provided use it, but if not use 'log' so we can append all logs to the same entry
+        const value = [[data, Date.now() / 1000]]; // create the log entry; a tuple of (data, timestamp) in a list that can be appended to an existing log entry
+        this.send(value, { id, view: 'log', append });
+    }
 
     showUrl() {
         const url = `http://${this.host}:${this.port}/`;
