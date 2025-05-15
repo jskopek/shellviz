@@ -227,7 +227,7 @@ class Shellviz:
             return
 
 
-        existing_entry_index = next((i for i, item in enumerate(self.entries) if item['id'] == id), None) if id else -1
+        existing_entry_index = next((i for i, item in enumerate(self.entries) if item['id'] == id), -1) if id else -1
         if existing_entry_index >= 0:
             if append:
                 # if an existing entry is found and append is true, append the new data to the existing entry
