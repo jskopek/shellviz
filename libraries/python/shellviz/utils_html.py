@@ -49,6 +49,7 @@ async def write_response(writer: StreamWriter, status_code: int=200, status_mess
         f"HTTP/1.1 {status_code} {status_message}\r\n"
         "Access-Control-Allow-Origin: *\r\n"
         "Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE\r\n"
+        "Access-Control-Allow-Headers: Content-Type\r\n"
     )
     if content_type:
         response += f"Content-Type: {content_type}\r\n"
