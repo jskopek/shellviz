@@ -18,6 +18,9 @@ function App() {
 		setEntries((entries) => entries.filter((e) => e.id !== entry.id));
 		fetch(`http://${hostname}:${port}/api/delete/${entry.id}`, { method: 'DELETE', });
 	}
+	function clearEntries() {
+		fetch(`http://${hostname}:${port}/api/clear`, { method: 'DELETE' });
+		setEntries([]);
 	}
 
 	useEffect(() => {
@@ -125,7 +128,7 @@ function App() {
 		<main className="">
 			{/* center image using tailwind */}
 			<div className="fixed bottom-2 left-2 z-10">
-				<div className={`w-4 h-4 rounded-full  bg-${{ 'connecting': 'blue', 'connected': 'green', 'updating': 'yellow', 'error': 'red' }[status]}-500 shadow ms-auto`} title={status}>
+				<div className={`w-4 h-4 rounded-full  bg-${{ 'connecting': 'blue', 'connected': 'green', 'updating': 'yellow', 'error': 'red' }[status]}-500 shadow ms-auto`} title={status} onClick={() => { clearEntries(); }}>
 					<span className="bg-blue-500 bg-green-500 bg-yellow-500" /> {/* ensure all colors are loaded */}
 				</div>
 			</div>
