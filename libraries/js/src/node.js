@@ -175,6 +175,11 @@ class ShellViz {
                     .end(html);
             }
 
+            /* ---------- get all entries -------------------------------------- */
+            else if (req.method === 'GET' && req.url === '/api/entries') {
+                res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(this.entries));
+            }
+
             /* ---------- static assets (optional) -------------------------- */
             else if (req.method === 'GET' && req.url.startsWith('/static/')) {
                 const filePath = path.join(CLIENT_DIST_PATH, req.url);

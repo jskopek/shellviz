@@ -41,6 +41,30 @@ async def parse_request(reader: StreamReader) -> HttpRequest:
     return HttpRequest(method, path, body if body else None)
 
 
+async def write_response(writer: StreamWriter, status_code: int=200, status_message: str='OK', content_type: str=None, content: str=None) -> None:
+    """
+    Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a response with the provided status code and message
+    """
+    response = (
+        f"HTTP/1.1 {status_code} {status_message}\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE\r\n"
+    )
+    if content_type:
+        response += f"Content-Type: {content_type}\r\n"
+    if content:
+        response += (
+            f"Content-Length: {len(content)}\r\n"
+            "\r\n"
+            f"{content}"
+        )
+    response = response.encode()
+
+    writer.write(response)
+    await writer.drain()
+    writer.close()
+    await writer.wait_closed()
+
 async def write_html(writer: StreamWriter, html: str) -> None:
     """
     Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a response with the provided `html` content
@@ -51,37 +75,7 @@ async def write_html(writer: StreamWriter, html: str) -> None:
         await write_html(writer, 'hello world')
     """
 
-    response = (
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/html\r\n"
-        "Access-Control-Allow-Origin: *\r\n"
-        "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-        "Access-Control-Allow-Headers: Content-Type\r\n"
-        f"Content-Length: {len(html)}\r\n"
-        "\r\n" +
-        html
-    ).encode()
-
-    writer.write(response)
-    await writer.drain()
-    writer.close()
-    await writer.wait_closed()
-
-async def write_response(writer: StreamWriter, status_code: int, status_message: str) -> None:
-    """
-    Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a response with the provided status code and message
-    """
-    response = (
-        f"HTTP/1.1 {status_code} {status_message}\r\n"
-        "Access-Control-Allow-Origin: *\r\n"
-        "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-        "Access-Control-Allow-Headers: Content-Type\r\n"
-        "\r\n"
-    ).encode()
-    writer.write(response)
-    await writer.drain()
-    writer.close()
-    await writer.wait_closed()
+    await write_response(writer,content_type='text/html', content=html)
 
 async def write_404(writer: StreamWriter) -> None:
     """
@@ -93,7 +87,18 @@ async def write_200(writer: StreamWriter) -> None:
     """
     Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a 200 response
     """
-    await write_response(writer, 200, "OK")
+    await write_response(writer)
+
+async def write_json(writer: StreamWriter, json_data: str) -> None:
+    """
+    Takes a StreamWriter instance initiated from an `asyncio.start_server` request and returns a JSON response
+    with proper content type and formatting.
+    
+    Args:
+        writer: The StreamWriter instance
+        json_data: The JSON string to send in the response
+    """
+    await write_response(writer, content_type='application/json', content=json_data)
 
 async def write_cors_headers(writer: StreamWriter) -> None:
     """
@@ -127,18 +132,8 @@ async def write_file(writer: StreamWriter, file_path: str, template_context: Opt
         template = Template(file_content)
         file_content = template.substitute(**template_context)
 
-    response = (
-        f"HTTP/1.1 200 OK\r\n"
-        f"Content-Type: {content_type}\r\n"
-        "Access-Control-Allow-Origin: *\r\n"
-        "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-        "Access-Control-Allow-Headers: Content-Type\r\n"
-        f"Content-Length: {len(file_content)}\r\n"
-        "\r\n" + file_content
-    ).encode()
+    await write_response(writer, content_type=content_type, content=file_content)
 
-    writer.write(response)
-    writer.close()
 
 # def render_simple_html_template(template_path: str, **kwargs) -> str:
 #     """

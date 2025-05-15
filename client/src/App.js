@@ -3,6 +3,14 @@ import { useEffect, useState, useRef } from 'react';
 import Entry from './components/Entry';
 
 function App() {
+	// get the hostname and port from the URL
+	const hostname = window.location.hostname;
+	let port = parseInt(new URLSearchParams(window.location.search).get('port')) || (parseInt(window.location.port) || 5544)
+	if (port === 3000) {
+		console.warn('Development port detected (3000). Using default websocket port 5544. To override, add ?port=XXXX to the URL');
+		port = 5544;
+	}
+
 	const [entries, setEntries] = useState([]);
 
 	const [status, setStatus] = useState('connecting') // 'connecting', 'connected', 'updating', 'error'
@@ -11,10 +19,10 @@ function App() {
 	}
 
 	useEffect(() => {
-		// Initialize entries from existing server values
-		if (window.__INITIAL_ENTRIES__) {
-			setEntries(window.__INITIAL_ENTRIES__);
-		}
+		fetch(`http://${hostname}:${port}/api/entries`)
+			.then(res => res.json())
+			.then(data => setEntries(data))
+			.catch(err => console.error(err));
 	}, [])
 
 	// set up websocket connection
@@ -25,13 +33,7 @@ function App() {
 
 		const connectWebSocket = () => {
 			setStatus('connecting');
-			// console.log('Attempting to connect to WebSocket');
-			let port = parseInt(new URLSearchParams(window.location.search).get('port')) || (parseInt(window.location.port) || 5544)
-			if (window.location.port === '3000') {
-				console.warn('Development port detected (3000). Using default websocket port 5544. To override, add ?port=XXXX to the URL');
-				port = 5544;
-			}
-			ws = new WebSocket("ws://" + window.location.hostname + ":" + port);
+			ws = new WebSocket("ws://" + hostname + ":" + port);
 
 			ws.onopen = function () {
 				// console.log("Connected to WebSocket server");

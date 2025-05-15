@@ -33,7 +33,6 @@ class ShellvizPanel(Panel):
         """Generate statistics for the panel."""
         self.record_stats({
             'shellviz_url': f'http://{get_local_ip()}:{self.shellviz.port}',
-            'entries': self.shellviz.entries
         }) 
 
     @property

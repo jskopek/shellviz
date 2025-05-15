@@ -8,7 +8,7 @@ from .utils_serialize import to_json_string
 from typing import Optional
 
 from shellviz.utils import append_data
-from .utils_html import parse_request, send_request, write_200, write_404, write_cors_headers, write_file, get_local_ip, print_qr
+from .utils_html import parse_request, send_request, write_200, write_404, write_cors_headers, write_file, get_local_ip, print_qr, write_json
 from .utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
 import socket
 import os
@@ -128,11 +128,14 @@ class Shellviz:
             await write_cors_headers(writer)
         elif request.path == '/':
             # listen for request to root webpage
-            await write_file(writer, os.path.join(CLIENT_DIST_PATH, 'index.html'), {'entries': to_json_string(self.entries)})
+            await write_file(writer, os.path.join(CLIENT_DIST_PATH, 'index.html'))
         elif request.path.startswith('/static'):
             # listen to requests for client js/css
             relative_path = request.path.lstrip('/') # strip the leading `/` from the path so it can be joined with the `CLIENT_DIST_PATH`
             await write_file(writer, os.path.join(CLIENT_DIST_PATH, relative_path))
+        elif request.path == '/api/entries':
+            # listen for requests to get all entries
+            await write_json(writer, to_json_string(self.entries))
         elif request.path == '/api/running':
             # listen for requests to check if a server is running on the specified port
             await write_200(writer)
