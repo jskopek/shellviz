@@ -103,8 +103,12 @@ class ShellViz {
     }
 
     clear() {
-        this.entries = [];
-        this._broadcast({ kind: 'clear' });
+        if (this.existingServerFound) {
+            fetch(`http://${this.host}:${this.port}/api/clear`, { method: 'DELETE' })
+        } else {
+            this.entries = [];
+            this.send('___clear___');
+        }
     }
 
     wait() {
@@ -151,7 +155,7 @@ class ShellViz {
             // Add CORS headers to all responses
             // This enables the client to make cross-origin requests (e.g. via the browser plugin) to the server
             res.setHeader('Access-Control-Allow-Origin', '*');
-            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE');
             res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
             res.setHeader('Access-Control-Max-Age', '86400');
 
@@ -199,6 +203,13 @@ class ShellViz {
             else if (req.method === 'DELETE' && req.url.startsWith('/api/delete/')) {
                 const entryId = req.url.split('/').pop();
                 this.entries = this.entries.filter(entry => entry.id !== entryId);
+                res.writeHead(200).end();
+            }
+
+            /* ---------- clear all entries --------------------------------- */
+            else if (req.method === 'DELETE' && req.url === '/api/clear') {
+                this.entries = [];
+                this.send('___clear___');
                 res.writeHead(200).end();
             }
             /* ---------- entry POST endpoint ------------------------------- */

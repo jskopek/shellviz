@@ -18,6 +18,7 @@ function App() {
 		setEntries((entries) => entries.filter((e) => e.id !== entry.id));
 		fetch(`http://${hostname}:${port}/api/delete/${entry.id}`, { method: 'DELETE', });
 	}
+	}
 
 	useEffect(() => {
 		fetch(`http://${hostname}:${port}/api/entries`)
@@ -45,11 +46,7 @@ function App() {
 			ws.onmessage = function (event) {
 				const entry = JSON.parse(event.data)
 
-				if (entry.data === '___clear___') {
-					// if a special ___clear___ event is sent, empty the messages
-					setEntries([]);
-					return;
-				}
+
 
 				setEntries((entries) => {
 					// Update the entry if it already exists, otherwise add it
@@ -57,6 +54,11 @@ function App() {
 					entryMap.set(entry.id, entry);
 					return Array.from(entryMap.values());
 				});
+
+				if (entry.data === '___clear___') {
+					// if a special ___clear___ event is sent, empty the messages
+					setEntries([]);
+				}
 			};
 
 			ws.onclose = function () {

@@ -144,6 +144,9 @@ class Shellviz:
             entry_id = request.path.split('/')[-1]
             self.entries = [entry for entry in self.entries if entry['id'] != entry_id]
             await write_200(writer)
+        elif request.path == '/api/clear':
+            self.entries = []
+            self.send(value='___clear___')
             await write_200(writer)
         elif request.path == '/api/send' and request.method == 'POST':
             # listen to requests to add new content
@@ -251,8 +254,13 @@ class Shellviz:
             self.wait()
     
     def clear(self):
-        self.send(value='___clear___')
-        self.entries = []
+        if self.existing_server_found:
+            # if this instance is not the server, send a clear request to the server
+            send_request('/api/clear', port=self.port, method='DELETE')
+        else:
+            # if this instance is the server, clear the entries list and send a clear request to all clients via websocket
+            self.entries = []
+            self.send(value='___clear___')
     
     def wait(self):
         while self.pending_entries:
