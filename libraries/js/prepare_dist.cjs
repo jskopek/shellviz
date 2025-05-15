@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 function build() {
     // Get the project root directory
@@ -34,45 +35,29 @@ function build() {
         fs.copyFileSync(path.join(clientDist, file), targetPath);
     });
 
-    // Copy the main index.js file as index.cjs
-    const sourceFile = path.join(__dirname, 'src', 'node.js');
-    const cjsFile = path.join(packageDist, 'node.cjs');
-    fs.mkdirSync(path.dirname(cjsFile), { recursive: true });
-    fs.copyFileSync(sourceFile, cjsFile);
+    // Bundle node.js with utils.js using esbuild
+    console.log('Bundling node.js with utils.js...');
+    
+    // Create CommonJS bundle (node.cjs)
+    // - format=cjs: Output as CommonJS module (require/module.exports)
+    // - platform=node: Target Node.js environment
+    // - bundle: Include all dependencies (like utils.js) in the output
+    // - banner: Add eslint-disable comment to prevent linting of generated code
+    execSync('esbuild ./src/node.js --bundle --format=cjs --platform=node --outfile=dist/node.cjs --banner:js="/* eslint-disable */"', { stdio: 'inherit' });
+    
+    // Create ESM bundle (node.js)
+    // - format=esm: Output as ES Module (import/export)
+    // - platform=node: Target Node.js environment
+    // - bundle: Include all dependencies in the output
+    // - Uses node.esm.js as entry point which re-exports all functions
+    execSync('esbuild ./src/node.esm.js --bundle --format=esm --platform=node --outfile=dist/node.js --banner:js="/* eslint-disable */"', { stdio: 'inherit' });
 
-    // Create ES module wrapper (index.js)
-    const esmContent = `// ES Module wrapper for shellviz
-import shellviz from './node.cjs';
-
-export const {
-    send,
-    clear,
-    wait,
-    log,
-    json,
-    table,
-    markdown,
-    bar,
-    Shellviz
-} = shellviz;
-`;
-
-    fs.writeFileSync(path.join(packageDist, 'node.js'), esmContent);
-
-    // Generate TypeScript declaration file
-    const dtsContent = `declare module 'shellviz' {
-    export function send(data: any, options?: { id?: string; view?: string; append?: boolean; wait?: boolean }): Promise<void>;
-    export function clear(): void;
-    export function wait(): Promise<void>;
-    export function log(data: any, id?: string): void;
-    export function json(data: any, id?: string): void;
-    export function table(data: any, id?: string): void;
-    export function markdown(data: any, id?: string): void;
-    export function bar(data: any, id?: string): void;
-    export function Shellviz(): any;
-}`;
-
-    fs.writeFileSync(path.join(packageDist, 'node.d.ts'), dtsContent);
+    // Copy TypeScript declarations
+    console.log('Copying TypeScript declarations...');
+    fs.copyFileSync(
+        path.join(__dirname, 'src', 'node.d.ts'),
+        path.join(packageDist, 'node.d.ts')
+    );
 }
 
 // Run the build

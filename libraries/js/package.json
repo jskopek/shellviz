@@ -1,6 +1,6 @@
 {
   "name": "shellviz",
-  "version": "0.2.11",
+  "version": "0.2.13",
   "description": "Visualization toolkit for shell scripts and command-line tools",
   "main": "./dist/node.cjs",
   "module": "./dist/node.js",
@@ -15,7 +15,7 @@
         "require": "./dist/browser.umd.js",
         "default": "./dist/browser.umd.js"
       },
-      "import": "./dist/node.mjs",
+      "import": "./dist/node.js",
       "require": "./dist/node.cjs",
       "types": "./dist/node.d.ts",
       "default": "./dist/node.cjs"
