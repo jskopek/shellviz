@@ -2,38 +2,38 @@
   "name": "shellviz",
   "version": "0.2.13",
   "description": "Visualization toolkit for shell scripts and command-line tools",
-  "main": "./dist/node.cjs",
-  "module": "./dist/node.js",
-  "browser": "./dist/browser.mjs",
-  "types": "./dist/node.d.ts",
-  "unpkg": "./dist/browser.umd.js",
-  "jsdelivr": "./dist/browser.umd.js",
+  "main": "./build/node.cjs",
+  "module": "./build/node.js",
+  "browser": "./build/browser.mjs",
+  "types": "./build/node.d.ts",
+  "unpkg": "./build/browser.umd.js",
+  "jsdelivr": "./build/browser.umd.js",
   "exports": {
     ".": {
       "browser": {
-        "import": "./dist/browser.mjs",
-        "require": "./dist/browser.umd.js",
-        "default": "./dist/browser.umd.js"
+        "import": "./build/browser.mjs",
+        "require": "./build/browser.umd.js",
+        "default": "./build/browser.umd.js"
       },
-      "import": "./dist/node.js",
-      "require": "./dist/node.cjs",
-      "types": "./dist/node.d.ts",
-      "default": "./dist/node.cjs"
+      "import": "./build/node.js",
+      "require": "./build/node.cjs",
+      "types": "./build/node.d.ts",
+      "default": "./build/node.cjs"
     },
     "./browser": {
-      "import": "./dist/browser.mjs",
-      "require": "./dist/browser.umd.js",
-      "default": "./dist/browser.umd.js"
+      "import": "./build/browser.mjs",
+      "require": "./build/browser.umd.js",
+      "default": "./build/browser.umd.js"
     }
   },
   "files": [
-    "dist"
+    "build"
   ],
   "scripts": {
     "build:node": "node prepare_dist.cjs",
-    "build:browser": "esbuild ./src/browser.js --bundle --format=esm --platform=browser --outfile=dist/browser.mjs --banner:js=\"/* eslint-disable */\" && esbuild ./src/browser.js --bundle --format=iife --global-name=shellviz --platform=browser --outfile=dist/browser.umd.js --banner:js=\"/* eslint-disable */\"",
+    "build:browser": "esbuild ./src/browser.js --bundle --format=esm --platform=browser --outfile=build/browser.mjs --banner:js=\"/* eslint-disable */\" && esbuild ./src/browser.js --bundle --format=iife --global-name=shellviz --platform=browser --outfile=build/browser.umd.js --banner:js=\"/* eslint-disable */\"",
     "build": "npm run build:node && npm run build:browser",
-    "pack": "npm run build && npm pack --pack-destination=build"
+    "pack": "npm run build && npm pack --pack-destination=dist"
   },
   "dependencies": {
     "qrcode-terminal": "^0.12.0",

@@ -43,8 +43,17 @@ async def parse_request(reader: StreamReader) -> HttpRequest:
 
 async def write_response(writer: StreamWriter, status_code: int=200, status_message: str='OK', content_type: str=None, content: str=None) -> None:
     """
-    Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a response with the provided status code and message
+    Takes a StreamWriter instance initiated from an `asyncio.start_server` request and returns a response with the provided status code and message.
+    Supports both string and bytes content. Always adds CORS headers.
     """
+    # Prepare content as bytes
+    if content is None:
+        content_bytes = b""
+    elif isinstance(content, str):
+        content_bytes = content.encode("utf-8")
+    else:
+        content_bytes = content  # assume bytes
+
     response = (
         f"HTTP/1.1 {status_code} {status_message}\r\n"
         "Access-Control-Allow-Origin: *\r\n"
@@ -53,15 +62,11 @@ async def write_response(writer: StreamWriter, status_code: int=200, status_mess
     )
     if content_type:
         response += f"Content-Type: {content_type}\r\n"
-    if content:
-        response += (
-            f"Content-Length: {len(content)}\r\n"
-            "\r\n"
-            f"{content}"
-        )
-    response = response.encode()
+    response += f"Content-Length: {len(content_bytes)}\r\n"
+    response += "Connection: close\r\n"
+    response += "\r\n"
 
-    writer.write(response)
+    writer.write(response.encode("utf-8") + content_bytes)
     await writer.drain()
     writer.close()
     await writer.wait_closed()
@@ -108,11 +113,10 @@ async def write_cors_headers(writer: StreamWriter) -> None:
     """
     await write_response(writer, 200, "OK")
 
-async def write_file(writer: StreamWriter, file_path: str, template_context: Optional[dict] = None) -> None:
+async def write_file(writer: StreamWriter, file_path: str) -> None:
     """
-    Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a response with the content of the file at `file_path`
-    Accepts an optional `template_context` dictionary to replace {placeholders} in the file content
-    `file_path` is an absolute path to the file
+    Takes a StreamWriter instance initiated from an `asyncio.start_server` request and returns a response with the content of the file at `file_path`.
+    `file_path` is an absolute path to the file.
 
     e.g.
         server = await asyncio.start_server(self.handle_http, self.host, self.port)
@@ -120,32 +124,18 @@ async def write_file(writer: StreamWriter, file_path: str, template_context: Opt
             write_file(writer, '/tmp/index.html')
     """
 
-
     if not os.path.isfile(file_path):
         return await write_404(writer)
 
     content_type, _ = mimetypes.guess_type(file_path)
     content_type = content_type or "application/octet-stream"
-    with open(file_path, "r") as f:
+    with open(file_path, "rb") as f:
         file_content = f.read()
 
-    if template_context:
-        template = Template(file_content)
-        file_content = template.substitute(**template_context)
+    if content_type and (content_type.startswith("text/") or content_type == "application/json"):
+        file_content = file_content.decode('utf-8')
 
     await write_response(writer, content_type=content_type, content=file_content)
-
-
-# def render_simple_html_template(template_path: str, **kwargs) -> str:
-#     """
-#     Renders a simple HTML template with placeholders replaced by the provided keyword arguments.
-#     e.g. 
-#     template.html: <h1>{title}</h1><p>{content}</p>
-#     render_simple_html_template('template.html', title='Hello', content='World')
-#     """
-#     with open(template_path, "r") as f:
-#         html_content = f.read()
-#     return html_content.format(**kwargs)
 
 
 def print_qr(url):

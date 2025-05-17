@@ -119,7 +119,7 @@ class ShellViz {
     }
 
     showUrl() {
-        const url = `http://${this.host}:${this.port}/`;
+        const url = `http://localhost:${this.port}/`;
         console.log(`ShellViz running on ${url}`);
     }
 
@@ -156,7 +156,7 @@ class ShellViz {
 
             // Get the path to the shellviz package; this can be overridden by the CLIENT_DIST_PATH environment variable
             const shellvizDistPath = path.dirname(require.resolve('shellviz'));
-            const CLIENT_DIST_PATH = process.env.CLIENT_DIST_PATH || shellvizDistPath;
+            const CLIENT_DIST_PATH = process.env.CLIENT_DIST_PATH || path.join(shellvizDistPath, 'client_build');
 
             /* ---------- main page with context ---------------------------- */
             if (req.method === 'GET' && req.url === '/') {
@@ -173,15 +173,7 @@ class ShellViz {
                 res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(this.entries));
             }
 
-            /* ---------- static assets (optional) -------------------------- */
-            else if (req.method === 'GET' && req.url.startsWith('/static/')) {
-                const filePath = path.join(CLIENT_DIST_PATH, req.url);
-                fs.readFile(filePath, (err, data) => {
-                    if (err) return res.writeHead(404).end('not found');
-                    const ct = { '.js': 'text/javascript', '.css': 'text/css' }[path.extname(filePath)] || 'application/octet-stream';
-                    res.writeHead(200, { 'Content-Type': ct }).end(data);
-                });
-            }
+
 
             /* ---------- health check -------------------------------------- */
             else if (req.method === 'GET' && req.url === '/api/running') {
@@ -225,6 +217,61 @@ class ShellViz {
                     });
             }
 
+            /* ---------- fallback: serve any file from CLIENT_DIST_PATH -------------------------- */
+            else if (req.method === 'GET') {
+                const relPath = req.url.startsWith('/') ? req.url.slice(1) : req.url;
+                const filePath = path.join(CLIENT_DIST_PATH, relPath);
+                fs.stat(filePath, (err, stats) => {
+                    if (err || !stats.isFile()) {
+                        res.writeHead(404, {
+                            'Access-Control-Allow-Origin': '*',
+                            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+                            'Access-Control-Allow-Headers': 'Content-Type'
+                        }).end('not found');
+                        return;
+                    }
+                    // Determine content type
+                    const ext = path.extname(filePath).toLowerCase();
+                    const contentTypes = {
+                        '.html': 'text/html',
+                        '.json': 'application/json',
+                        '.js': 'text/javascript',
+                        '.css': 'text/css',
+                        '.png': 'image/png',
+                        '.jpg': 'image/jpeg',
+                        '.jpeg': 'image/jpeg',
+                        '.gif': 'image/gif',
+                        '.svg': 'image/svg+xml',
+                        '.ico': 'image/x-icon',
+                        '.txt': 'text/plain',
+                        '.map': 'application/json',
+                        '.wasm': 'application/wasm',
+                        '.woff': 'font/woff',
+                        '.woff2': 'font/woff2',
+                        '.ttf': 'font/ttf',
+                        '.eot': 'application/vnd.ms-fontobject',
+                        '.otf': 'font/otf'
+                    };
+                    const ct = contentTypes[ext] || 'application/octet-stream';
+                    // Read and send file
+                    fs.readFile(filePath, (err, data) => {
+                        if (err) {
+                            res.writeHead(404, {
+                                'Access-Control-Allow-Origin': '*',
+                                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+                                'Access-Control-Allow-Headers': 'Content-Type'
+                            }).end('not found');
+                            return;
+                        }
+                        res.writeHead(200, {
+                            'Content-Type': ct,
+                            'Access-Control-Allow-Origin': '*',
+                            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE',
+                            'Access-Control-Allow-Headers': 'Content-Type'
+                        }).end(data);
+                    });
+                });
+            }
             /* ---------- fallback ------------------------------------------ */
             else {
                 res.writeHead(404).end('not found');

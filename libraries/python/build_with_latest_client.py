@@ -6,10 +6,6 @@ import shutil
 
 def run_client_build():
     client_dir = Path(__file__).parent.parent.parent / "client"
-    print("Running npm install...")
-    npm_install = subprocess.run(["npm", "install"], cwd=client_dir)
-    if npm_install.returncode != 0:
-        print("Warning: npm install exited with errors, but continuing...")
 
     print("Running npm run build...")
     npm_build = subprocess.run(["npm", "run", "build"], cwd=client_dir)
@@ -18,35 +14,37 @@ def run_client_build():
 
 def copy_client_files():
     root_dir = Path(__file__).parent.parent.parent
-    client_dist = root_dir / "client" / "dist"
-    package_dir = root_dir / "libraries" / "python" / "shellviz" / "dist"
-    required_files = [
-        "index.html",
-        "static/js/main.js",
-        "static/css/main.css"
-    ]
-    missing = []
-    for file in required_files:
-        src = client_dist / file
-        dst = package_dir / file
-        print(f"Copying {src} to {dst}")
-        if not src.exists():
-            missing.append(str(src))
-            continue
-        os.makedirs(dst.parent, exist_ok=True)
-        shutil.copy2(src, dst)
-    readme_source = root_dir / "README.md"
-    shutil.copy2(readme_source, package_dir / "README.md")
-    if missing:
-        print("\nERROR: The following required files are missing after client build:")
-        for f in missing:
-            print("  -", f)
-        print("Aborting build.")
-        sys.exit(1)
+    client_dist = root_dir / "client" / "build"
+    package_dir = root_dir / "libraries" / "python" / "shellviz" / "client_build"
+    # empty the package dir before copying
+    if package_dir.exists():
+        shutil.rmtree(package_dir)
+    # Recursively copy all files and directories from client_dist to package_dir
+    shutil.copytree(client_dist, package_dir, dirs_exist_ok=True)
 
 def run_poetry_build():
     python_dir = Path(__file__).parent
     subprocess.check_call(["poetry", "build"], cwd=python_dir)
+
+def toggle_rule_in_gitignore(rule, gitignore_path):
+    """
+    Toggles a rule in a gitignore file.
+    """
+    with open(gitignore_path, "r") as f:
+        lines = f.readlines()
+    with open(gitignore_path, "w") as f:
+        for line in lines:
+            stripped = line.strip()
+            if stripped.lstrip("# ").startswith(rule):
+                if stripped.startswith("#"):
+                    # Uncomment the rule
+                    new_line = stripped.lstrip("# ").rstrip() + "\n"
+                else:
+                    # Comment the rule
+                    new_line = "# " + stripped + "\n"
+                f.write(new_line)
+            else:
+                f.write(line)
 
 if __name__ == "__main__":
     print("Building with latest client...")
@@ -54,5 +52,7 @@ if __name__ == "__main__":
     print("Copying client files...")
     copy_client_files()
     print("Running poetry build...")
+    toggle_rule_in_gitignore("libraries/python/shellviz/client_build", "../../.gitignore") # This is a bit of a hack, as the poetry build stage seems to be ignorning files and folders that are in the .gitignore file.
     run_poetry_build()
+    toggle_rule_in_gitignore("libraries/python/shellviz/client_build", "../../.gitignore") # This is a bit of a hack, as the poetry build stage seems to be ignorning files and folders that are in the .gitignore file.
     print("Done!")

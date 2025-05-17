@@ -1,13 +1,11 @@
 [tool.poetry]
 name = "shellviz"
-version = "0.4.3"
+version = "0.4.4"
 description = ""
 authors = ["Jean-Marc Skopek <jskopek@gmail.com>"]
 readme = "README.md"
 include = [
-    "shellviz/dist/index.html",
-    "shellviz/dist/static/js/main.js",
-    "shellviz/dist/static/css/main.css",
+    "shellviz/dist",
 ]
 
 [tool.poetry.dependencies]

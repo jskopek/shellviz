@@ -121,7 +121,7 @@ class Shellviz:
         request = await parse_request(reader)
 
         # Compiled python package will have a `dist` folder in the same directory as the package; this can be overridden by setting the `SHELLVIZ_CLIENT_DIST_PATH` environment variable
-        CLIENT_DIST_PATH = os.environ.get('CLIENT_DIST_PATH', os.path.join(os.path.dirname(__file__), 'dist')) 
+        CLIENT_DIST_PATH = os.environ.get('CLIENT_DIST_PATH', os.path.join(os.path.dirname(__file__), 'client_build')) 
 
         # Handle OPTIONS requests for CORS preflight
         if request.method == 'OPTIONS':
@@ -129,10 +129,6 @@ class Shellviz:
         elif request.path == '/':
             # listen for request to root webpage
             await write_file(writer, os.path.join(CLIENT_DIST_PATH, 'index.html'))
-        elif request.path.startswith('/static'):
-            # listen to requests for client js/css
-            relative_path = request.path.lstrip('/') # strip the leading `/` from the path so it can be joined with the `CLIENT_DIST_PATH`
-            await write_file(writer, os.path.join(CLIENT_DIST_PATH, relative_path))
         elif request.path == '/api/entries':
             # listen for requests to get all entries
             await write_json(writer, to_json_string(self.entries))
@@ -158,7 +154,13 @@ class Shellviz:
             else:
                 await write_404(writer)
         else:
-            await write_404(writer)
+            # attempt to serve any file matching the request path from the dist directory
+            relative_path = request.path.lstrip('/')
+            file_path = os.path.join(CLIENT_DIST_PATH, relative_path)
+            if os.path.isfile(file_path):
+                await write_file(writer, file_path)
+            else:
+                await write_404(writer)
     # -- / HTTP server method --
 
     # -- WebSocket server methods --
@@ -274,7 +276,7 @@ class Shellviz:
             time.sleep(0.01)
         
     def show_url(self):
-        print(f'Shellviz running on http://{get_local_ip()}:{self.port}')
+        print(f'Shellviz running on http://localhost:{self.port}')
 
     def show_qr_code(self, warn_on_import_error=True):
         try:

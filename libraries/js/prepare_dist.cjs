@@ -5,35 +5,18 @@ const { execSync } = require('child_process');
 function build() {
     // Get the project root directory
     const rootDir = path.resolve(__dirname, '../..');
-    const clientDist = path.join(rootDir, 'client', 'dist');
-    const packageDist = path.join(__dirname, 'dist');
+    const clientDist = path.join(rootDir, 'client', 'build');
+    const packageDist = path.join(__dirname, 'build', 'client_build');
 
-    // Check if client/dist exists and has required files
-    const requiredFiles = [
-        'index.html',
-        'static/js/main.js',
-        'static/css/main.css'
-    ];
-
-    const missingFiles = requiredFiles.filter(file => 
-        !fs.existsSync(path.join(clientDist, file))
-    );
-
-    if (missingFiles.length > 0) {
-        throw new Error(
-            'Missing required client/dist files. Please run the client build script first.\n' +
-            `Missing files: ${missingFiles.join(', ')}\n` +
-            `Folder: ${clientDist}`
-        );
+    // Remove the dist directory if it exists
+    if (fs.existsSync(packageDist)) {
+        fs.rmSync(packageDist, { recursive: true, force: true });
+        console.log(`Emptied directory: ${packageDist}`);
     }
 
-    // Create necessary directories
-    requiredFiles.forEach(file => {
-        const targetPath = path.join(packageDist, file);
-        fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-        console.log(`Copying ${path.join(clientDist, file)} to ${targetPath}`);
-        fs.copyFileSync(path.join(clientDist, file), targetPath);
-    });
+    // Use fs.cpSync (Node.js 16+) to recursively copy everything from client/dist to dist
+    fs.cpSync(clientDist, packageDist, { recursive: true });
+    console.log(`Copied all files from ${clientDist} to ${packageDist}`);
 
     // Bundle node.js with utils.js using esbuild
     console.log('Bundling node.js with utils.js...');
@@ -43,20 +26,20 @@ function build() {
     // - platform=node: Target Node.js environment
     // - bundle: Include all dependencies (like utils.js) in the output
     // - banner: Add eslint-disable comment to prevent linting of generated code
-    execSync('esbuild ./src/node.js --bundle --format=cjs --platform=node --outfile=dist/node.cjs --banner:js="/* eslint-disable */"', { stdio: 'inherit' });
+    execSync('esbuild ./src/node.js --bundle --format=cjs --platform=node --outfile=build/node.cjs --banner:js="/* eslint-disable */"', { stdio: 'inherit' });
     
     // Create ESM bundle (node.js)
     // - format=esm: Output as ES Module (import/export)
     // - platform=node: Target Node.js environment
     // - bundle: Include all dependencies in the output
     // - Uses node.esm.js as entry point which re-exports all functions
-    execSync('esbuild ./src/node.esm.js --bundle --format=esm --platform=node --outfile=dist/node.js --banner:js="/* eslint-disable */"', { stdio: 'inherit' });
+    execSync('esbuild ./src/node.esm.js --bundle --format=esm --platform=node --outfile=build/node.js --banner:js="/* eslint-disable */"', { stdio: 'inherit' });
 
     // Copy TypeScript declarations
     console.log('Copying TypeScript declarations...');
     fs.copyFileSync(
         path.join(__dirname, 'src', 'node.d.ts'),
-        path.join(packageDist, 'node.d.ts')
+        path.join(__dirname, 'build', 'node.d.ts')
     );
 }
 
