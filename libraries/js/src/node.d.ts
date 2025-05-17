@@ -5,7 +5,7 @@ declare module 'shellviz' {
     export function showUrl(): void;
     export function showQrCode(): void;
     export function table(data: any, id?: string): void;
-    export function log(data: any, id?: string): void;
+    export function log(...args: any[]): void;
     export function json(data: any, id?: string): void;
     export function markdown(data: any, id?: string): void;
     export function progress(data: any, id?: string): void;

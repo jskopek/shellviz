@@ -33,7 +33,7 @@ class ShellvizHandler(logging.Handler):
     
     def __init__(self, level: int = logging.NOTSET, 
                  shellviz_instance: Optional[Shellviz] = None,
-                 log_id: str = 'django_logs'):
+                 log_id: str = 'log'):
         """
         Initialize the handler.
         

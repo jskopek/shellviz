@@ -97,7 +97,7 @@ function App() {
 	useEffect(() => {
 		const handleScroll = () => {
 			const atBottom =
-				window.innerHeight + window.scrollY >= document.body.scrollHeight - 50; // add a 50px tollerance to the bottom of the page
+				window.innerHeight + window.scrollY >= document.body.scrollHeight - 100; // add a 100px tollerance to the bottom of the page
 			setAtBottom(atBottom);
 		};
 		window.addEventListener("scroll", handleScroll);

@@ -296,11 +296,11 @@ class Shellviz:
     def card(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='card', append=append)
     def location(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='location', append=append)
     def raw(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='raw', append=append)
-    def log(self, data, id: Optional[str] = None, append: bool = True): 
-        data = str(to_json_safe(data)) # convert the data to a string so it can be appended to the log
+    def log(self, *data, id: Optional[str] = None): 
+        data = jsonFn.dumps(to_json_safe(data)) 
         id = id or 'log' #  if an id is provided use it, but if not use 'log' so we can append all logs to the same entry
         value = [(data, time.time())] # create the log entry; a tuple of (data, timestamp) in a list that can be appended to an existing log entry
-        self.send(value, id=id, view='log', append=append)
+        self.send(value, id=id, view='log', append=True)
    
 
 
@@ -320,7 +320,7 @@ def show_url(): _global_shellviz().show_url()
 def show_qr_code(): _global_shellviz().show_qr_code()
 def wait(): _global_shellviz().wait()
 
-def log(data, id: Optional[str] = None, append: bool = True): _global_shellviz().log(data, id=id, append=append)
+def log(*data, id: Optional[str] = None): _global_shellviz().log(*data, id=id)
 def table(data, id: Optional[str] = None, append: bool = False): _global_shellviz().table(data, id=id, append=append)
 def json(data, id: Optional[str] = None, append: bool = False): _global_shellviz().json(data, id=id, append=append)
 def markdown(data, id: Optional[str] = None, append: bool = False): _global_shellviz().markdown(data, id=id, append=append)

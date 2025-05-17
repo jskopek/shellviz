@@ -1,7 +1,9 @@
+import { toJsonSafe, splitArgsAndOptions } from './utils.js';
+
 // browser/client.js
 export default class Shellviz {
     constructor(port = 5544) {
-      this.endpoint = `http://${location.hostname}:${port}`;
+      this.endpoint = `http://localhost:${port}`;
       this.entries = [];
     }
   
@@ -24,8 +26,14 @@ export default class Shellviz {
       }
     }
 
+    log = (...args) => {
+      const [data, options] = splitArgsAndOptions(args, ['id']);
+      const { id = 'log' } = options;
+      const safeData = toJsonSafe(data);
+      const value = [[safeData, Date.now() / 1000]];
+      this.send(value, { id, view: 'log', append: true });
+    }
     table = (data, id=null, append=false) => this.send(data, { id, view: 'table', append });
-    log = (data, id=null, append=true) => this.send([[data, Date.now() / 1000]], { id: id || 'log', view: 'log', append });
     json = (data, id=null, append=false) => this.send(data, { id: id, view: 'json', append });
     markdown = (data, id=null, append=false) => this.send(data, { id: id, view: 'markdown', append });
     progress = (data, id=null, append=false) => this.send(data, { id: id, view: 'progress', append });
