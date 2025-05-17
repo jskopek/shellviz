@@ -7,7 +7,7 @@ import logging
 from .utils_serialize import to_json_string, to_json_safe
 from typing import Optional
 
-from shellviz.utils import append_data
+from shellviz.utils import append_data, get_stack_trace
 from .utils_html import parse_request, send_request, write_200, write_404, write_cors_headers, write_file, get_local_ip, print_qr, write_json
 from .utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
 import socket
@@ -301,6 +301,7 @@ class Shellviz:
         id = id or 'log' #  if an id is provided use it, but if not use 'log' so we can append all logs to the same entry
         value = [(data, time.time())] # create the log entry; a tuple of (data, timestamp) in a list that can be appended to an existing log entry
         self.send(value, id=id, view='log', append=True)
+    def stack(self, id: Optional[str] = None): self.send(get_stack_trace(), id=id, view='stack')
    
 
 
@@ -314,7 +315,7 @@ def _global_shellviz():
     return _global_shellviz_instance
 
 # Convenience methods for quickly interacting with a global shellviz instance
-def send(data, id: Optional[str] = None): _global_shellviz().send(data, id=id, view='text')
+def send(data, id: Optional[str] = None, view: Optional[str] = 'text'): _global_shellviz().send(data, id=id, view=view)
 def clear(): _global_shellviz().clear()
 def show_url(): _global_shellviz().show_url()
 def show_qr_code(): _global_shellviz().show_qr_code()
@@ -332,3 +333,4 @@ def bar(data, id: Optional[str] = None, append: bool = False): _global_shellviz(
 def card(data, id: Optional[str] = None, append: bool = False): _global_shellviz().card(data, id=id, append=append)
 def location(data, id: Optional[str] = None, append: bool = False): _global_shellviz().location(data, id=id, append=append)
 def raw(data, id: Optional[str] = None, append: bool = False): _global_shellviz().raw(data, id=id, append=append)
+def stack(id: Optional[str] = None): _global_shellviz().stack(id=id)

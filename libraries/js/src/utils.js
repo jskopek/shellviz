@@ -81,3 +81,72 @@ export function splitArgsAndOptions(args, validOptions) {
     }
     return [args, {}];
 }
+
+export function getStackTrace(locals = null, options = {}) {
+    /**
+     * Returns an array of stack frames with function, filename, lineno, code (if available), and locals (only for the top frame, if provided).
+     * Portable version: no Node dependencies. By default, includes all frames and does not attempt to read code lines.
+     *
+     * @param {Object} [locals] - (optional) Locals for the current frame.
+     * @param {Object} [options] - Optional hooks: fileFilter(file), readSourceLine(file, lineno)
+     * @returns {Array<Object>} Stack frames with function, filename, lineno, code, and locals (top frame only).
+     */
+    const stack = (new Error()).stack || '';
+    const lines = stack.split('\n').slice(1); // skip the Error line
+    const frames = [];
+    const defaultFileFilter = () => true;
+    const defaultReadSourceLine = () => null;
+    const fileFilter = options.fileFilter || defaultFileFilter;
+    const readSourceLine = options.readSourceLine || defaultReadSourceLine;
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        // Example: at FunctionName (filename.js:10:15)
+        // or: at filename.js:10:15
+        const match = line.match(/^at (.+?) \((.+?):(\d+):(\d+)\)$/) ||
+                      line.match(/^at (.+?):(\d+):(\d+)$/);
+        let fn, file, lineno;
+        if (match) {
+            if (match.length === 5) {
+                fn = match[1];
+                file = match[2];
+                lineno = parseInt(match[3], 10);
+            } else if (match.length === 4) {
+                fn = '<anonymous>';
+                file = match[1];
+                lineno = parseInt(match[2], 10);
+            }
+        } else {
+            fn = '<unknown>';
+            file = '<unknown>';
+            lineno = null;
+        }
+        if (fileFilter(file)) {
+            let code = readSourceLine(file, lineno);
+            let localsObj = {};
+            if (frames.length === 0) {
+                if (locals && typeof locals === 'object') {
+                    localsObj = {};
+                    for (const [k, v] of Object.entries(locals)) {
+                        try {
+                            localsObj[k] = JSON.stringify(v);
+                        } catch {
+                            localsObj[k] = String(v);
+                        }
+                    }
+                } else if (locals !== null && locals !== undefined) {
+                    localsObj = { value: String(locals) };
+                } else {
+                    localsObj = {};
+                }
+            }
+            frames.unshift({
+                function: fn,
+                filename: file,
+                lineno: lineno,
+                code: code,
+                locals: localsObj
+            });
+        }
+    }
+    return frames;
+}

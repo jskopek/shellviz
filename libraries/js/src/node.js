@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { WebSocketServer } = require('ws');
 const qrcode = require('qrcode-terminal');
-const { getLocalIp } = require('./utils_node');
+const { getLocalIp, getStackTrace } = require('./utils_node.js');
 const { appendData, toJsonSafe, splitArgsAndOptions } = require('./utils');
 const DEFAULT_PORT = 5544;
 
@@ -109,6 +109,7 @@ class ShellViz {
     card = (data, id=null, append=false) => { this.send(data, { id, view: 'card', append }); }
     location = (data, id=null, append=false) => { this.send(data, { id, view: 'location', append }); }
     raw = (data, id=null, append=false) => { this.send(data, { id, view: 'raw', append }); }
+    stack = (locals=null, id=null) => { this.send(getStackTrace(locals), { id, view: 'stack' }); }
     log = (...args) => {
         const [data, options] = splitArgsAndOptions(args, ['id', 'level']);
         const { id = 'log', level } = options;
@@ -298,5 +299,6 @@ module.exports = {
     card: (data, id=null, append=false) => _global().card(data, id, append),
     location: (data, id=null, append=false) => _global().location(data, id, append),
     raw: (data, id=null, append=false) => _global().raw(data, id, append),
+    stack: (locals=null, id=null) => _global().stack(locals, id),
     Shellviz: () => _global(),
 };

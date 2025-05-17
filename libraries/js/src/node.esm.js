@@ -19,5 +19,6 @@ export const {
     card,
     location,
     raw,
+    stack,
     Shellviz
 } = shellviz; 

@@ -16,5 +16,6 @@ declare module 'shellviz' {
     export function card(data: any, id?: string): void;
     export function location(data: any, id?: string): void;
     export function raw(data: any, id?: string): void;
+    export function stack(locals?: any, id?: string): void;
     export function Shellviz(): any;
 } 

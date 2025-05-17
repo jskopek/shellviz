@@ -10,6 +10,7 @@ import { ProgressView } from "./progressView";
 import { LocationView } from "./locationView";
 import { CardView } from "./cardView";
 import { LogView } from "./logView";
+import { StackView } from "./stackView";
 
 const views = [
   LogView,
@@ -23,6 +24,7 @@ const views = [
   NumberDataView,
   ProgressView,
   LocationView,
-  RawDataView
+  RawDataView,
+  StackView
 ];
 export default views;

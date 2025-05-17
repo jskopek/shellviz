@@ -1,4 +1,4 @@
-import { toJsonSafe, splitArgsAndOptions } from './utils.js';
+import { toJsonSafe, splitArgsAndOptions, getStackTrace } from './utils.js';
 
 // browser/client.js
 export default class Shellviz {
@@ -44,6 +44,7 @@ export default class Shellviz {
     card = (data, id=null, append=false) => this.send(data, { id: id, view: 'card', append });
     location = (data, id=null, append=false) => this.send(data, { id: id, view: 'location', append });
     raw = (data, id=null, append=false) => this.send(data, { id: id, view: 'raw', append });
+    stack = (locals=null, id=null) => this.send(getStackTrace(locals), { id: id, view: 'stack' });
 
     clear = () => this.send('___clear___');
     wait = () => new Promise(resolve => setTimeout(resolve, 10));
