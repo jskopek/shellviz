@@ -1,4 +1,4 @@
-export function appendData(existingData, data) {
+function appendData(existingData, data) {
     /*
     append data to existing data
     */
@@ -12,7 +12,7 @@ export function appendData(existingData, data) {
         return [existingData, data];
     }
 }
-export function toJsonSafe(data) {
+function toJsonSafe(data) {
     /*
     convert data to a json string
     */
@@ -24,7 +24,7 @@ export function toJsonSafe(data) {
 }
 
 
-export function splitArgsAndOptions(args, validOptions) {
+function splitArgsAndOptions(args, validOptions) {
     /**
      * Splits a list of arguments into [data, options] for flexible APIs.
      *
@@ -82,10 +82,10 @@ export function splitArgsAndOptions(args, validOptions) {
     return [args, {}];
 }
 
-export function getStackTrace(locals = null, options = {}) {
+function getStackTrace(locals = null, options = {}) {
     /**
      * Returns an array of stack frames with function, filename, lineno, code (if available), and locals (only for the top frame, if provided).
-     * Portable version: no Node dependencies. By default, includes all frames and does not attempt to read code lines.
+     * Portable version: no Node dependencies, includes all frames and does not attempt to read code lines.
      *
      * @param {Object} [locals] - (optional) Locals for the current frame.
      * @param {Object} [options] - Optional hooks: fileFilter(file), readSourceLine(file, lineno)
@@ -150,3 +150,10 @@ export function getStackTrace(locals = null, options = {}) {
     }
     return frames;
 }
+
+module.exports = {
+  appendData,
+  toJsonSafe,
+  splitArgsAndOptions,
+  getStackTrace
+};

@@ -1,5 +1,6 @@
-import os from 'os';
-import { getStackTrace as getStackTraceBase } from './utils.js';
+const os = require('os');
+const fs = require('fs');
+const utils = require('./utils.js');
 
 /**
  * Returns an array of stack frames with function, filename, lineno, code (if available), and locals (only for the top frame, if provided).
@@ -7,8 +8,8 @@ import { getStackTrace as getStackTraceBase } from './utils.js';
  * @param {Object} [options] - Optional overrides for fileFilter/readSourceLine.
  * @returns {Array<Object>} Stack frames with function, filename, lineno, code, and locals (top frame only).
  */
-export function getStackTrace(locals = null) {
-    return getStackTraceBase(locals, {
+function getStackTrace(locals = null) {
+    return utils.getStackTrace(locals, {
         fileFilter: (file) => (
             typeof file === 'string' &&
             file.startsWith(process && process.cwd ? process.cwd().replace(/\\/g, '/') + '/' : '') &&
@@ -30,7 +31,7 @@ export function getStackTrace(locals = null) {
     });
 }
 
-export function getLocalIp() {
+function getLocalIp() {
     /*
     get the local ip address from the network interfaces
     */
@@ -44,3 +45,9 @@ export function getLocalIp() {
     }
     return '127.0.0.1'; // Fallback to localhost
 }
+
+module.exports = {
+    getStackTrace,
+    getLocalIp
+};
+    
