@@ -1,6 +1,7 @@
 import { faLayerGroup } from "@fortawesome/free-solid-svg-icons";
 import React, { useState } from "react";
 
+
 // Evaluator: checks if data matches the stack array structure
 function isStackData(data) {
   return Array.isArray(data) && data.every(
@@ -8,92 +9,108 @@ function isStackData(data) {
   );
 }
 
-// Helper: pretty-print locals with type coloring and type labels
-function LocalsTable({ locals }) {
+// Helper: pretty-print locals with type coloring and type labels (styled as flex rows, not table)
+function LocalsBlock({ locals }) {
   if (!locals || Object.keys(locals).length === 0) return <div className="text-gray-400 italic">No locals</div>;
+  // Helper to get type
+  const getType = value => {
+    if (value === null) return "null";
+    if (Array.isArray(value)) return "array";
+    if (typeof value === "number") return Number.isInteger(value) ? "int" : "float";
+    return typeof value;
+  };
+  // Helper to format value
+  const formatValue = (value, type) => {
+    switch (type) {
+      case "string": return <span className="text-orange-500">"{value}"</span>;
+      case "int":
+      case "float":
+      case "number": return <span className="text-blue-500">{value}</span>;
+      case "boolean": return <span className="text-purple-500">{value.toString()}</span>;
+      case "null": return <span className="text-gray-400">null</span>;
+      case "object": return <span className="text-gray-500">{JSON.stringify(value)}</span>;
+      case "array": return <span className="text-gray-500">[{value.join(", ")}]</span>;
+      default: return <span>{String(value)}</span>;
+    }
+  };
   return (
-    <table className="min-w-fit text-sm font-mono bg-gray-50 rounded mb-2">
-      <tbody>
-        {Object.entries(locals).map(([key, value]) => {
-          let parsed, typeLabel, displayVal;
-          try {
-            parsed = JSON.parse(value);
-            typeLabel = typeof parsed;
-            displayVal = parsed;
-          } catch {
-            typeLabel = value === 'null' ? 'null' : (value.startsWith('"<') ? 'object' : 'str');
-            displayVal = value;
-          }
-          let color =
-            typeLabel === 'number' ? "text-blue-600" :
-            typeLabel === 'string' ? "text-orange-600" :
-            typeLabel === 'boolean' ? "text-purple-600" :
-            typeLabel === 'object' ? "text-gray-800" :
-            typeLabel === 'null' ? "text-gray-400" :
-            "text-gray-800";
-          return (
-            <tr key={key}>
-              <td className="pr-2 text-gray-500">"{key}"<span className="text-xs text-gray-400">: {typeLabel}</span></td>
-              <td>
-                <span className={color}>{typeof displayVal === 'string' ? displayVal.replace(/^"|"$/g, '') : JSON.stringify(displayVal)}</span>
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+    <div className="font-mono text-sm space-y-1">
+      {Object.entries(locals).map(([key, value], idx) => {
+        const type = getType(value);
+        return (
+          <div key={idx} className="flex items-start">
+            <span className="text-gray-800">"{key}"</span>
+            <span className="text-gray-400 ml-1">{type}</span>
+            <span className="ml-1">{formatValue(value, type)}</span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
-// Accordion-style stack trace view
+// Accordion-style stack trace view with card and header
 function StackAccordion({ stack }) {
+  stack = stack.reverse()
   // Only topmost (last) frame expanded by default
-  const [open, setOpen] = useState([stack.length - 1]);
-  const toggle = idx => setOpen(open => open.includes(idx) ? open.filter(i => i !== idx) : [...open, idx]);
-
+  const [expandedFrames, setExpandedFrames] = useState(
+    stack.reduce((acc, _, idx) => ({ ...acc, [idx]: idx === 0 }), {})
+  );
+  // Toggle a frame
+  const toggleFrameExpanded = idx =>
+    setExpandedFrames(prev => ({ ...prev, [idx]: !prev[idx] }));
+  // SVGs for chevrons and function icon
+  const ChevronDownSvg = (
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M6 8l4 4 4-4" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+  );
+  const ChevronRightSvg = (
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M8 6l4 4-4 4" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+  );
+  const FunctionIconSvg = (
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="6" stroke="#6B7280" strokeWidth="1.5"/></svg>
+  );
   return (
-    <div className="rounded border border-gray-200 divide-y divide-gray-100 bg-white">
-      {stack.slice().reverse().map((frame, revIdx) => {
-        const idx = stack.length - 1 - revIdx;
+    <div className="font-mono text-sm">
+      {stack.map((frame, idx) => {
         const hasLocals = frame.locals && Object.keys(frame.locals).length > 0;
-        const expanded = open.includes(idx);
+        const expanded = expandedFrames[idx];
         return (
-          <div key={idx}>
+          <div key={idx} className="border-b last:border-b-0">
+            {/* Frame header */}
             {hasLocals ? (
-              <>
-                <button
-                  className="w-full flex items-center justify-between px-3 py-2 font-mono text-gray-900 bg-gray-50 hover:bg-gray-100 focus:outline-none"
-                  onClick={() => toggle(idx)}
-                  aria-expanded={expanded}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span className="flex items-center">
-                    <span className={expanded ? "mr-2" : "mr-2 rotate-90"}>
-                      {expanded ? "▾" : "▸"}
-                    </span>
-                    <span className="font-semibold">{frame.function}</span>
-                    <span className="text-xs text-gray-500 ml-2">
-                      {frame.filename.split("/").slice(-1)[0]}:{frame.lineno}
-                    </span>
-                  </span>
-                  <span className="text-xs text-gray-400">{frame.code}</span>
-                </button>
-                {expanded && (
-                  <div className="px-5 pb-2 pt-1 bg-white">
-                    <LocalsTable locals={frame.locals} />
-                  </div>
-                )}
-              </>
+              <div
+                className={`py-2 px-3 hover:bg-gray-50 cursor-pointer flex items-center ${idx === 0 ? "bg-gray-50" : ""}`}
+                onClick={() => toggleFrameExpanded(idx)}
+              >
+                <span className="mr-2 flex-shrink-0">{expanded ? ChevronDownSvg : ChevronRightSvg}</span>
+                <span className="mr-2 flex-shrink-0">{FunctionIconSvg}</span>
+                <div className="text-xs text-gray-700">{frame.function}</div>
+                <div className="text-xs text-gray-500 ml-auto flex-shrink-0">
+                  {frame.filename}:{frame.lineno}
+                  {frame.column ? `:${frame.column}` : ""}
+                </div>
+              </div>
             ) : (
-              <div className="w-full flex items-center justify-between px-3 py-2 font-mono text-gray-900 bg-gray-50">
-                <span className="flex items-center">
-                  <span className="mr-2 opacity-0">▸</span>
-                  <span className="font-semibold">{frame.function}</span>
-                  <span className="text-xs text-gray-500 ml-2">
-                    {frame.filename.split("/").slice(-1)[0]}:{frame.lineno}
-                  </span>
-                </span>
-                <span className="text-xs text-gray-400">{frame.code}</span>
+              <div
+                className={`py-2 px-3 flex items-center ${idx === 0 ? "bg-gray-50" : ""}`}
+                // No onClick, not expandable
+              >
+                {/* No chevron */}
+                <span className="mr-2 flex-shrink-0" />
+                <span className="mr-2 flex-shrink-0">{FunctionIconSvg}</span>
+                <div className="text-xs text-gray-700">{frame.function}</div>
+                <div className="text-xs text-gray-500 ml-auto flex-shrink-0">
+                  {frame.filename}:{frame.lineno}
+                  {frame.column ? `:${frame.column}` : ""}
+                </div>
+              </div>
+            )}
+            {/* Frame details */}
+            {hasLocals && expanded && (
+              <div className="px-3 pb-3 pt-1">
+                <div className="p-3 font-mono">
+                  <LocalsBlock locals={frame.locals} />
+                </div>
               </div>
             )}
           </div>
