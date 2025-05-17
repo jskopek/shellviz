@@ -92,37 +92,27 @@ function App() {
 
 	/* Handle auto-scrolling */
 	const [atBottom, setAtBottom] = useState(true);
-	const isProgrammaticScrollRef = useRef(false);
+
+	// Listen for scrolls
 	useEffect(() => {
 		const handleScroll = () => {
-			if (isProgrammaticScrollRef.current) {
-				return; // Ignore scroll events triggered programmatically
-			}
-
-			// Check if the user is at the bottom
 			const atBottom =
-				window.innerHeight + window.scrollY >= document.body.scrollHeight - 1; // Add a small tolerance to avoid precision issues
+				window.innerHeight + window.scrollY >= document.body.scrollHeight - 50; // add a 50px tollerance to the bottom of the page
 			setAtBottom(atBottom);
 		};
-
-		// Add event listener for scroll
 		window.addEventListener("scroll", handleScroll);
-
-		return () => {
-			// Cleanup event listener on unmount
-			window.removeEventListener("scroll", handleScroll);
-		};
+		return () => window.removeEventListener("scroll", handleScroll);
 	}, []);
+
+	// When entries change, scroll if user was at bottom
 	useEffect(() => {
 		if (atBottom) {
-			isProgrammaticScrollRef.current = true; // Set the flag before programmatic scrolling
-			setTimeout(() => {
-				window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-				isProgrammaticScrollRef.current = false; // Reset the flag after scroll
-			}, 0);
+			window.scrollTo({ top: document.body.scrollHeight, behavior: "instant" });
 		}
-	}, [entries, atBottom]);
+	}, [atBottom, entries]);
+
 	/* / Handle auto-scrolling */
+
 
 	return (
 		<main className="">
