@@ -2,6 +2,8 @@ import './App.scss';
 import { useEffect, useState } from 'react';
 import Entry from './components/Entry';
 
+const VERSION = '0.1.0';
+
 function App() {
 	// get the hostname and port from the URL
 	const hostname = window.location.hostname;
@@ -24,6 +26,7 @@ function App() {
 	}
 
 	useEffect(() => {
+		console.log(`Shellviz Client v${VERSION} initializing on http://${hostname}:${port}`);
 		fetch(`http://${hostname}:${port}/api/entries`)
 			.then(res => res.json())
 			.then(data => setEntries(data))
