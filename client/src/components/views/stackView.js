@@ -51,23 +51,22 @@ function LocalsBlock({ locals }) {
 
 // Accordion-style stack trace view with card and header
 function StackAccordion({ stack }) {
-  stack = stack.reverse()
-  // Only topmost (last) frame expanded by default
+  // Onlylast frame expanded by default
   const [expandedFrames, setExpandedFrames] = useState(
-    stack.reduce((acc, _, idx) => ({ ...acc, [idx]: idx === 0 }), {})
+    stack.reduce((acc, _, idx) => ({ ...acc, [idx]: idx === stack.length - 1 }), {})
   );
   // Toggle a frame
   const toggleFrameExpanded = idx =>
     setExpandedFrames(prev => ({ ...prev, [idx]: !prev[idx] }));
   // SVGs for chevrons and function icon
   const ChevronDownSvg = (
-    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M6 8l4 4 4-4" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M6 8l4 4 4-4" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
   );
   const ChevronRightSvg = (
-    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M8 6l4 4-4 4" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M8 6l4 4-4 4" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
   );
   const FunctionIconSvg = (
-    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="6" stroke="#6B7280" strokeWidth="1.5"/></svg>
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="6" stroke="#6B7280" strokeWidth="1.5" /></svg>
   );
   return (
     <div className="font-mono text-sm">
@@ -93,7 +92,7 @@ function StackAccordion({ stack }) {
             ) : (
               <div
                 className={`py-2 px-3 flex items-center ${idx === 0 ? "bg-gray-50" : ""}`}
-                // No onClick, not expandable
+              // No onClick, not expandable
               >
                 {/* No chevron */}
                 <span className="mr-2 flex-shrink-0" />
