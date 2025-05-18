@@ -14,7 +14,7 @@ import socket
 import os
 
 # Configure logging to silence specific warnings
-logging.getLogger('asyncio').setLevel(logging.ERROR)
+# logging.getLogger('asyncio').setLevel(logging.ERROR)
 
 class Shellviz:
     def __init__(self, port=5544, show_url=True):
@@ -101,19 +101,30 @@ class Shellviz:
         # Check if this is a WebSocket handshake request
         if data.startswith(b'GET / HTTP/1.1') and b'Upgrade: websocket' in data:
             # This is a WebSocket connection
-            # Don't call feed_eof() for WebSocket because we need to keep reading more data
-            # after the handshake (like messages from the client)
             try:
                 await self.handle_websocket_connection(new_reader, writer)
-            except BrokenPipeError:
-                # This is a normal occurrence when the client disconnects; ignore it
+            except (asyncio.CancelledError, GeneratorExit, BrokenPipeError, ConnectionResetError):
+                # These are normal on disconnect/shutdown; silence them
                 pass
+            except Exception as e:
+                # Log only truly unexpected errors
+                print(f"Unexpected error in handle_connection: {e}")
         else:
             # This is an HTTP connection
-            # Call feed_eof() for HTTP because we've received the complete request
-            # and don't expect any more data from the client
             new_reader.feed_eof()
-            await self.handle_http(new_reader, writer)
+            try:
+                await self.handle_http(new_reader, writer)
+            except (asyncio.CancelledError, GeneratorExit, BrokenPipeError, ConnectionResetError):
+                pass
+            except Exception as e:
+                print(f"Unexpected error in handle_http: {e}")
+        # Always ensure the writer is closed
+        if not writer.is_closing():
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except Exception:
+                pass
     # -- / Commands to initialize and handle HTTP & WebSocket connections --
 
     # -- HTTP sever method --
@@ -165,27 +176,34 @@ class Shellviz:
 
     # -- WebSocket server methods --
     async def handle_websocket_connection(self, reader, writer):
-        # Perform WebSocket handshake
-        await perform_websocket_handshake(reader, writer)
-
-        self.websocket_clients.add(writer)
-
-        # send any pending updates to clients via websocket
-        asyncio.run_coroutine_threadsafe(self.send_pending_entries_to_websocket_clients(), self.loop)
-
         try:
-            while True:
-                message = await receive_websocket_message(reader)
-                if message is None:
-                    break  # Connection was closed
-                # Process the message as needed (e.g., log, process, respond, etc.)
-        except Exception as e:
-            print(f"WebSocket error: {e}")
+            # Perform WebSocket handshake
+            await perform_websocket_handshake(reader, writer)
+            self.websocket_clients.add(writer)
+            # send any pending updates to clients via websocket
+            asyncio.run_coroutine_threadsafe(self.send_pending_entries_to_websocket_clients(), self.loop)
+            try:
+                while True:
+                    try:
+                        message = await receive_websocket_message(reader)
+                    except (asyncio.CancelledError, GeneratorExit, ConnectionResetError, BrokenPipeError):
+                        break  # Normal disconnect
+                    if message is None:
+                        break  # Connection was closed
+                    # Process the message as needed (e.g., log, process, respond, etc.)
+            except (asyncio.CancelledError, GeneratorExit, ConnectionResetError, BrokenPipeError):
+                pass  # Normal disconnect
+            except Exception as e:
+                print(f"WebSocket error: {e}")
         finally:
             # Ensure the client is removed from the set even if another exception occurs
             self.websocket_clients.discard(writer)
-            writer.close()
-            await writer.wait_closed()
+            if not writer.is_closing():
+                writer.close()
+                try:
+                    await writer.wait_closed()
+                except Exception:
+                    pass
 
     async def send_pending_entries_to_websocket_clients(self):
         if not self.websocket_clients:
