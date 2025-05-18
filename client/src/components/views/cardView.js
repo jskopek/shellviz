@@ -22,14 +22,14 @@ export const CardView = {
             if(index > data.length - 1) {
                 setIndex(data.length ? data.length - 1 : 0);
             }
-        }, [data])
+        }, [data, index])
 
         const row = data[index];
 
         // Generate key-value pairs
         // The values in each cell are either converted to a JSON string (if they're an object) or left as is.
         // This is done to ensure that the table can display all types of data, including nested JSON objects.
-        const values = useMemo(() => _.toPairs(_.mapValues(row, (value) => isValidJson(value) ? JSON.stringify(value) : value)), [index, data]);
+        const values = useMemo(() => _.toPairs(_.mapValues(row, (value) => isValidJson(value) ? JSON.stringify(value) : value)), [row]);
 
 
 

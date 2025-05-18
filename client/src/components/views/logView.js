@@ -2,23 +2,14 @@ import { faTerminal } from "@fortawesome/free-solid-svg-icons";
 import { formatDistanceToNow } from "date-fns";
 import { JsonViewer } from "@textea/json-viewer";
 
-function isSimpleObject(obj) {
-  return false
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    !Array.isArray(obj) &&
-    Object.values(obj).every(
-      v => typeof v !== 'object' || v === null // Only shallow
-    )
-  );
-}
-
 function InlineJson({ value }) {
   if (Array.isArray(value) && value.length <= 5 && value.every(v => typeof v !== 'object')) {
     return <span>[{value.map((v, i) => <span key={i}>{JSON.stringify(v)}{i < value.length - 1 ? ', ' : ''}</span>)}]</span>;
   }
-  if (isSimpleObject(value) && Object.keys(value).length <= 3) {
+
+  // check if the object is shallow and has <= 2 keys
+  const isSimpleObject = typeof value === 'object' && value !== null && !Array.isArray(value) && Object.values(value).every(v => typeof v !== 'object' || v === null) && Object.keys(value).length <= 2; // Only shallow
+  if (isSimpleObject) {
     return (
       <span>
         {'{'}
@@ -31,7 +22,7 @@ function InlineJson({ value }) {
       </span>
     );
   }
-  // fallback to JsonViewer for complex
+  // fallback to JsonViewer for complex objects
   return (
     <span className="inline-block align-top max-w-full">
       <JsonViewer

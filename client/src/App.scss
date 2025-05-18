@@ -1,12 +1,7 @@
-/* styles/globals.css */
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
-// @import "leaflet/dist/leaflet.css";
-@import "tailwindcss/utilities";
-@import "leaflet/dist/leaflet.css";
-
-
+@forward "tailwindcss/base";
+@forward "tailwindcss/components";
+@forward "tailwindcss/utilities";
+@forward "leaflet/dist/leaflet";
 
 body.dark {
   /* background-color: #f8f6f6; */

@@ -18,7 +18,7 @@ const Entry = ({ data, id, view: viewName, onDelete }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
   const [filteredData, setFilteredData] = useState(data);
-  useEffect(() => { setFilteredData(View.search ? View.search(data, searchQuery) : data); }, [data, searchQuery]);
+  useEffect(() => { setFilteredData(View.search ? View.search(data, searchQuery) : data); }, [data, searchQuery, View]);
 
   return (
     <div className="border border-gray-200 shadow-md">

@@ -62,7 +62,7 @@ export const BarChartView = {
         groupedKeys: keys,
         dataToDisplay: barChartData,
       });
-    }, []);
+    }, [data]);
 
     const handleChange = (e) => {
       const newValue = e.target.value;

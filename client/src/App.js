@@ -1,5 +1,5 @@
 import './App.scss';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Entry from './components/Entry';
 
 function App() {
@@ -28,7 +28,7 @@ function App() {
 			.then(res => res.json())
 			.then(data => setEntries(data))
 			.catch(err => console.error(err));
-	}, [])
+	}, [hostname, port])
 
 	// set up websocket connection
 	useEffect(() => {
@@ -88,7 +88,7 @@ function App() {
 			if (ws) ws.close();
 			clearTimeout(retryTimeout);
 		};
-	}, []);
+	}, [hostname, port]);
 
 	/* Handle auto-scrolling */
 	const [atBottom, setAtBottom] = useState(true);

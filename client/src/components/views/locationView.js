@@ -1,6 +1,5 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet"; // Import the Leaflet namespace
-import { getCoordinates } from "../../utils/helpers";
 import { faMapLocation } from "@fortawesome/free-solid-svg-icons";
 import { isValidLocation } from "../../utils/dataValidator";
 import { parseJSON } from "../../utils/dataValidator";

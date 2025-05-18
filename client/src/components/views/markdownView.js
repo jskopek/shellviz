@@ -14,9 +14,9 @@ export const MarkdownView = {
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeRaw]}
       components={{
-        h1: ({ node, ...props }) => ( <h1 className="text-3xl font-bold mt-6 mb-4" {...props} />),
-        h2: ({ node, ...props }) => ( <h2 className="text-2xl font-semibold mt-5 mb-3" {...props} />),
-        h3: ({ node, ...props }) => ( <h3 className="text-xl font-medium mt-4 mb-2" {...props} />),
+        h1: ({ node, children, ...props }) => ( <h1 className="text-3xl font-bold mt-6 mb-4" {...props}>{children}</h1>),
+        h2: ({ node, children, ...props }) => ( <h2 className="text-2xl font-semibold mt-5 mb-3" {...props}>{children}</h2>),
+        h3: ({ node, children, ...props }) => ( <h3 className="text-xl font-medium mt-4 mb-2" {...props}>{children}</h3>),
         p: ({ node, ...props }) => ( <p className="text-base leading-6 mb-3" {...props} />),
         ul: ({ node, ...props }) => ( <ul className="list-disc list-inside ml-4 mb-3" {...props} />),
         ol: ({ node, ...props }) => ( <ol className="list-decimal list-inside ml-4 mb-3" {...props} />),
