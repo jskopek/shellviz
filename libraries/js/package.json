@@ -1,11 +1,8 @@
 {
   "name": "shellviz",
   "type": "module",
-  "version": "0.2.13",
+  "version": "0.2.15-beta.0",
   "description": "Visualization toolkit for shell scripts and command-line tools",
-  "main": "./build/node.cjs",
-  "module": "./build/node.js",
-  "browser": "./build/browser.mjs",
   "types": "./build/client.d.ts",
   "unpkg": "./build/browser_client.umd.js",
   "jsdelivr": "./build/browser_client.umd.js",
@@ -13,31 +10,24 @@
     ".": {
       "browser": {
         "import": "./build/browser_client.mjs",
-        "require": "./build/browser_client.umd.js",
-        "default": "./build/browser_client.umd.js"
+        "require": "./build/browser_client.umd.js"
       },
       "import": "./build/node_client.js",
-      "require": "./build/node_client.cjs",
-      "types": "./build/client.d.ts",
-      "default": "./build/node_client.cjs"
-    },
-    "./browser": {
-      "import": "./build/browser_client.mjs",
-      "require": "./build/browser_client.umd.js",
-      "default": "./build/browser_client.umd.js"
+      "require": "./build/node_client.cjs"
     }
   },
   "files": [
     "build"
   ],
+  "browser": {
+    "./src/server.js": "./src/browser_server_shim.js"
+  },
   "scripts": {
-    "build:node:client:cjs": "esbuild ./src/node_client.js --bundle --platform=node --format=cjs --outfile=build/node_client.cjs",
-    "build:node:client:esm": "esbuild ./src/node_client.js --bundle --platform=node --format=esm --outfile=build/node_client.js",
-    "build:node": "npm-run-all --sequential build:node:client:cjs build:node:client:esm",
-    "build:browser:esm": "esbuild ./src/browser_client.js --bundle --platform=browser --format=esm --outfile=build/browser_client.mjs --banner:js=\"/* eslint-disable */\"",
-    "build:browser:umd": "esbuild ./src/browser_client.js --bundle --platform=browser --format=iife --global-name=shellviz --outfile=build/browser_client.umd.js --banner:js=\"/* eslint-disable */\"",
-    "build:browser": "npm-run-all --sequential build:browser:esm build:browser:umd",
-    "build": "npm run build:node && npm run build:browser",
+    "build:node:client:cjs": "esbuild ./src/client.js --bundle --platform=node --format=cjs --outfile=build/node_client.cjs",
+    "build:node:client:esm": "esbuild ./src/client.js --bundle --external:ws --platform=node --format=esm --outfile=build/node_client.js",
+    "build:browser:esm": "esbuild ./src/client.js --bundle --platform=browser --format=esm --outfile=build/browser_client.mjs --banner:js=\"/* eslint-disable */\"",
+    "build:browser:umd": "esbuild ./src/client.js --bundle --platform=browser --format=iife --global-name=shellviz --outfile=build/browser_client.umd.js --banner:js=\"/* eslint-disable */\"",
+    "build": "npm-run-all --sequential build:node:client:cjs build:node:client:esm build:browser:esm build:browser:umd",
     "postbuild": "node scripts/postbuild.js",
     "pack": "npm run build && npm pack --pack-destination=dist"
   },

@@ -4,12 +4,14 @@
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { WebSocketServer } from 'ws';
 import qrcode from 'qrcode-terminal';
 import { appendData } from './utils.js';
+import { createRequire } from 'module';
 const DEFAULT_PORT = 5544;
 
-class NodeServer {
+class ShellvizServer {
     constructor({ port = DEFAULT_PORT, showUrl = true } = {}) {
         this.port = port;
         this.entries = [];
@@ -58,11 +60,10 @@ class NodeServer {
                 return;
             }
 
-            const shellvizDistPath = path.dirname(require.resolve('shellviz'));
-            const CLIENT_DIST_PATH = process.env.CLIENT_DIST_PATH || path.join(shellvizDistPath, 'client_build');
+            const clientDistPath = getClientDistPath();
 
             if (req.method === 'GET' && req.url === '/') {
-                const index_template = fs.readFileSync(path.join(CLIENT_DIST_PATH, 'index.html'), 'utf8');
+                const index_template = fs.readFileSync(path.join(clientDistPath, 'index.html'), 'utf8');
                 const html = index_template.replace('{{entries}}', JSON.stringify(this.entries));
                 res.writeHead(200, { 'Content-Type': 'text/html' }).end(html);
             } else if (req.method === 'GET' && req.url === '/api/entries') {
@@ -97,7 +98,7 @@ class NodeServer {
                 });
             } else if (req.method === 'GET') {
                 const relPath = req.url.startsWith('/') ? req.url.slice(1) : req.url;
-                const filePath = path.join(CLIENT_DIST_PATH, relPath);
+                const filePath = path.join(clientDistPath, relPath);
                 fs.stat(filePath, (err, stats) => {
                     if (err || !stats.isFile()) {
                         res.writeHead(404).end('not found');
@@ -145,7 +146,7 @@ class NodeServer {
     }
 }
 
-export default NodeServer;
+export default ShellvizServer;
 
 
 /* helper functions */
@@ -162,4 +163,21 @@ function getLocalIp() {
         }
     }
     return '127.0.0.1'; // Fallback to localhost
+}
+
+function getClientDistPath() {
+    // Helper to get clientDistPath in both ESM and CJS
+    if (process.env.CLIENT_DIST_PATH) {
+        return process.env.CLIENT_DIST_PATH;
+    }
+    let shellvizDistPath;
+    // ESM: use createRequire(import.meta.url)
+    if (typeof require === 'undefined') {
+        const require = createRequire(import.meta.url);
+        shellvizDistPath = path.dirname(require.resolve('shellviz'));
+    } else {
+        // CJS: use native require
+        shellvizDistPath = path.dirname(require.resolve('shellviz'));
+    }
+    return path.join(shellvizDistPath, 'client_build');
 }
