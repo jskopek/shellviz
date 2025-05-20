@@ -1,4 +1,4 @@
-from .serialize import to_json_string
+from .utils_serialize import to_json_string
 import inspect
 import re
 import os

@@ -1,11 +1,13 @@
-from .client import ShellvizClient
+from .client import Shellviz
 from typing import Optional
 
+# Global instance of Shellviz
 _global_shellviz_instance = None
 def _global_shellviz():
     global _global_shellviz_instance
     if not _global_shellviz_instance:
-        _global_shellviz_instance = ShellvizClient()
+        # print("Shellviz: No instance found. Creating new instance.")
+        _global_shellviz_instance = Shellviz()
     return _global_shellviz_instance
 
 # Convenience methods for quickly interacting with a global shellviz instance
@@ -28,4 +30,3 @@ def card(data, id: Optional[str] = None, append: bool = False): _global_shellviz
 def location(data, id: Optional[str] = None, append: bool = False): _global_shellviz().location(data, id=id, append=append)
 def raw(data, id: Optional[str] = None, append: bool = False): _global_shellviz().raw(data, id=id, append=append)
 def stack(id: Optional[str] = None): _global_shellviz().stack(id=id)
-Shellviz = ShellvizClient

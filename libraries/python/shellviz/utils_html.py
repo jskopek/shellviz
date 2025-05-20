@@ -1,0 +1,190 @@
+from asyncio import StreamReader, StreamWriter
+from dataclasses import dataclass
+import json
+import mimetypes
+import os
+import socket
+from string import Template
+from typing import Optional, Union
+
+
+def get_local_ip():
+    """
+    Returns the local IP address of the machine.
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.254.254.254', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
+
+@dataclass
+class HttpRequest:
+    method: str = ""
+    path: str = ""
+    body: Optional[str] = None
+
+
+async def parse_request(reader: StreamReader) -> HttpRequest:
+    """
+    Returns an HttpRequest instance with data from the provided StreamReader instance initiated from an `asyncio.start_server` request
+    """
+    request = await reader.read(1024)
+    headers, _, body = request.decode().partition("\r\n\r\n")
+    request_line = headers.splitlines()[0]
+    method, path, _ = request_line.split()
+    return HttpRequest(method, path, body if body else None)
+
+
+async def write_response(writer: StreamWriter, status_code: int=200, status_message: str='OK', content_type: str=None, content: str=None) -> None:
+    """
+    Takes a StreamWriter instance initiated from an `asyncio.start_server` request and returns a response with the provided status code and message.
+    Supports both string and bytes content. Always adds CORS headers.
+    """
+    # Prepare content as bytes
+    if content is None:
+        content_bytes = b""
+    elif isinstance(content, str):
+        content_bytes = content.encode("utf-8")
+    else:
+        content_bytes = content  # assume bytes
+
+    response = (
+        f"HTTP/1.1 {status_code} {status_message}\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "Access-Control-Allow-Methods: GET, POST, OPTIONS, DELETE\r\n"
+        "Access-Control-Allow-Headers: Content-Type\r\n"
+    )
+    if content_type:
+        response += f"Content-Type: {content_type}\r\n"
+    response += f"Content-Length: {len(content_bytes)}\r\n"
+    response += "Connection: close\r\n"
+    response += "\r\n"
+
+    writer.write(response.encode("utf-8") + content_bytes)
+    await writer.drain()
+    writer.close()
+    await writer.wait_closed()
+
+async def write_html(writer: StreamWriter, html: str) -> None:
+    """
+    Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a response with the provided `html` content
+    e.g.
+
+    server = await asyncio.start_server(self.handle_http, self.host, self.port)
+    async def handle_http(self, reader, writer):
+        await write_html(writer, 'hello world')
+    """
+
+    await write_response(writer,content_type='text/html', content=html)
+
+async def write_404(writer: StreamWriter) -> None:
+    """
+    Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a 404 response
+    """
+    await write_response(writer, 404, "Not Found")
+
+async def write_200(writer: StreamWriter) -> None:
+    """
+    Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a 200 response
+    """
+    await write_response(writer)
+
+async def write_json(writer: StreamWriter, json_data: str) -> None:
+    """
+    Takes a StreamWriter instance initiated from an `asyncio.start_server` request and returns a JSON response
+    with proper content type and formatting.
+    
+    Args:
+        writer: The StreamWriter instance
+        json_data: The JSON string to send in the response
+    """
+    await write_response(writer, content_type='application/json', content=json_data)
+
+async def write_cors_headers(writer: StreamWriter) -> None:
+    """
+    Takes a StreamWriter instance initiated from an `aynscio.start_server` request and returns a response with the CORS headers
+    This enables the client to make cross-origin requests (e.g. via the browser plugin) to the server
+    """
+    await write_response(writer, 200, "OK")
+
+async def write_file(writer: StreamWriter, file_path: str) -> None:
+    """
+    Takes a StreamWriter instance initiated from an `asyncio.start_server` request and returns a response with the content of the file at `file_path`.
+    `file_path` is an absolute path to the file.
+
+    e.g.
+        server = await asyncio.start_server(self.handle_http, self.host, self.port)
+        async def handle_http(self, reader, writer):
+            write_file(writer, '/tmp/index.html')
+    """
+
+    if not os.path.isfile(file_path):
+        return await write_404(writer)
+
+    content_type, _ = mimetypes.guess_type(file_path)
+    content_type = content_type or "application/octet-stream"
+    with open(file_path, "rb") as f:
+        file_content = f.read()
+
+    if content_type and (content_type.startswith("text/") or content_type == "application/json"):
+        file_content = file_content.decode('utf-8')
+
+    await write_response(writer, content_type=content_type, content=file_content)
+
+
+def print_qr(url):
+    """
+    Generates and prints a QR code for the provided `url` in the terminal
+    Requires the `qrcode` package to be installed; will raise an ImportError if not available
+    """
+    import qrcode
+
+    # Step 1: Generate the QR code data
+    qr = qrcode.QRCode(border=1)
+    qr.add_data(url)
+    qr.make(fit=True)
+
+    # Step 2: Convert the QR code matrix into ASCII for terminal display
+    qr_matrix = qr.get_matrix()
+    for row in qr_matrix:
+        line = ''.join(['██' if cell else '  ' for cell in row])
+        print(line)
+
+
+
+def send_request(path: str, body: Optional[Union[str, dict]] = None, port: Optional[int] = 5544, method: Optional[str] = 'GET', ip_address: Optional[str] = '127.0.0.1', timeout: Optional[int] = 1) -> Union[str, bool]:
+    """
+    Sends an HTTP request to the local server and returns the response
+    If a response is received, returns a decoded value of that response
+
+    :param path: The path to send the request to
+    :param body: The body of the request; if a dict is provided, it will be converted to a JSON string
+    :param port: The port to send the request to; default to 5544
+    :param method: The HTTP method to use; default to GET
+    :param ip_address: The IP address to send the request to; default to 127.0.0.1
+
+    Example:
+        send_request('/path', {'key': 'value'}, port=8080, method='POST')
+    """
+    with socket.create_connection((ip_address, port), timeout=timeout) as sock:
+        headers = [
+            f'{method} {path} HTTP/1.1',
+            f'Host: {ip_address}'
+        ]
+        if body:
+            if isinstance(body, dict):
+                body = json.dumps(body)
+                headers.append('Content-Type: application/json')
+            headers.append(f'Content-Length: {len(body)}')
+            request = '\r\n'.join(headers) + '\r\n\r\n' + body
+        else:
+            request = '\r\n'.join(headers) + '\r\n\r\n'
+        sock.sendall(request.encode())
+        response = sock.recv(1024)
+        return response.decode()
