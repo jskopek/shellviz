@@ -1,5 +1,4 @@
 import struct
-
 import asyncio
 
 async def send_websocket_message(writer, message):

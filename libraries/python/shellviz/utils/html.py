@@ -4,8 +4,15 @@ import json
 import mimetypes
 import os
 import socket
-from string import Template
 from typing import Optional, Union
+import asyncio
+import atexit
+import threading
+import time
+import http.client
+import urllib.parse
+from http.server import BaseHTTPRequestHandler
+from io import BytesIO
 
 
 def get_local_ip():
@@ -32,13 +39,93 @@ class HttpRequest:
 
 async def parse_request(reader: StreamReader) -> HttpRequest:
     """
-    Returns an HttpRequest instance with data from the provided StreamReader instance initiated from an `asyncio.start_server` request
+    Parses a raw HTTP request from an asyncio StreamReader and returns an HttpRequest object.
     """
-    request = await reader.read(1024)
-    headers, _, body = request.decode().partition("\r\n\r\n")
-    request_line = headers.splitlines()[0]
-    method, path, _ = request_line.split()
-    return HttpRequest(method, path, body if body else None)
+    # Read header section
+    headers_bytes = bytearray()
+    while True:
+        chunk = await reader.read(1024)
+        if not chunk:
+            break
+        headers_bytes.extend(chunk)
+        if b'\r\n\r\n' in headers_bytes:
+            break
+
+    if not headers_bytes:
+        print("No data received")
+        return HttpRequest()
+
+    # Split header and initial body
+    header_end = headers_bytes.find(b'\r\n\r\n')
+    if header_end == -1:
+        print("Invalid HTTP request (no header-body separator)")
+        return HttpRequest()
+
+    raw_headers = headers_bytes[:header_end]
+    body_buffer = bytearray(headers_bytes[header_end + 4:])
+
+    # Extract content length
+    headers_text = raw_headers.decode(errors="replace")
+    content_length = 0
+    for line in headers_text.splitlines():
+        if line.lower().startswith('content-length:'):
+            try:
+                content_length = int(line.split(':', 1)[1].strip())
+            except ValueError:
+                content_length = 0
+            break
+
+    # Read the rest of the body if needed
+    remaining = content_length - len(body_buffer)
+    while remaining > 0:
+        chunk = await reader.read(min(1024, remaining))
+        if not chunk:
+            break
+        body_buffer.extend(chunk)
+        remaining -= len(chunk)
+
+    # Final combined request data
+    full_request = raw_headers + b'\r\n\r\n' + body_buffer
+
+    # Log raw request
+    print("\n=== Raw Request Data ===")
+    print(f"Total bytes length: {len(full_request)}")
+    print("Raw bytes (hex):", full_request.hex())
+    print("\nRaw text:")
+    print(full_request.decode(errors='replace'))
+    print("=====================\n")
+
+    # Parse using BaseHTTPRequestHandler
+    class RequestHandler(BaseHTTPRequestHandler):
+        def __init__(self, data: bytes):
+            self.rfile = BytesIO(data)
+            self.raw_requestline = self.rfile.readline()
+            self.error_code = self.error_message = None
+            self.parse_request()
+
+    handler = RequestHandler(full_request)
+
+    if handler.error_code:
+        print(f"HTTP parsing error: {handler.error_code} - {handler.error_message}")
+        return HttpRequest()
+
+    # Log parsed request
+    print("\n=== Parsed Request ===")
+    print(f"Method: {handler.command}")
+    print(f"Path: {handler.path}")
+    print("Headers:")
+    for k, v in handler.headers.items():
+        print(f"  {k}: {v}")
+    print("=====================\n")
+
+    body = body_buffer.decode(errors='replace') if body_buffer else None
+
+    if body:
+        print("\n=== Request Body ===")
+        print(body)
+        print("===================\n")
+
+    return HttpRequest(method=handler.command, path=handler.path, body=body)
 
 
 async def write_response(writer: StreamWriter, status_code: int=200, status_message: str='OK', content_type: str=None, content: str=None) -> None:
@@ -157,37 +244,68 @@ def print_qr(url):
         print(line)
 
 
-
 def send_request(path: str, body: Optional[Union[str, dict]] = None, port: Optional[int] = 5544, method: Optional[str] = 'GET', ip_address: Optional[str] = '127.0.0.1') -> Union[str, bool]:
     """
-    Sends an HTTP request to the local server and returns the response
-    If a response is received, returns a decoded value of that response. If an error is raised, returns False
-
-    :param path: The path to send the request to
-    :param body: The body of the request; if a dict is provided, it will be converted to a JSON string
-    :param port: The port to send the request to; default to 5544
-    :param method: The HTTP method to use; default to GET
-    :param ip_address: The IP address to send the request to; default to 127.0.0.1
-
-    Example:
-        send_request('/path', {'key': 'value'}, port=8080, method='POST')
+    Sends an HTTP request to the local server and returns the response.
+    Uses Python's built-in http.client for robust HTTP handling.
+    
+    Args:
+        path: The path to send the request to
+        body: The body of the request; if a dict is provided, it will be converted to a JSON string
+        port: The port to send the request to; default to 5544
+        method: The HTTP method to use; default to GET
+        ip_address: The IP address to send the request to; default to 127.0.0.1
+    
+    Returns:
+        The response body as a string if successful, False if an error occurs
     """
     try:
-        with socket.create_connection((ip_address, port), timeout=1) as sock:
-            headers = [
-                f'{method} {path} HTTP/1.1',
-                f'Host: {ip_address}'
-            ]
-            if body:
-                if isinstance(body, dict):
-                    body = json.dumps(body)
-                    headers.append('Content-Type: application/json')
-                headers.append(f'Content-Length: {len(body)}')
-                request = '\r\n'.join(headers) + '\r\n\r\n' + body
-            else:
-                request = '\r\n'.join(headers) + '\r\n\r\n'
-            sock.sendall(request.encode())
-            response = sock.recv(1024)
-            return response.decode()
+        conn = http.client.HTTPConnection(ip_address, port, timeout=1)
+        
+        # Prepare headers
+        headers = {}
+        if body:
+            if isinstance(body, dict):
+                body = json.dumps(body)
+                headers['Content-Type'] = 'application/json'
+            headers['Content-Length'] = str(len(body))
+        
+        # Log the request details before sending
+        print("\n=== Sending Request ===")
+        print(f"Method: {method}")
+        print(f"Path: {path}")
+        print("Headers:")
+        for header, value in headers.items():
+            print(f"  {header}: {value}")
+        if body:
+            print("\nBody:")
+            print(body)
+        print("=====================\n")
+        
+        # Send request
+        conn.request(method, path, body=body, headers=headers)
+        
+        # Get response
+        response = conn.getresponse()
+        print("\n=== Response ===")
+        print(f"Status: {response.status} {response.reason}")
+        print("Response Headers:")
+        for header, value in response.getheaders():
+            print(f"  {header}: {value}")
+        
+        response_data = response.read().decode()
+        print("\nResponse Body:")
+        print(response_data)
+        print("=================\n")
+        
+        # Close connection
+        conn.close()
+        
+        return response_data
+        
     except Exception as e:
+        print(f"\n=== Error in send_request ===")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error message: {e}")
+        print("===========================\n")
         return False

@@ -16,7 +16,7 @@ class ShellvizHandler(logging.Handler):
         'version': 1,
         'handlers': {
             'shellviz': {
-                'class': 'shellviz.django_logging.ShellvizHandler',
+                'class': 'shellviz.django.logging.ShellvizHandler',
                 'level': 'INFO',
                 'formatter': 'verbose',
             },
