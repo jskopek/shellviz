@@ -6,7 +6,7 @@ import json as jsonFn
 from .utils_serialize import to_json_string
 from typing import Optional
 from shellviz.utils import append_data
-from .utils_html import parse_request, write_200, write_404, write_cors_headers, write_file, write_json
+from .utils_html import parse_request, write_200, write_404, write_cors_headers, write_file, write_json, BufferedStreamReader
 from .utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
 import os
 
@@ -38,6 +38,7 @@ class ShellvizServer:
         threading.Thread(target=self._run_event_loop, daemon=True).start()  # Run loop in background thread; daemon=True ensures that the thread is killed when the main thread exits
 
     def _run_event_loop(self):
+        
         asyncio.set_event_loop(self.loop) # set this thread's event loop to the main event loop
         self.loop.run_forever() # keep the event loop running
 
@@ -74,36 +75,31 @@ class ShellvizServer:
         async with server:
             await server.serve_forever() # server will run indefinitely until the method's task is `.cancel()`ed
 
+
     async def handle_connection(self, reader, writer):
-        # Peek at the first few bytes to determine if this is a WebSocket connection
+        # Read up to 1024 bytes to determine connection type, but do not lose them
         data = await reader.read(1024)
         if not data:
             return
 
-        # Create a new reader that includes the data we already read
-        new_reader = asyncio.StreamReader()
-        new_reader.feed_data(data)
+        buffered_reader = BufferedStreamReader(data, reader)
 
         # Check if this is a WebSocket handshake request
         if data.startswith(b'GET / HTTP/1.1') and b'Upgrade: websocket' in data:
-            # This is a WebSocket connection
             try:
-                await self.handle_websocket_connection(new_reader, writer)
+                await self.handle_websocket_connection(buffered_reader, writer)
             except (asyncio.CancelledError, GeneratorExit, BrokenPipeError, ConnectionResetError):
-                # These are normal on disconnect/shutdown; silence them
                 pass
             except Exception as e:
-                # Log only truly unexpected errors
                 print(f"Unexpected error in handle_connection: {e}")
         else:
-            # This is an HTTP connection
-            new_reader.feed_eof()
             try:
-                await self.handle_http(new_reader, writer)
+                await self.handle_http(buffered_reader, writer)
             except (asyncio.CancelledError, GeneratorExit, BrokenPipeError, ConnectionResetError):
                 pass
             except Exception as e:
                 print(f"Unexpected error in handle_http: {e}")
+
         # Always ensure the writer is closed
         if not writer.is_closing():
             writer.close()
