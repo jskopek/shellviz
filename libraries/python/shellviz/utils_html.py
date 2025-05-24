@@ -189,24 +189,48 @@ def print_qr(url):
 
 
 
-def send_request(path: str, body: Optional[Union[str, dict]] = None, port: Optional[int] = 5544, method: Optional[str] = 'GET', ip_address: Optional[str] = '127.0.0.1', timeout: Optional[int] = 1) -> Union[str, bool]:
+def send_request(path: str, body: Optional[Union[str, dict]] = None, method: Optional[str] = 'GET', timeout: Optional[int] = 1, base_url: str = 'http://localhost:5544') -> Union[str, bool]:
     """
-    Sends an HTTP request to the local server and returns the response
+    Sends an HTTP request to the specified base_url and returns the response
     If a response is received, returns a decoded value of that response
 
     :param path: The path to send the request to
     :param body: The body of the request; if a dict is provided, it will be converted to a JSON string
-    :param port: The port to send the request to; default to 5544
     :param method: The HTTP method to use; default to GET
-    :param ip_address: The IP address to send the request to; default to 127.0.0.1
-
-    Example:
-        send_request('/path', {'key': 'value'}, port=8080, method='POST')
+    :param timeout: Request timeout in seconds
+    :param base_url: The base URL of the server to send the request to
+    :return: The response from the server or False if the request failed
     """
-    with socket.create_connection((ip_address, port), timeout=timeout) as sock:
+    # Parse the endpoint URL to extract host, port, and scheme
+    from urllib.parse import urlparse
+    parsed = urlparse(base_url)
+    
+    if not parsed.hostname:
+        raise ValueError(f"Invalid base_url: {base_url}")
+    
+    host = parsed.hostname
+    if parsed.port:
+        port = parsed.port
+    else:
+        # Use default ports based on scheme
+        port = 443 if parsed.scheme == 'https' else 80
+    
+    # For HTTPS requests, we need to handle SSL
+    if parsed.scheme == 'https':
+        import ssl
+        context = ssl.create_default_context()
+        sock = socket.create_connection((host, port), timeout=timeout)
+        sock = context.wrap_socket(sock, server_hostname=host)
+    else:
+        sock = socket.create_connection((host, port), timeout=timeout)
+    
+    # Create proper Host header
+    host_header = f'{host}:{port}' if (parsed.scheme == 'http' and port != 80) or (parsed.scheme == 'https' and port != 443) else host
+
+    try:
         headers = [
             f'{method} {path} HTTP/1.1',
-            f'Host: {ip_address}'
+            f'Host: {host_header}'
         ]
         if body:
             if isinstance(body, dict):
@@ -219,6 +243,8 @@ def send_request(path: str, body: Optional[Union[str, dict]] = None, port: Optio
         sock.sendall(request.encode())
         response = sock.recv(1024)
         return response.decode()
+    finally:
+        sock.close()
 
 
 

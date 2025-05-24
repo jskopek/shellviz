@@ -9,15 +9,18 @@ import { WebSocketServer } from 'ws';
 import qrcode from 'qrcode-terminal';
 import { appendData } from './utils.js';
 import { createRequire } from 'module';
-const DEFAULT_PORT = 5544;
+import { SHELLVIZ_PORT, SHELLVIZ_SHOW_URL } from './config.js';
 
 class ShellvizServer {
-    constructor({ port = DEFAULT_PORT, showUrl = true } = {}) {
-        this.port = port;
+    constructor({ port = 5544, showUrl = true } = {}) {
+        // Use config values if available, otherwise use defaults from parameters
+        this.port = SHELLVIZ_PORT || port;
+        const defaultShowUrl = SHELLVIZ_SHOW_URL !== null ? SHELLVIZ_SHOW_URL : showUrl;
+        
         this.entries = [];
         this.clients = new Set();
         this.host = getLocalIp();
-        this._startServer(showUrl);
+        this._startServer(defaultShowUrl);
     }
 
     send(data, { id = null, view = 'log', append = false } = {}) {
