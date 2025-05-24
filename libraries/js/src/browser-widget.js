@@ -205,7 +205,7 @@ class BrowserWidget {
       
       if (embeddedAssets) {
         console.log('Loading ShellViz from embedded assets');
-        this._loadFromEmbeddedAssets(container, embeddedAssets);
+        this._loadFromEmbeddedAssetsSimple(container, embeddedAssets);
         return;
       }
     } catch (error) {
@@ -229,7 +229,13 @@ class BrowserWidget {
   _loadFromEmbeddedAssets(container, embeddedAssets) {
     // Create a mini HTML document structure
     container.innerHTML = `
-      <div id="root" class="shellviz-widget" style="width: 100%; height: 100%;"></div>
+      <div id="root" class="shellviz-widget" style="
+        width: 100%; 
+        height: 100%;
+        /* CSS containment to prevent style leaking */
+        contain: style layout;
+        isolation: isolate;
+      "></div>
       <style>
         .shellviz-widget { 
           margin: 0; 
@@ -238,6 +244,9 @@ class BrowserWidget {
           height: 100%;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
           box-sizing: border-box;
+          /* Additional isolation */
+          position: relative;
+          z-index: 0;
         }
         .shellviz-widget * {
           box-sizing: border-box;
@@ -245,11 +254,11 @@ class BrowserWidget {
       </style>
     `;
 
-    // Inject CSS with scoping to avoid affecting parent page
+    // Inject CSS with minimal scoping to avoid affecting parent page
     const cssContent = embeddedAssets.getEmbeddedCSS();
     if (cssContent) {
       const style = document.createElement('style');
-      // Scope all CSS rules to the widget container
+      // Simple scoping - just add .shellviz-widget to the front of everything
       const scopedCSS = this._scopeCSS(cssContent, '.shellviz-widget');
       style.textContent = scopedCSS;
       document.head.appendChild(style);
@@ -274,6 +283,67 @@ class BrowserWidget {
     }
   }
 
+  // Alternative ultra-simple approach - no CSS parsing needed
+  _loadFromEmbeddedAssetsSimple(container, embeddedAssets) {
+    // Create a highly specific container that isolates styles
+    container.innerHTML = `
+      <div id="root" class="shellviz-widget-isolated" data-shellviz="true" style="
+        width: 100%; 
+        height: 100%;
+        contain: style layout;
+        isolation: isolate;
+        position: relative;
+        z-index: 0;
+      "></div>
+      <style>
+        /* High specificity styles for the widget */
+        [data-shellviz="true"] { 
+          margin: 0 !important; 
+          padding: 0 !important; 
+          width: 100% !important; 
+          height: 100% !important;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+          box-sizing: border-box !important;
+        }
+        [data-shellviz="true"] * {
+          box-sizing: border-box !important;
+        }
+      </style>
+    `;
+
+    // Inject CSS without scoping - relies on containment
+    const cssContent = embeddedAssets.getEmbeddedCSS();
+    if (cssContent) {
+      const style = document.createElement('style');
+      // Add CSS with high specificity prefix
+      const prefixedCSS = `
+        /* ShellViz Widget Styles - Contained */
+        .shellviz-widget-isolated { 
+          ${cssContent.replace(/body\b/g, '&').replace(/html\b/g, '&')}
+        }
+      `;
+      style.textContent = prefixedCSS;
+      document.head.appendChild(style);
+    }
+
+    // Inject and execute JavaScript
+    const jsContent = embeddedAssets.getEmbeddedJS();
+    if (jsContent) {
+      const script = document.createElement('script');
+      script.textContent = jsContent;
+      
+      script.onload = () => {
+        console.log('ShellViz React app loaded from embedded assets (simple)');
+      };
+      script.onerror = () => {
+        console.error('Failed to execute embedded JavaScript');
+        this._showFallbackUI(container, 'Failed to execute embedded assets');
+      };
+      document.head.appendChild(script);
+    } else {
+      this._showFallbackUI(container, 'No embedded JavaScript found');
+    }
+  }
 
   _showFallbackUI(container, errorInfo) {
     container.innerHTML = `
@@ -291,173 +361,46 @@ class BrowserWidget {
     `;
   }
 
-
   // Helper method to scope CSS to a specific selector
   _scopeCSS(cssContent, scopeSelector) {
     try {
-      // Improved CSS scoping with better parsing
-      return this._processCSS(cssContent, scopeSelector);
+      // Simple regex-based scoping - much simpler than parsing
+      return cssContent
+        // Handle body/html selectors
+        .replace(/\bbody\b/g, scopeSelector)
+        .replace(/\bhtml\b/g, scopeSelector)
+        // Handle universal selector
+        .replace(/^\s*\*\s*{/gm, `${scopeSelector} * {`)
+        // Handle regular selectors (add scope to beginning of each rule)
+        .replace(/([^{}]+){/g, (match, selectors) => {
+          // Skip @-rules (media, keyframes, etc.)
+          if (selectors.trim().startsWith('@')) {
+            return match;
+          }
+          
+          const scopedSelectors = selectors
+            .split(',')
+            .map(selector => {
+              selector = selector.trim();
+              if (!selector || selector.includes(scopeSelector)) {
+                return selector;
+              }
+              
+              // Don't scope keyframes, font-face, etc.
+              if (selector.includes('@')) {
+                return selector;
+              }
+              
+              return `${scopeSelector} ${selector}`;
+            })
+            .join(', ');
+          
+          return `${scopedSelectors} {`;
+        });
     } catch (error) {
       console.warn('Error scoping CSS, falling back to original:', error);
       return cssContent;
     }
-  }
-
-  _processCSS(cssContent, scopeSelector) {
-    let result = '';
-    let pos = 0;
-    let depth = 0;
-    let currentRule = '';
-    let inAtRule = false;
-    let atRuleType = '';
-
-    while (pos < cssContent.length) {
-      const char = cssContent[pos];
-      
-      if (char === '@' && depth === 0) {
-        // Start of at-rule
-        inAtRule = true;
-        atRuleType = '';
-        currentRule = char;
-      } else if (inAtRule && (char === ' ' || char === '\t' || char === '\n') && atRuleType === '') {
-        // Extract at-rule type
-        atRuleType = currentRule.slice(1).toLowerCase();
-        currentRule += char;
-      } else if (char === '{') {
-        depth++;
-        currentRule += char;
-        
-        if (depth === 1 && !inAtRule) {
-          // Regular CSS rule - scope the selectors
-          const parts = currentRule.split('{');
-          if (parts.length === 2) {
-            const selectors = parts[0].trim();
-            const scopedSelectors = this._scopeSelectors(selectors, scopeSelector);
-            result += scopedSelectors + ' {';
-          } else {
-            result += currentRule;
-          }
-          currentRule = '';
-        } else if (inAtRule && (atRuleType === 'media' || atRuleType === 'supports' || atRuleType === 'container')) {
-          // At-rules that can contain other rules
-          result += currentRule;
-          currentRule = '';
-        } else {
-          // Other cases (keyframes, etc.)
-          result += currentRule;
-          currentRule = '';
-        }
-      } else if (char === '}') {
-        depth--;
-        currentRule += char;
-        
-        if (depth === 0) {
-          if (inAtRule && (atRuleType === 'keyframes' || atRuleType === 'font-face' || atRuleType === 'page')) {
-            // At-rules that don't need scoping
-            result += currentRule;
-          } else {
-            // End of rule or media query
-            result += currentRule;
-          }
-          currentRule = '';
-          inAtRule = false;
-          atRuleType = '';
-        } else {
-          result += currentRule;
-          currentRule = '';
-        }
-      } else {
-        currentRule += char;
-      }
-      
-      pos++;
-    }
-    
-    // Add any remaining content
-    if (currentRule.trim()) {
-      result += currentRule;
-    }
-    
-    return result;
-  }
-
-  _scopeSelectors(selectors, scopeSelector) {
-    return selectors
-      .split(',')
-      .map(selector => {
-        selector = selector.trim();
-        
-        // Skip empty selectors
-        if (!selector) return selector;
-        
-        // Don't scope selectors that are already scoped
-        if (selector.includes(scopeSelector)) {
-          return selector;
-        }
-        
-        // Handle special body/html selectors that need transformation
-        if (selector === 'body' || selector === 'html' || selector === '*') {
-          return scopeSelector;
-        }
-        
-        // Handle body.class selectors (like body.dark)
-        if (selector.match(/^body\./)) {
-          const className = selector.replace('body.', '');
-          return `${scopeSelector}.${className}`;
-        }
-        
-        // Handle html.class selectors
-        if (selector.match(/^html\./)) {
-          const className = selector.replace('html.', '');
-          return `${scopeSelector}.${className}`;
-        }
-        
-        // Handle pseudo-elements and pseudo-classes at the start
-        if (selector.startsWith('::') || selector.startsWith(':')) {
-          return `${scopeSelector}${selector}`;
-        }
-        
-        // Handle complex selectors with pseudo-classes/elements
-        const pseudoMatch = selector.match(/^([^:]+)(:.*)$/);
-        if (pseudoMatch) {
-          const [, baseSelector, pseudo] = pseudoMatch;
-          const base = baseSelector.trim();
-          
-          if (base === 'body' || base === 'html') {
-            return `${scopeSelector}${pseudo}`;
-          }
-          
-          // Handle body.class:pseudo or html.class:pseudo
-          if (base.match(/^body\./)) {
-            const className = base.replace('body.', '');
-            return `${scopeSelector}.${className}${pseudo}`;
-          }
-          
-          if (base.match(/^html\./)) {
-            const className = base.replace('html.', '');
-            return `${scopeSelector}.${className}${pseudo}`;
-          }
-          
-          return `${scopeSelector} ${base}${pseudo}`;
-        }
-        
-        // Handle descendant selectors that start with body or html
-        if (selector.startsWith('body ') || selector.startsWith('html ')) {
-          const rest = selector.replace(/^(body|html) /, '');
-          return `${scopeSelector} ${rest}`;
-        }
-        
-        // Handle body.class descendant selectors
-        const bodyClassMatch = selector.match(/^body\.([^\\s]+)\\s+(.+)$/);
-        if (bodyClassMatch) {
-          const [, className, descendant] = bodyClassMatch;
-          return `${scopeSelector}.${className} ${descendant}`;
-        }
-        
-        // Regular selectors
-        return `${scopeSelector} ${selector}`;
-      })
-      .join(', ');
   }
 }
 
