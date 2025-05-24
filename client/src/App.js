@@ -126,19 +126,13 @@ function App() {
 		if (atBottom) {
 			const container = document.getElementById('shellviz-app-root');
 			if (container) {
-				container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
-			} else {
-				window.scrollTo({ top: document.body.scrollHeight, behavior: "instant" });
+				container.scrollTo({ top: container.scrollHeight, behavior: "instant" });
 			}
 		}
 	}, [atBottom, entries]);
 
 	/* / Handle auto-scrolling */
 
-	useEffect(() => {
-		console.log('entries updated', entries)
-	}, [entries])
-	console.log('about to render', entries)
 	return (
 		<main className="">
 			{/* center image using tailwind */}
