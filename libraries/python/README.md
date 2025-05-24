@@ -98,6 +98,117 @@ To install into a local python environment, run the following command:
 poetry add --no-cache ~/[path-to-repo]/dist/shellviz-0.x.x-py3-none-any.whl
 ```
 
+# Beta Versioning & TestPyPI Workflow
+
+For testing and iterating on new features, Shellviz uses beta versioning following PEP 440 standards and TestPyPI for safe deployment testing.
+
+## Beta Version Format
+
+Beta versions follow the format `X.Y.Zb{number}`:
+- `0.5.0b1` - First beta of version 0.5.0
+- `0.5.0b2` - Second beta of version 0.5.0
+- `0.5.0b15` - Fifteenth beta (final beta before release)
+
+Update the version in `pyproject.toml`:
+```toml
+[tool.poetry]
+version = "0.5.0b1"
+```
+
+## Setting Up TestPyPI
+
+TestPyPI is a separate instance of PyPI for testing package uploads without affecting the main PyPI repository.
+
+### 1. Create TestPyPI Account
+Visit https://test.pypi.org/account/register/ to create an account.
+
+### 2. Generate API Token
+1. Go to https://test.pypi.org/manage/account/token/
+2. Click "Add API token"
+3. Name it (e.g., "poetry-cli")
+4. Set scope to "Entire account"
+5. Copy the generated token (starts with `pypi-`)
+
+### 3. Configure Poetry
+```bash
+# Add TestPyPI repository
+poetry config repositories.test-pypi https://test.pypi.org/legacy/
+
+# Set your API token (replace with your actual token)
+poetry config pypi-token.test-pypi pypi-AgEIcHlwaS5vcmcCJGYwZjE3...
+```
+
+## Publishing to TestPyPI
+
+```bash
+# Build the package
+poetry build
+
+# Upload to TestPyPI
+poetry publish -r test-pypi
+```
+
+## Installing from TestPyPI
+
+### Using pip
+```bash
+# Install specific beta version
+pip install --index-url https://test.pypi.org/simple/ shellviz==0.5.0b1
+
+# Install latest pre-release
+pip install --index-url https://test.pypi.org/simple/ --pre shellviz
+```
+
+### Using Poetry in Another Project
+
+First, add TestPyPI as a source in your target project:
+```bash
+poetry source add test-pypi https://test.pypi.org/simple/ --priority=explicit
+```
+
+Then install the beta package:
+```bash
+# Install specific beta version
+poetry add shellviz==0.5.0b1 --source test-pypi
+
+# Or allow pre-releases
+poetry add shellviz --allow-prereleases --source test-pypi
+```
+
+### Manual pyproject.toml Configuration
+```toml
+[[tool.poetry.source]]
+name = "test-pypi"
+url = "https://test.pypi.org/simple/"
+priority = "explicit"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+shellviz = {version = "0.5.0b1", source = "test-pypi"}
+```
+
+## Recommended Beta Workflow
+
+1. **Early Development (b1-b10)**: Use TestPyPI exclusively
+   - Rapid iteration without cluttering main PyPI
+   - Test full upload/download workflow
+   - Share with early testers
+
+2. **Final Testing (b11-b15)**: Optionally use main PyPI
+   - Wider audience for final validation
+   - Users must explicitly request with `--pre` flag
+   - Clean transition to stable release
+
+3. **Stable Release**: Publish `0.5.0` to main PyPI
+   - Remove beta versions from TestPyPI if desired
+   - Update documentation and changelogs
+
+## Version Management Tips
+
+- **Sequential numbering**: Always increment beta numbers (`b1`, `b2`, `b3`, etc.)
+- **No gaps**: Don't skip beta numbers to maintain clear progression
+- **Final release**: Go directly from final beta to stable (e.g., `0.5.0b15` → `0.5.0`)
+- **Version ordering**: Python correctly sorts `0.5.0b1 < 0.5.0b2 < 0.5.0rc1 < 0.5.0`
 
 # ShellViz Configuration
 
