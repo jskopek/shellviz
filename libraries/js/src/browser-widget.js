@@ -109,7 +109,26 @@ class BrowserWidget {
       overflow: hidden;
       z-index: 10001;
       border: 1px solid #e0e0e0;
+      min-width: 250px;
+      min-height: 300px;
+      max-width: 800px;
+      max-height: 800px;
     `;
+
+    // Create content wrapper for React app
+    const contentWrapper = document.createElement('div');
+    contentWrapper.id = 'shellviz-content';
+    contentWrapper.style.cssText = `
+      width: 100%;
+      height: 100%;
+      position: relative;
+      z-index: 1;
+    `;
+    
+    this.panel.appendChild(contentWrapper);
+
+    // Add resize handles to the panel (not the content wrapper)
+    this._addResizeHandles(this.panel);
 
     document.body.appendChild(this.panel);
 
@@ -158,12 +177,135 @@ class BrowserWidget {
 
     document.body.appendChild(header);
 
-    // Load and inject the React app directly into panel (preserving original behavior)
-    this._loadReactApp(this.panel);
+    // Load and inject the React app into the content wrapper (not the panel directly)
+    this._loadReactApp(contentWrapper);
 
     // Hide bubble when expanded
     this.bubble.style.display = 'none';
     this.isExpanded = true;
+  }
+
+  _addResizeHandles(panel) {
+    // Create resize handles
+    const topHandle = document.createElement('div');
+    const leftHandle = document.createElement('div');
+    const topLeftHandle = document.createElement('div');
+
+    // Top resize handle
+    topHandle.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 8px;
+      right: 8px;
+      height: 8px;
+      cursor: n-resize;
+      z-index: 10003;
+      background: transparent;
+    `;
+
+    // Left resize handle  
+    leftHandle.style.cssText = `
+      position: absolute;
+      left: 0;
+      top: 8px;
+      bottom: 8px;
+      width: 8px;
+      cursor: w-resize;
+      z-index: 10003;
+      background: transparent;
+    `;
+
+    // Top-left corner resize handle
+    topLeftHandle.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 8px;
+      height: 8px;
+      cursor: nw-resize;
+      z-index: 10004;
+      background: transparent;
+    `;
+
+    panel.appendChild(topHandle);
+    panel.appendChild(leftHandle);
+    panel.appendChild(topLeftHandle);
+
+    // Add resize functionality
+    this._addResizeEventListeners(topHandle, 'top');
+    this._addResizeEventListeners(leftHandle, 'left');
+    this._addResizeEventListeners(topLeftHandle, 'top-left');
+  }
+
+  _addResizeEventListeners(handle, direction) {
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight;
+
+    handle.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      isResizing = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      
+      const rect = this.panel.getBoundingClientRect();
+      startWidth = rect.width;
+      startHeight = rect.height;
+      
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = handle.style.cursor;
+
+      const handleMouseMove = (e) => {
+        if (!isResizing) return;
+
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+
+        if (direction === 'top' || direction === 'top-left') {
+          newHeight = startHeight - deltaY;
+        }
+
+        if (direction === 'left' || direction === 'top-left') {
+          newWidth = startWidth - deltaX;
+        }
+
+        // Apply constraints
+        newWidth = Math.max(250, Math.min(800, newWidth));
+        newHeight = Math.max(300, Math.min(800, newHeight));
+
+        // Update panel dimensions while keeping position fixed
+        this.panel.style.width = newWidth + 'px';
+        this.panel.style.height = newHeight + 'px';
+        // Keep bottom and right fixed at 20px - don't change these
+        // this.panel.style.bottom = '20px';
+        // this.panel.style.right = '20px';
+
+        // Update header position to stay above panel
+        const header = document.getElementById('shellviz-header');
+        if (header) {
+          const panelRect = this.panel.getBoundingClientRect();
+          const headerBottom = window.innerHeight - panelRect.top + 10;
+          const headerRight = window.innerWidth - panelRect.right + (panelRect.width / 2) - 15;
+          header.style.bottom = headerBottom + 'px';
+          header.style.right = headerRight + 'px';
+        }
+      };
+
+      const handleMouseUp = () => {
+        isResizing = false;
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    });
   }
 
   _collapseWidget() {
