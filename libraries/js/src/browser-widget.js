@@ -208,11 +208,6 @@ class BrowserWidget {
         this._loadFromEmbeddedAssets(container, embeddedAssets);
         return;
       }
-
-      // Fall back to server loading
-      console.log('Loading ShellViz from server assets');
-      await this._loadFromServer(container);
-      
     } catch (error) {
       console.error('Error loading React app:', error);
       this._showFallbackUI(container, error.message);
@@ -234,18 +229,29 @@ class BrowserWidget {
   _loadFromEmbeddedAssets(container, embeddedAssets) {
     // Create a mini HTML document structure
     container.innerHTML = `
-      <div id="root" style="width: 100%; height: 100%;"></div>
+      <div id="root" class="shellviz-widget" style="width: 100%; height: 100%;"></div>
       <style>
-        body, #root { margin: 0; padding: 0; width: 100%; height: 100%; }
-        .shellviz-widget-container { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }
+        .shellviz-widget { 
+          margin: 0; 
+          padding: 0; 
+          width: 100%; 
+          height: 100%;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+          box-sizing: border-box;
+        }
+        .shellviz-widget * {
+          box-sizing: border-box;
+        }
       </style>
     `;
 
-    // Inject CSS
+    // Inject CSS with scoping to avoid affecting parent page
     const cssContent = embeddedAssets.getEmbeddedCSS();
     if (cssContent) {
       const style = document.createElement('style');
-      style.textContent = cssContent;
+      // Scope all CSS rules to the widget container
+      const scopedCSS = this._scopeCSS(cssContent, '.shellviz-widget');
+      style.textContent = scopedCSS;
       document.head.appendChild(style);
     }
 
@@ -268,53 +274,6 @@ class BrowserWidget {
     }
   }
 
-  async _loadFromServer(container) {
-    // Base URL for assets - try to find them relative to current script
-    const baseUrl = this._getAssetBaseUrl();
-    
-    // Create a mini HTML document structure
-    container.innerHTML = `
-      <div id="root" style="width: 100%; height: 100%;"></div>
-      <style>
-        body, #root { margin: 0; padding: 0; width: 100%; height: 100%; }
-        .shellviz-widget-container { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }
-      </style>
-    `;
-
-    // Try to load asset manifest to get correct file names
-    let assetManifest;
-    try {
-      const manifestResponse = await fetch(`${baseUrl}/asset-manifest.json`);
-      if (manifestResponse.ok) {
-        assetManifest = await manifestResponse.json();
-      }
-    } catch (e) {
-      console.warn('Could not load asset manifest, using default filenames');
-    }
-
-    // Get CSS and JS file paths
-    const cssFile = assetManifest?.files?.['main.css'] || '/static/css/main.5793353d.css';
-    const jsFile = assetManifest?.files?.['main.js'] || '/static/js/main.e42d2d9b.js';
-
-    // Load CSS
-    const cssLink = document.createElement('link');
-    cssLink.rel = 'stylesheet';
-    cssLink.href = `${baseUrl}${cssFile}`;
-    document.head.appendChild(cssLink);
-
-    // Load JavaScript
-    const script = document.createElement('script');
-    script.src = `${baseUrl}${jsFile}`;
-    script.onload = () => {
-      console.log('ShellViz React app loaded successfully from server');
-      // The React app should automatically mount to the #root element
-    };
-    script.onerror = () => {
-      console.error('Failed to load ShellViz React app from server');
-      this._showFallbackUI(container, baseUrl);
-    };
-    document.head.appendChild(script);
-  }
 
   _showFallbackUI(container, errorInfo) {
     container.innerHTML = `
@@ -332,24 +291,173 @@ class BrowserWidget {
     `;
   }
 
-  _getAssetBaseUrl() {
-    // Try to determine base URL for assets
-    // First check if we're running with a server
-    if (this.client.existingServerFound && this.client.baseUrl) {
-      return this.client.baseUrl;
-    }
 
-    // Otherwise try to find assets relative to current location
-    // This assumes the built assets are served alongside the current page
-    const currentPath = window.location.pathname;
-    if (currentPath.includes('/build/') || currentPath.includes('/client_build/')) {
-      // We're likely in a development environment, try to find the assets
-      const basePath = currentPath.split('/build/')[0] || currentPath.split('/client_build/')[0];
-      return `${window.location.origin}${basePath}/build/client_build`;
+  // Helper method to scope CSS to a specific selector
+  _scopeCSS(cssContent, scopeSelector) {
+    try {
+      // Improved CSS scoping with better parsing
+      return this._processCSS(cssContent, scopeSelector);
+    } catch (error) {
+      console.warn('Error scoping CSS, falling back to original:', error);
+      return cssContent;
     }
+  }
 
-    // Default to trying localhost server
-    return `http://localhost:${this.client.port}`;
+  _processCSS(cssContent, scopeSelector) {
+    let result = '';
+    let pos = 0;
+    let depth = 0;
+    let currentRule = '';
+    let inAtRule = false;
+    let atRuleType = '';
+
+    while (pos < cssContent.length) {
+      const char = cssContent[pos];
+      
+      if (char === '@' && depth === 0) {
+        // Start of at-rule
+        inAtRule = true;
+        atRuleType = '';
+        currentRule = char;
+      } else if (inAtRule && (char === ' ' || char === '\t' || char === '\n') && atRuleType === '') {
+        // Extract at-rule type
+        atRuleType = currentRule.slice(1).toLowerCase();
+        currentRule += char;
+      } else if (char === '{') {
+        depth++;
+        currentRule += char;
+        
+        if (depth === 1 && !inAtRule) {
+          // Regular CSS rule - scope the selectors
+          const parts = currentRule.split('{');
+          if (parts.length === 2) {
+            const selectors = parts[0].trim();
+            const scopedSelectors = this._scopeSelectors(selectors, scopeSelector);
+            result += scopedSelectors + ' {';
+          } else {
+            result += currentRule;
+          }
+          currentRule = '';
+        } else if (inAtRule && (atRuleType === 'media' || atRuleType === 'supports' || atRuleType === 'container')) {
+          // At-rules that can contain other rules
+          result += currentRule;
+          currentRule = '';
+        } else {
+          // Other cases (keyframes, etc.)
+          result += currentRule;
+          currentRule = '';
+        }
+      } else if (char === '}') {
+        depth--;
+        currentRule += char;
+        
+        if (depth === 0) {
+          if (inAtRule && (atRuleType === 'keyframes' || atRuleType === 'font-face' || atRuleType === 'page')) {
+            // At-rules that don't need scoping
+            result += currentRule;
+          } else {
+            // End of rule or media query
+            result += currentRule;
+          }
+          currentRule = '';
+          inAtRule = false;
+          atRuleType = '';
+        } else {
+          result += currentRule;
+          currentRule = '';
+        }
+      } else {
+        currentRule += char;
+      }
+      
+      pos++;
+    }
+    
+    // Add any remaining content
+    if (currentRule.trim()) {
+      result += currentRule;
+    }
+    
+    return result;
+  }
+
+  _scopeSelectors(selectors, scopeSelector) {
+    return selectors
+      .split(',')
+      .map(selector => {
+        selector = selector.trim();
+        
+        // Skip empty selectors
+        if (!selector) return selector;
+        
+        // Don't scope selectors that are already scoped
+        if (selector.includes(scopeSelector)) {
+          return selector;
+        }
+        
+        // Handle special body/html selectors that need transformation
+        if (selector === 'body' || selector === 'html' || selector === '*') {
+          return scopeSelector;
+        }
+        
+        // Handle body.class selectors (like body.dark)
+        if (selector.match(/^body\./)) {
+          const className = selector.replace('body.', '');
+          return `${scopeSelector}.${className}`;
+        }
+        
+        // Handle html.class selectors
+        if (selector.match(/^html\./)) {
+          const className = selector.replace('html.', '');
+          return `${scopeSelector}.${className}`;
+        }
+        
+        // Handle pseudo-elements and pseudo-classes at the start
+        if (selector.startsWith('::') || selector.startsWith(':')) {
+          return `${scopeSelector}${selector}`;
+        }
+        
+        // Handle complex selectors with pseudo-classes/elements
+        const pseudoMatch = selector.match(/^([^:]+)(:.*)$/);
+        if (pseudoMatch) {
+          const [, baseSelector, pseudo] = pseudoMatch;
+          const base = baseSelector.trim();
+          
+          if (base === 'body' || base === 'html') {
+            return `${scopeSelector}${pseudo}`;
+          }
+          
+          // Handle body.class:pseudo or html.class:pseudo
+          if (base.match(/^body\./)) {
+            const className = base.replace('body.', '');
+            return `${scopeSelector}.${className}${pseudo}`;
+          }
+          
+          if (base.match(/^html\./)) {
+            const className = base.replace('html.', '');
+            return `${scopeSelector}.${className}${pseudo}`;
+          }
+          
+          return `${scopeSelector} ${base}${pseudo}`;
+        }
+        
+        // Handle descendant selectors that start with body or html
+        if (selector.startsWith('body ') || selector.startsWith('html ')) {
+          const rest = selector.replace(/^(body|html) /, '');
+          return `${scopeSelector} ${rest}`;
+        }
+        
+        // Handle body.class descendant selectors
+        const bodyClassMatch = selector.match(/^body\.([^\\s]+)\\s+(.+)$/);
+        if (bodyClassMatch) {
+          const [, className, descendant] = bodyClassMatch;
+          return `${scopeSelector}.${className} ${descendant}`;
+        }
+        
+        // Regular selectors
+        return `${scopeSelector} ${selector}`;
+      })
+      .join(', ');
   }
 }
 
