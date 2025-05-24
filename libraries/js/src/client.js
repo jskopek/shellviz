@@ -17,10 +17,10 @@ class ShellvizClient {
     this.baseUrl = SHELLVIZ_URL || opts.url || `http://localhost:${this.port}`;
     
     this.existingServerFound = false;
-    this._ensureServer();
+    this._findOrStartServer();
   }
 
-  async _ensureServer() {
+  async _findOrStartServer() {
     if (this.existingServerFound) return;
     const exists = await this._checkExistingServer();
     
@@ -30,12 +30,13 @@ class ShellvizClient {
     
     if (!exists && !this.server && isLocalhost) {
       // Start server (ShellvizServer in Node.js, ShellvizServerInBrowser in browser via package.json browser shim)
+      // console.log('starting server')
       this.server = new ShellvizServer({ port: this.port, showUrl: true });
       await new Promise(r => setTimeout(r, 200));
       
       // Auto-show widget when using local server in browser
       if (isBrowser && !this._browserWidgetShown) {
-        this.renderInBrowser();
+        this.show();
         this._browserWidgetShown = true;
       }
     } else if (exists) {
@@ -57,10 +58,7 @@ class ShellvizClient {
   }
 
   async send(data, { id = null, view = 'log', append = false, wait = false } = {}) {
-    if (typeof window === 'undefined') {
-      await this._ensureServer();
-    }
-    
+    await this._findOrStartServer();
     await fetch(`${this.baseUrl}/api/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -70,9 +68,7 @@ class ShellvizClient {
   }
 
   async clear() {
-    if (typeof window === 'undefined') {
-      await this._ensureServer();
-    }
+    await this._findOrStartServer();
     await fetch(`${this.baseUrl}/api/clear`, { method: 'DELETE' });
   }
 
@@ -111,7 +107,7 @@ class ShellvizClient {
   stack = (locals = null, id = null) => { this.send(getStackTrace(locals), { id, view: 'stack' }); }
 
   // Render in browser function - creates a floating widget with the ShellViz React client
-  renderInBrowser = () => {
+  show = () => {
     if (!this.browserWidget) {
       this.browserWidget = new BrowserWidget(this);
     }
@@ -145,9 +141,10 @@ export function card(data, id = null, append = false) { return _global().card(da
 export function location(data, id = null, append = false) { return _global().location(data, id, append); }
 export function raw(data, id = null, append = false) { return _global().raw(data, id, append); }
 export function stack(locals = null, id = null) { return _global().stack(locals, id); }
-export function renderInBrowser() { return _global().renderInBrowser(); }
+export function show() { return _global().show(); }
 export function Shellviz() { return _global(); }
 
-if (typeof window !== 'undefined') {
-  window.shellviz = _global();
-}
+// if (typeof window !== 'undefined') {
+//   console.log('shellviz', _global());
+//   window.shellviz = _global();
+// }

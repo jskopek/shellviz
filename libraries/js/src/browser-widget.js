@@ -10,6 +10,9 @@ class BrowserWidget {
     this.isExpanded = false;
     this.bubble = null;
     this.panel = null;
+    
+    // Load saved preferences
+    this.preferences = this._loadPreferences();
   }
 
   show() {
@@ -25,6 +28,11 @@ class BrowserWidget {
 
     this._createBubble();
     this.isVisible = true;
+    
+    // If the user had the panel expanded when they last used it, expand it automatically
+    if (this.preferences.isExpanded) {
+      this._expandWidget();
+    }
   }
 
   hide() {
@@ -94,15 +102,15 @@ class BrowserWidget {
   _expandWidget() {
     if (this.isExpanded) return;
 
-    // Create expanded panel
+    // Create expanded panel using saved dimensions
     this.panel = document.createElement('div');
     this.panel.id = 'shellviz-panel';
     this.panel.style.cssText = `
       position: fixed;
       bottom: 20px;
       right: 20px;
-      width: 300px;
-      height: 500px;
+      width: ${this.preferences.width}px;
+      height: ${this.preferences.height}px;
       background: white;
       border-radius: 12px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.3);
@@ -135,10 +143,16 @@ class BrowserWidget {
     // Create floating header chevron above the panel
     const header = document.createElement('div');
     header.id = 'shellviz-header';
+    
+    // Calculate header position based on actual panel dimensions
+    const panelRect = this.panel.getBoundingClientRect();
+    const headerBottom = window.innerHeight - panelRect.top + 10;
+    const headerRight = window.innerWidth - panelRect.right + (panelRect.width / 2) - 15;
+    
     header.style.cssText = `
       position: fixed;
-      bottom: 530px;
-      right: 135px;
+      bottom: ${headerBottom}px;
+      right: ${headerRight}px;
       width: 30px;
       height: 20px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -183,6 +197,9 @@ class BrowserWidget {
     // Hide bubble when expanded
     this.bubble.style.display = 'none';
     this.isExpanded = true;
+    
+    // Save expanded state
+    this._updateExpandedState(true);
   }
 
   _addResizeHandles(panel) {
@@ -301,6 +318,12 @@ class BrowserWidget {
         document.body.style.cursor = '';
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
+        
+        // Save the new dimensions when resize is complete
+        if (this.panel) {
+          const rect = this.panel.getBoundingClientRect();
+          this._updateDimensions(rect.width, rect.height);
+        }
       };
 
       document.addEventListener('mousemove', handleMouseMove);
@@ -326,6 +349,9 @@ class BrowserWidget {
     // Show bubble again
     this.bubble.style.display = 'flex';
     this.isExpanded = false;
+    
+    // Save collapsed state
+    this._updateExpandedState(false);
   }
 
   async _loadReactApp(container) {
@@ -431,6 +457,48 @@ class BrowserWidget {
     container.innerHTML = `
       <div style="padding: 20px; text-align: center; color: #666;">Error: ${typeof errorInfo === 'string' ? errorInfo : 'Asset loading failed'}</div>
     `;
+  }
+
+  _loadPreferences() {
+    try {
+      const saved = localStorage.getItem('shellviz-widget-preferences');
+      if (saved) {
+        const preferences = JSON.parse(saved);
+        return {
+          width: preferences.width || 300,
+          height: preferences.height || 500,
+          isExpanded: preferences.isExpanded || false
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to load widget preferences:', error);
+    }
+    
+    // Default preferences
+    return {
+      width: 300,
+      height: 500,
+      isExpanded: false
+    };
+  }
+
+  _savePreferences() {
+    try {
+      localStorage.setItem('shellviz-widget-preferences', JSON.stringify(this.preferences));
+    } catch (error) {
+      console.warn('Failed to save widget preferences:', error);
+    }
+  }
+
+  _updateDimensions(width, height) {
+    this.preferences.width = width;
+    this.preferences.height = height;
+    this._savePreferences();
+  }
+
+  _updateExpandedState(isExpanded) {
+    this.preferences.isExpanded = isExpanded;
+    this._savePreferences();
   }
 }
 

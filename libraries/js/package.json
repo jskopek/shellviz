@@ -1,7 +1,7 @@
 {
   "name": "shellviz",
   "type": "module",
-  "version": "0.2.15-beta.0",
+  "version": "0.5.0-beta.0",
   "description": "Visualization toolkit for shell scripts and command-line tools",
   "types": "./build/client.d.ts",
   "unpkg": "./build/browser_client.umd.js",
