@@ -1,4 +1,4 @@
-from asyncio import StreamReader, StreamWriter
+from asyncio import StreamReader, StreamWriter, IncompleteReadError
 from dataclasses import dataclass
 import json
 import mimetypes
@@ -251,7 +251,7 @@ class BufferedStreamReader:
         while n > 0:
             chunk = await self.read(n)
             if not chunk:
-                raise asyncio.IncompleteReadError(b''.join(chunks), n)
+                raise IncompleteReadError(b''.join(chunks), n)
             chunks.append(chunk)
             n -= len(chunk)
         return b''.join(chunks)
@@ -262,7 +262,7 @@ class BufferedStreamReader:
         while True:
             c = await self.read(1)
             if not c:
-                raise asyncio.IncompleteReadError(line, len(separator))
+                raise IncompleteReadError(line, len(separator))
             line += c
             if line.endswith(separator):
                 break

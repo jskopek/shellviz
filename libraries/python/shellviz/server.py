@@ -5,7 +5,7 @@ import time
 import json as jsonFn
 from .utils_serialize import to_json_string
 from typing import Optional
-from shellviz.utils import append_data
+from .utils import append_data
 from .utils_html import parse_request, write_200, write_404, write_cors_headers, write_file, write_json, BufferedStreamReader
 from .utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
 import os
@@ -165,26 +165,24 @@ class ShellvizServer:
     # -- WebSocket server methods --
     async def handle_websocket_connection(self, reader, writer):
         try:
-            # Perform WebSocket handshake
             await perform_websocket_handshake(reader, writer)
             self.websocket_clients.add(writer)
-            # send any pending updates to clients via websocket
             asyncio.run_coroutine_threadsafe(self.send_pending_entries_to_websocket_clients(), self.loop)
             try:
                 while True:
                     try:
                         message = await receive_websocket_message(reader)
+                        if message is None:
+                            break # [WebSocket] received None, connection likely closed"
+                        elif message == "":
+                            continue # [WebSocket] received empty message, continuing"
                     except (asyncio.CancelledError, GeneratorExit, ConnectionResetError, BrokenPipeError):
-                        break  # Normal disconnect
-                    if message is None:
-                        break  # Connection was closed
-                    # Process the message as needed (e.g., log, process, respond, etc.)
-            except (asyncio.CancelledError, GeneratorExit, ConnectionResetError, BrokenPipeError):
-                pass  # Normal disconnect
+                        break # [WebSocket] disconnect or cancellation"
+                    except Exception as e:
+                        break # [WebSocket] error receiving message"
             except Exception as e:
-                print(f"WebSocket error: {e}")
+                pass # [WebSocket] error in message loop"
         finally:
-            # Ensure the client is removed from the set even if another exception occurs
             self.websocket_clients.discard(writer)
             if not writer.is_closing():
                 writer.close()
@@ -266,4 +264,3 @@ class ShellvizServer:
     def wait(self):
         while self.pending_entries:
             time.sleep(0.01)
-        
