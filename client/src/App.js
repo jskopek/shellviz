@@ -110,15 +110,8 @@ function App() {
 	useEffect(() => {
 		const handleScroll = () => {
 			const container = document.getElementById('shellviz-app-root');
-			if (container) {
-				// We're in a widget, check widget scroll
-				const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100;
-				setAtBottom(atBottom);
-			} else {
-				// Normal full page mode
-				const atBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 100;
-				setAtBottom(atBottom);
-			}
+			const atBottom = container ? container.scrollTop + container.clientHeight >= container.scrollHeight - 100 : true;
+			setAtBottom(atBottom);
 		};
 		
 		const scrollTarget = document.getElementById('shellviz-app-root') || window;
@@ -130,9 +123,9 @@ function App() {
 	useEffect(() => {
 		if (atBottom) {
 			const container = document.getElementById('shellviz-app-root');
-			if (container) {
+			setTimeout(() => {
 				container.scrollTo({ top: container.scrollHeight, behavior: "instant" });
-			}
+			}, 0);
 		}
 	}, [atBottom, entries]);
 
