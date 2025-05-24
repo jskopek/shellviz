@@ -113,14 +113,53 @@ class BrowserWidget {
 
     document.body.appendChild(this.panel);
 
-    // Load and inject the React app
-    this._loadReactApp(this.panel);
+    // Create floating header chevron above the panel
+    const header = document.createElement('div');
+    header.id = 'shellviz-header';
+    header.style.cssText = `
+      position: fixed;
+      bottom: 530px;
+      right: 135px;
+      width: 30px;
+      height: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 15px 15px 4px 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10002;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: all 0.2s ease;
+    `;
 
-    // Close button handler
-    document.getElementById('shellviz-close').addEventListener('click', (e) => {
+    // Add chevron down icon
+    header.innerHTML = `
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="white" style="opacity: 0.9;">
+        <path d="M7 10l5 5 5-5z"/>
+      </svg>
+    `;
+
+    // Add hover effect to header
+    header.addEventListener('mouseenter', () => {
+      header.style.background = 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)';
+      header.style.transform = 'scale(1.05)';
+    });
+    header.addEventListener('mouseleave', () => {
+      header.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      header.style.transform = 'scale(1)';
+    });
+
+    // Click handler for header chevron
+    header.addEventListener('click', (e) => {
       e.stopPropagation();
       this._collapseWidget();
     });
+
+    document.body.appendChild(header);
+
+    // Load and inject the React app directly into panel (preserving original behavior)
+    this._loadReactApp(this.panel);
 
     // Hide bubble when expanded
     this.bubble.style.display = 'none';
@@ -134,6 +173,12 @@ class BrowserWidget {
     if (this.panel) {
       this.panel.remove();
       this.panel = null;
+    }
+
+    // Clean up floating header
+    const header = document.getElementById('shellviz-header');
+    if (header) {
+      header.remove();
     }
 
     // Show bubble again
