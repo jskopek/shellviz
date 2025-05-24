@@ -43,7 +43,7 @@ function App() {
 				console.error('Failed to connect to server:', err);
 				setStatus('error');
 			});
-	}, [hostname, port, config])
+	}, [hostname, port])
 
 	// set up websocket connection
 	useEffect(() => {
@@ -101,7 +101,7 @@ function App() {
 			if (ws) ws.close();
 			clearTimeout(retryTimeout);
 		};
-	}, [hostname, port, config]);
+	}, [hostname, port]);
 
 	/* Handle auto-scrolling */
 	const [atBottom, setAtBottom] = useState(true);
