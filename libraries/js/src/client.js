@@ -4,7 +4,6 @@
 // Utility imports (always available)
 import { toJsonSafe, splitArgsAndOptions, getStackTrace } from './utils.js';
 import ShellvizServer from './server.js';
-import LocalServer from './local-server.js';
 import BrowserWidget from './browser-widget.js';
 import { SHELLVIZ_PORT, SHELLVIZ_URL } from './config.js';
 
@@ -25,36 +24,25 @@ class ShellvizClient {
     if (this.existingServerFound) return;
     const exists = await this._checkExistingServer();
     
-    // Only try to start ShellvizServer if in Node.js and using localhost
+    // Only try to start ShellvizServer if using localhost
     const isLocalhost = this.baseUrl.includes('localhost') || this.baseUrl.includes('127.0.0.1');
     const isBrowser = typeof window !== 'undefined';
     
-    if (!exists && !this.server && typeof process !== 'undefined' && process.versions && process.versions.node && isLocalhost) {
-      // console.log(`Starting ShellViz server on port ${this.port}`, this.server)
+    if (!exists && !this.server && isLocalhost) {
+      // Start server (ShellvizServer in Node.js, ShellvizServerInBrowser in browser via package.json browser shim)
       this.server = new ShellvizServer({ port: this.port, showUrl: true });
       await new Promise(r => setTimeout(r, 200));
-    } else if (exists) {
-      this.existingServerFound = true;
-      // console.log(`ShellViz server found at ${this.baseUrl}`);
-    } else if (!exists && !isLocalhost) {
-      // If using a remote URL and can't connect, throw an error
-      throw new Error(`Cannot connect to server at ${this.baseUrl}`);
-    } else if (!exists && isBrowser && isLocalhost) {
-      // Browser environment, can't start server, fall back to local server
-      console.log('Server not available, starting LocalServer');
-      this.localServer = new LocalServer(this.baseUrl);
-      this.localServer.start();
-      this.existingServerFound = true; // Prevent further server checks
       
-      // Auto-show widget when using local server
-      if (!this._browserWidgetShown) {
+      // Auto-show widget when using local server in browser
+      if (isBrowser && !this._browserWidgetShown) {
         this.renderInBrowser();
         this._browserWidgetShown = true;
       }
-      
-      return;
-    } else {
-      // console.log(`ShellViz server not found at ${this.baseUrl}`);
+    } else if (exists) {
+      this.existingServerFound = true;
+    } else if (!exists && !isLocalhost) {
+      // If using a remote URL and can't connect, throw an error
+      throw new Error(`Cannot connect to server at ${this.baseUrl}`);
     }
     this.existingServerFound = true;
   }
@@ -137,7 +125,6 @@ function _global() {
   if (!globalThis.__shellviz) globalThis.__shellviz = new ShellvizClient();
   return globalThis.__shellviz;
 }
-
 
 export default ShellvizClient;
 export { ShellvizClient };

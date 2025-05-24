@@ -20,7 +20,7 @@
     "build"
   ],
   "browser": {
-    "./src/server.js": "./src/browser_server_shim.js"
+    "./src/server.js": "./src/server_browser.js"
   },
   "scripts": {
     "build:client": "cd ../../client && npm run build",
