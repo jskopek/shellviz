@@ -1,8 +1,8 @@
 from debug_toolbar.panels import Panel
 from django.template import engines
 from django.conf import settings
-from . import _global_shellviz
-from .utils.html import get_local_ip
+from .. import _global_shellviz
+from ..utils_html import get_local_ip
 import importlib.resources as resources
 import os
 

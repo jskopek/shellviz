@@ -2,7 +2,7 @@ import './App.scss';
 import { useEffect, useState } from 'react';
 import Entry from './components/Entry';
 
-const VERSION = '0.1.1';
+const VERSION = '0.5.0-beta.0';
 
 function App() {
 	// Check for global configuration from widget, otherwise use URL-based detection
@@ -52,16 +52,18 @@ function App() {
 		let retryInterval = 1000;  // Initial retry interval for websocket
 
 		const connectWebSocket = () => {
+			// console.log('Websocket.connecting to websocket', hostname, port)
 			setStatus('connecting');
 			ws = new WebSocket("ws://" + hostname + ":" + port);
 
 			ws.onopen = function () {
-				// console.log("Connected to WebSocket server");
+				// console.log("Websocket.Connected to WebSocket server");
 				retryInterval = 1000;  // Reset the retry interval on a successful connection
 				setStatus('connected');
 			};
 
 			ws.onmessage = function (event) {
+				// console.log('Websocket.received message', event.data)
 				const entry = JSON.parse(event.data)
 
 				setEntries((entries) => {
@@ -78,7 +80,7 @@ function App() {
 			};
 
 			ws.onclose = function () {
-				// console.log("WebSocket connection closed. Reconnecting...");
+				// console.log("Websocket.WebSocket connection closed. Reconnecting...");
 				// Retry with an increasing delay (exponential backoff)
 				retryTimeout = setTimeout(() => {
 					retryInterval = Math.min(retryInterval * 2, 10000);  // Double the retry interval, with a max of 10 seconds
@@ -89,7 +91,7 @@ function App() {
 
 			ws.onerror = function (error) {
 				setStatus('error');
-				// console.error("WebSocket error:", error);
+				// console.error("Websocket.WebSocket error:", error);
 				ws.close();
 			};
 		};

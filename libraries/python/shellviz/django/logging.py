@@ -1,6 +1,6 @@
 import logging
 from typing import Optional, Dict, Any
-from . import _global_shellviz, Shellviz
+from .. import _global_shellviz, Shellviz
 
 class ShellvizHandler(logging.Handler):
     """
