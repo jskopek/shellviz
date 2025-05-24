@@ -65,7 +65,6 @@ class Shellviz:
                 print(f'The `qcode` package (available via `pip install qrcode`) is required to show the QR code')
 
     # -- Convenience methods for quickly sending data with a specific view --
-    def table(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='table', append=append)
     def json(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='json', append=append)
     def markdown(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='markdown', append=append)
     def progress(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='progress', append=append)
@@ -76,9 +75,14 @@ class Shellviz:
     def card(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='card', append=append)
     def location(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='location', append=append)
     def raw(self, data, id: Optional[str] = None, append: bool = False): self.send(data, id=id, view='raw', append=append)
+    def stack(self, id: Optional[str] = None): self.send(get_stack_trace(), id=id, view='stack')
     def log(self, *data, id: Optional[str] = None): 
         data = jsonFn.dumps(to_json_safe(data)) 
         id = id or 'log' #  if an id is provided use it, but if not use 'log' so we can append all logs to the same entry
         value = [(data, time.time())] # create the log entry; a tuple of (data, timestamp) in a list that can be appended to an existing log entry
         self.send(value, id=id, view='log', append=True)
-    def stack(self, id: Optional[str] = None): self.send(get_stack_trace(), id=id, view='stack')
+    def table(self, data, id: Optional[str] = None, append: bool = False): 
+        formatted_data = data
+        if isinstance(data, list) and len(data) > 0 and not isinstance(data[0], list):
+            formatted_data = [data] # if the data is a single list, wrap it in another list so it can be displayed as a table
+        self.send(formatted_data, id=id, view='table', append=append)
