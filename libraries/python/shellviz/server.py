@@ -8,17 +8,18 @@ from typing import Optional
 from .utils import append_data
 from .utils_html import parse_request, write_200, write_404, write_cors_headers, write_file, write_json, BufferedStreamReader
 from .utils_websockets import send_websocket_message, receive_websocket_message, perform_websocket_handshake
+from .config import SHELLVIZ_PORT
 import os
 
 
 class ShellvizServer:
-    def __init__(self, port=5544):
+    def __init__(self, port: int = 5544):
+        self.port = SHELLVIZ_PORT or port
+        
         self.entries = []  # store a list of all existing entries; client will show these entries on page load
         self.pending_entries = []  # store a list of all pending entries that have yet to be sent via websocket connection
         self.is_initialized = False  # flag to track if server is fully initialized
         self.initialized_event = threading.Event()  # thread-safe event for initialization
-
-        self.port = port
 
         self.loop = asyncio.new_event_loop() # the event loop that is attached to the thread created for this instance; new `create_task` async methods are added to the loop
         self.server_task = None # keeps track of http/websocket server task that is triggered by the asyncio.create_task method so it can be cancelled on `shutdown`

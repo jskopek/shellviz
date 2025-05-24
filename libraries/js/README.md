@@ -178,3 +178,160 @@ You can promote a tested beta to latest later using:
 ```bash
 npm dist-tag add shellviz@1.1.0-beta.3 latest
 
+
+
+
+# ShellViz JavaScript Configuration
+
+ShellViz JavaScript libraries support configuration through environment variables (Node.js) and window objects (browser) with a clear fallback hierarchy.
+
+## Configuration Hierarchy
+
+1. **Constructor parameters** (highest priority)
+2. **Environment Variables** (`process.env` in Node.js)
+3. **Window Variables** (`window.SHELLVIZ_*` in browser)
+4. **Default Values** (visible in function declarations)
+
+## Available Configuration Options
+
+### Environment Variables (Node.js)
+
+All environment variables are prefixed with `SHELLVIZ_`:
+
+- `SHELLVIZ_PORT` - Port number for the server (default: 5544)
+- `SHELLVIZ_SHOW_URL` - Whether to show URL on startup (default: true)
+- `SHELLVIZ_URL` - Custom base URL for the server (default: None, constructs from port)
+
+### Window Variables (Browser)
+
+For browser environments, you can set global variables:
+
+```javascript
+// Set these before importing ShellViz
+window.SHELLVIZ_PORT = 8080;
+window.SHELLVIZ_SHOW_URL = false;
+window.SHELLVIZ_URL = "https://my-custom-domain.com";
+```
+
+### Environment Variable Examples (Node.js)
+
+```bash
+# Set port to 8080
+export SHELLVIZ_PORT=8080
+
+# Disable URL display on startup
+export SHELLVIZ_SHOW_URL=false
+
+# Use a custom URL
+export SHELLVIZ_URL="https://my-remote-shellviz.com"
+
+# Run your JavaScript application
+node my_script.js
+```
+
+## Usage Examples
+
+### JavaScript Client
+
+```javascript
+import { ShellvizClient } from 'shellviz';
+
+// Uses defaults: port=5544, url=undefined
+// Overridden by process.env or window vars if present
+const sv = new ShellvizClient();
+
+// Override specific settings
+const sv = new ShellvizClient({ port: 9000, url: "https://my-server.com" });
+```
+
+### JavaScript Server
+
+```javascript
+import ShellvizServer from 'shellviz/server';
+
+// Uses defaults: port=5544, showUrl=true
+// Overridden by process.env if present
+const server = new ShellvizServer();
+
+// Override settings
+const server = new ShellvizServer({ port: 9000, showUrl: false });
+```
+
+## Cross-Platform Support
+
+The configuration system works seamlessly across different environments:
+
+### Node.js Environment
+- Checks `process.env.SHELLVIZ_*` variables
+- Full server and client functionality available
+
+### Browser Environment  
+- Checks `window.SHELLVIZ_*` variables
+- Client functionality available (no local server)
+- Safe fallbacks prevent crashes
+
+### Webpack/Bundler Environment
+- Uses compile-time environment variables if available
+- Falls back to window variables or defaults
+
+## Configuration Implementation
+
+The configuration values are computed once when the module is imported:
+
+```javascript
+// In your code, you can import the computed values directly:
+import { SHELLVIZ_PORT, SHELLVIZ_SHOW_URL, SHELLVIZ_URL } from 'shellviz/config';
+
+// These will be null if not set via process.env or window
+console.log(SHELLVIZ_PORT);      // e.g., 8080 or null
+console.log(SHELLVIZ_SHOW_URL);  // e.g., false or null  
+console.log(SHELLVIZ_URL);       // e.g., "https://my-server.com" or null
+```
+
+## Boolean Values
+
+For boolean configuration values, the following are considered `true`:
+- `true` (boolean)
+- `"true"` (string)
+- `"1"` (string)
+- `"yes"` (string)
+
+All other values are considered `false`.
+
+## Default Values
+
+Default values are clearly visible in the constructor declarations:
+
+```javascript
+// Client defaults
+constructor(opts = {}) // port defaults to 5544 from opts or DEFAULT_PORT
+
+// Server defaults  
+constructor({ port = 5544, showUrl = true } = {})
+```
+
+Environment variables and window variables automatically override these defaults when present.
+
+## Browser Integration Example
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <script>
+        // Set config before importing ShellViz
+        window.SHELLVIZ_PORT = 8080;
+        window.SHELLVIZ_URL = "https://my-shellviz-server.com";
+    </script>
+</head>
+<body>
+    <script type="module">
+        import { ShellvizClient } from './path/to/shellviz/client.js';
+        
+        // Will use the window variables set above
+        const sv = new ShellvizClient();
+        sv.log("Hello from browser!");
+    </script>
+</body>
+</html>
+``` 

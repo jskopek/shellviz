@@ -4,15 +4,16 @@
 // Utility imports (always available)
 import { toJsonSafe, splitArgsAndOptions, getStackTrace } from './utils.js';
 import ShellvizServer from './server.js';
-
-const DEFAULT_PORT = 5544;
+import { SHELLVIZ_PORT, SHELLVIZ_SHOW_URL, SHELLVIZ_URL } from './config.js';
 
 class ShellvizClient {
   constructor(opts = {}) {
     this.server = null;
-    this.port = opts.port || DEFAULT_PORT;
     this.entries = [];
-    this.endpoint = opts.endpoint || `http://localhost:${this.port}`;
+
+    this.port = SHELLVIZ_PORT || opts.port || 5544;
+    this.baseUrl = SHELLVIZ_URL || opts.url || `http://localhost:${this.port}`;
+    
     this.existingServerFound = false;
     this._ensureServer();
   }
@@ -20,23 +21,29 @@ class ShellvizClient {
   async _ensureServer() {
     if (this.existingServerFound) return;
     const exists = await this._checkExistingServer();
-    // Only try to start ShellvizServer if in Node.js
-    if (!exists && !this.server && typeof process !== 'undefined' && process.versions && process.versions.node) {
+    
+    // Only try to start ShellvizServer if in Node.js and using localhost
+    const isLocalhost = this.baseUrl.includes('localhost') || this.baseUrl.includes('127.0.0.1');
+    
+    if (!exists && !this.server && typeof process !== 'undefined' && process.versions && process.versions.node && isLocalhost) {
       // console.log(`Starting ShellViz server on port ${this.port}`, this.server)
       this.server = new ShellvizServer({ port: this.port, showUrl: true });
       await new Promise(r => setTimeout(r, 200));
     } else if (exists) {
       this.existingServerFound = true;
-      // console.log(`ShellViz server found at ${this.endpoint}`);
+      // console.log(`ShellViz server found at ${this.baseUrl}`);
+    } else if (!exists && !isLocalhost) {
+      // If using a remote URL and can't connect, throw an error
+      throw new Error(`Cannot connect to server at ${this.baseUrl}`);
     } else {
-      // console.log(`ShellViz server not found at ${this.endpoint}`);
+      // console.log(`ShellViz server not found at ${this.baseUrl}`);
     }
     this.existingServerFound = true;
   }
 
   async _checkExistingServer() {
     try {
-      const response = await fetch(`${this.endpoint}/api/running`);
+      const response = await fetch(`${this.baseUrl}/api/running`);
       return response.ok;
     } catch (e) {
       return false;
@@ -47,7 +54,7 @@ class ShellvizClient {
     if (typeof window === 'undefined') {
       await this._ensureServer();
     }
-    await fetch(`${this.endpoint}/api/send`, {
+    await fetch(`${this.baseUrl}/api/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, data, view, append })
@@ -59,7 +66,7 @@ class ShellvizClient {
     if (typeof window === 'undefined') {
       await this._ensureServer();
     }
-    await fetch(`${this.endpoint}/api/clear`, { method: 'DELETE' });
+    await fetch(`${this.baseUrl}/api/clear`, { method: 'DELETE' });
   }
 
   wait() {
