@@ -4,39 +4,46 @@
 // Utility imports (always available)
 import { toJsonSafe, splitArgsAndOptions, getStackTrace } from './utils.js';
 import ShellvizServer from './server.js';
-import { SHELLVIZ_PORT, SHELLVIZ_SHOW_URL, SHELLVIZ_URL } from './config.js';
+import BrowserWidget from './browser-widget.js';
+import { SHELLVIZ_PORT, SHELLVIZ_URL } from './config.js';
 
 class ShellvizClient {
   constructor(opts = {}) {
     this.server = null;
     this.entries = [];
+    this.browserWidget = null;
 
     this.port = SHELLVIZ_PORT || opts.port || 5544;
     this.baseUrl = SHELLVIZ_URL || opts.url || `http://localhost:${this.port}`;
     
     this.existingServerFound = false;
-    this._ensureServer();
+    this._findOrStartServer();
   }
 
-  async _ensureServer() {
+  async _findOrStartServer() {
     if (this.existingServerFound) return;
     const exists = await this._checkExistingServer();
     
-    // Only try to start ShellvizServer if in Node.js and using localhost
+    // Only try to start ShellvizServer if using localhost
     const isLocalhost = this.baseUrl.includes('localhost') || this.baseUrl.includes('127.0.0.1');
+    const isBrowser = typeof window !== 'undefined';
     
-    if (!exists && !this.server && typeof process !== 'undefined' && process.versions && process.versions.node && isLocalhost) {
-      // console.log(`Starting ShellViz server on port ${this.port}`, this.server)
+    if (!exists && !this.server && isLocalhost) {
+      // Start server (ShellvizServer in Node.js, ShellvizServerInBrowser in browser via package.json browser shim)
+      // console.log('starting server')
       this.server = new ShellvizServer({ port: this.port, showUrl: true });
       await new Promise(r => setTimeout(r, 200));
+      
+      // Auto-show widget when using local server in browser
+      if (isBrowser && !this._browserWidgetShown) {
+        this.show();
+        this._browserWidgetShown = true;
+      }
     } else if (exists) {
       this.existingServerFound = true;
-      // console.log(`ShellViz server found at ${this.baseUrl}`);
     } else if (!exists && !isLocalhost) {
       // If using a remote URL and can't connect, throw an error
       throw new Error(`Cannot connect to server at ${this.baseUrl}`);
-    } else {
-      // console.log(`ShellViz server not found at ${this.baseUrl}`);
     }
     this.existingServerFound = true;
   }
@@ -51,9 +58,7 @@ class ShellvizClient {
   }
 
   async send(data, { id = null, view = 'log', append = false, wait = false } = {}) {
-    if (typeof window === 'undefined') {
-      await this._ensureServer();
-    }
+    await this._findOrStartServer();
     await fetch(`${this.baseUrl}/api/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -63,9 +68,7 @@ class ShellvizClient {
   }
 
   async clear() {
-    if (typeof window === 'undefined') {
-      await this._ensureServer();
-    }
+    await this._findOrStartServer();
     await fetch(`${this.baseUrl}/api/clear`, { method: 'DELETE' });
   }
 
@@ -102,6 +105,14 @@ class ShellvizClient {
   location = (data, id = null, append = false) => { this.send(data, { id, view: 'location', append }); }
   raw = (data, id = null, append = false) => { this.send(data, { id, view: 'raw', append }); }
   stack = (locals = null, id = null) => { this.send(getStackTrace(locals), { id, view: 'stack' }); }
+
+  // Render in browser function - creates a floating widget with the ShellViz React client
+  show = () => {
+    if (!this.browserWidget) {
+      this.browserWidget = new BrowserWidget(this);
+    }
+    this.browserWidget.show();
+  }
 }
 
 // -------- exported singleton + helpers ---------------------------------
@@ -110,7 +121,6 @@ function _global() {
   if (!globalThis.__shellviz) globalThis.__shellviz = new ShellvizClient();
   return globalThis.__shellviz;
 }
-
 
 export default ShellvizClient;
 export { ShellvizClient };
@@ -131,8 +141,10 @@ export function card(data, id = null, append = false) { return _global().card(da
 export function location(data, id = null, append = false) { return _global().location(data, id, append); }
 export function raw(data, id = null, append = false) { return _global().raw(data, id, append); }
 export function stack(locals = null, id = null) { return _global().stack(locals, id); }
+export function show() { return _global().show(); }
 export function Shellviz() { return _global(); }
 
-if (typeof window !== 'undefined') {
-  window.shellviz = _global();
-}
+// if (typeof window !== 'undefined') {
+//   console.log('shellviz', _global());
+//   window.shellviz = _global();
+// }

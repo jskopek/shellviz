@@ -46,6 +46,10 @@ class ShellvizServer {
         this.send('___clear___');
     }
 
+    delete(id) {
+        this.entries = this.entries.filter(entry => entry.id !== id);
+    }
+
     _broadcast(msg) {
         const json = JSON.stringify(msg);
         this.clients.forEach(ws => ws.readyState === 1 && ws.send(json));
@@ -75,7 +79,7 @@ class ShellvizServer {
                 res.writeHead(200).end('ok');
             } else if (req.method === 'DELETE' && req.url.startsWith('/api/delete/')) {
                 const entryId = req.url.split('/').pop();
-                this.entries = this.entries.filter(entry => entry.id !== entryId);
+                this.delete(entryId);
                 res.writeHead(200).end();
             } else if (req.method === 'DELETE' && req.url === '/api/clear') {
                 this.clear();

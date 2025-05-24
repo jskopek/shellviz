@@ -46,19 +46,19 @@ const LogValues = ({ values }) => {
     </div>
   )
 }
-const LogValue = ({ value, key }) => {
+const LogValue = ({ value }) => {
     if (typeof value === 'number') {
-      return <span key={key} className="text-blue-600">{value}</span>;
+      return <span className="text-blue-600">{value}</span>;
     } else if (typeof value === 'string') {
-      return <span key={key} className="text-gray-900">{value}</span>;
+      return <span className="text-gray-900">{value}</span>;
     } else if (typeof value === 'boolean') {
-      return <span key={key} className="text-purple-700">{String(value)}</span>;
+      return <span className="text-purple-700">{String(value)}</span>;
     } else if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
       return <InlineJson value={value} />;
     } else if (value === null) {
-      return <span key={key} className="text-gray-500">null</span>;
+      return <span className="text-gray-500">null</span>;
     } else {
-      return <span key={key}>{String(value)}</span>;
+      return <span>{String(value)}</span>;
     }
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "shellviz",
   "type": "module",
-  "version": "0.2.15-beta.0",
+  "version": "0.5.0-beta.0",
   "description": "Visualization toolkit for shell scripts and command-line tools",
   "types": "./build/client.d.ts",
   "unpkg": "./build/browser_client.umd.js",
@@ -20,14 +20,17 @@
     "build"
   ],
   "browser": {
-    "./src/server.js": "./src/browser_server_shim.js"
+    "./src/server.js": "./src/server_browser.js"
   },
   "scripts": {
+    "build:client": "cd ../../client && npm run build",
+    "copy:client": "cp -r ../../client/build/* build/client_build/ 2>/dev/null || echo 'Client build not found, skipping...'",
+    "embed:assets": "node scripts/embed-assets.js",
     "build:node:client:cjs": "esbuild ./src/client.js --bundle --platform=node --format=cjs --outfile=build/node_client.cjs",
     "build:node:client:esm": "esbuild ./src/client.js --bundle --external:ws --platform=node --format=esm --outfile=build/node_client.js",
     "build:browser:esm": "esbuild ./src/client.js --bundle --platform=browser --format=esm --outfile=build/browser_client.mjs --banner:js=\"/* eslint-disable */\"",
     "build:browser:umd": "esbuild ./src/client.js --bundle --platform=browser --format=iife --global-name=shellviz --outfile=build/browser_client.umd.js --banner:js=\"/* eslint-disable */\"",
-    "build": "npm-run-all --sequential build:node:client:cjs build:node:client:esm build:browser:esm build:browser:umd",
+    "build": "npm-run-all --sequential build:client copy:client embed:assets build:node:client:cjs build:node:client:esm build:browser:esm build:browser:umd",
     "postbuild": "node scripts/postbuild.js",
     "pack": "npm run build && npm pack --pack-destination=dist"
   },

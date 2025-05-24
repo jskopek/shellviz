@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShellViz Widget Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+        .demo-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #5a6268;
+        }
+        code {
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Cascadia Code', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>ShellViz Browser Widget Demo</h1>
+    
+    <p>This page demonstrates the new automatic fallback functionality. When you call ShellViz functions and no server is available, it automatically creates a floating browser widget.</p>
+    
+    <div class="info-box">
+        <strong>How the Fallback Works:</strong>
+        <ol>
+            <li>ShellViz tries to connect to a local server (localhost:5544)</li>
+            <li>If no server is found and we're in a browser, it automatically falls back to widget mode</li>
+            <li>The first time you send data, the widget appears automatically</li>
+            <li>All visualizations work in the widget using embedded React assets</li>
+        </ol>
+    </div>
+    
+    <div class="demo-section">
+        <h2>Test Automatic Fallback</h2>
+        <p>Simply start sending data - the widget will appear automatically:</p>
+        <button onclick="sendLog()">Send Log Data</button>
+        <button onclick="sendTable()">Send Table Data</button>
+        <button onclick="sendJSON()">Send JSON Data</button>
+        <button onclick="sendChart()">Send Chart Data</button>
+    </div>
+    
+    <div class="demo-section">
+        <h2>Manual Widget Creation</h2>
+        <p>Or you can manually create the widget first:</p>
+        <button onclick="initWidget()">Create Widget Manually</button>
+        <button class="secondary" onclick="removeWidget()">Remove Widget</button>
+        <p><small>Look for a floating bubble in the bottom-right corner of your screen.</small></p>
+    </div>
+    
+    <div class="demo-section">
+        <h2>Test Different Data Types</h2>
+        <p>Send various types of data to see them in the widget:</p>
+        <button onclick="sendProgress()">Progress Bar</button>
+        <button onclick="sendMarkdown()">Markdown</button>
+        <button onclick="sendNumber()">Number</button>
+        <button onclick="sendMultipleData()">Multiple Views</button>
+    </div>
+
+    <!-- Load ShellViz client -->
+    <script type="module">
+        // For this demo, we'll load from the built browser client
+        import * as shellviz from './libraries/js/build/browser_client.mjs';
+        
+        // Make it available globally for the demo buttons
+        window.shellviz = shellviz;
+        
+        // Also expose individual functions
+        window.initWidget = () => {
+            shellviz.renderInBrowser();
+        };
+        
+        window.removeWidget = () => {
+            const widget = document.getElementById('shellviz-widget');
+            const panel = document.getElementById('shellviz-panel');
+            if (widget) widget.remove();
+            if (panel) panel.remove();
+        };
+        
+        window.sendLog = () => {
+            shellviz.log('Hello from ShellViz widget!', { timestamp: new Date().toISOString() });
+        };
+        
+        window.sendTable = () => {
+            const data = [
+                ['Name', 'Age', 'City'],
+                ['Alice', 30, 'New York'],
+                ['Bob', 25, 'San Francisco'],
+                ['Charlie', 35, 'Chicago']
+            ];
+            shellviz.table(data, 'demo-table');
+        };
+        
+        window.sendJSON = () => {
+            const data = {
+                user: 'demo',
+                timestamp: Date.now(),
+                data: {
+                    metrics: [1, 2, 3, 4, 5],
+                    status: 'active',
+                    config: {
+                        enabled: true,
+                        theme: 'dark'
+                    }
+                }
+            };
+            shellviz.json(data, 'demo-json');
+        };
+        
+        window.sendChart = () => {
+            const data = [
+                { name: 'Jan', value: 30 },
+                { name: 'Feb', value: 45 },
+                { name: 'Mar', value: 35 },
+                { name: 'Apr', value: 50 },
+                { name: 'May', value: 40 }
+            ];
+            shellviz.bar(data, 'demo-chart');
+        };
+        
+        window.sendProgress = () => {
+            shellviz.progress(0.75, 'demo-progress');
+        };
+        
+        window.sendMarkdown = () => {
+            const markdown = `# ShellViz Widget
+            
+This is **markdown** content with:
+- List items
+- *Italic text*
+- \`code snippets\`
+
+> A blockquote for good measure!
+            `;
+            shellviz.markdown(markdown, 'demo-markdown');
+        };
+        
+        window.sendNumber = () => {
+            shellviz.number(42.5, 'demo-number');
+        };
+        
+        window.sendMultipleData = () => {
+            // Send multiple different types of data
+            shellviz.log('Sending multiple data types...');
+            
+            setTimeout(() => {
+                shellviz.number(95.2, 'score');
+            }, 500);
+            
+            setTimeout(() => {
+                shellviz.progress(0.6, 'completion');
+            }, 1000);
+            
+            setTimeout(() => {
+                const pieData = [
+                    { name: 'Success', value: 85 },
+                    { name: 'Warning', value: 10 },
+                    { name: 'Error', value: 5 }
+                ];
+                shellviz.pie(pieData, 'status-breakdown');
+            }, 1500);
+        };
+        
+        // Show current mode
+        console.log('ShellViz loaded in browser mode with automatic fallback');
+    </script>
+</body>
+</html> 
