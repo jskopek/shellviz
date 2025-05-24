@@ -111,54 +111,10 @@ class BrowserWidget {
       border: 1px solid #e0e0e0;
     `;
 
-    // Create header with close button
-    const header = document.createElement('div');
-    header.style.cssText = `
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 10px 15px;
-      font-weight: 600;
-      font-size: 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    `;
-    header.innerHTML = `
-      <span>Shellviz</span>
-      <button id="shellviz-close" style="
-        background: none;
-        border: none;
-        color: white;
-        font-size: 18px;
-        cursor: pointer;
-        padding: 0;
-        width: 20px;
-        height: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      ">&times;</button>
-    `;
-
-    // Create container for the React app
-    const container = document.createElement('div');
-    container.style.cssText = `
-      height: calc(100% - 50px);
-      overflow-y: scroll;
-    `;
-
-    // Create the React app container
-    const appContainer = document.createElement('div');
-    appContainer.id = 'shellviz-app-root';
-    appContainer.style.cssText = `width: 100%;`;
-
-    container.appendChild(appContainer);
-    this.panel.appendChild(header);
-    this.panel.appendChild(container);
     document.body.appendChild(this.panel);
 
     // Load and inject the React app
-    this._loadReactApp(appContainer);
+    this._loadReactApp(this.panel);
 
     // Close button handler
     document.getElementById('shellviz-close').addEventListener('click', (e) => {

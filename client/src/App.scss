@@ -30,6 +30,16 @@ body.dark {
   }
 }
 
+#shellviz-app-root {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+#root #shellviz-app-root {
+  /* applies when shellviz is running standalone rather than in an embedded browser panel */
+  height: 100vh;
+}
+
 .star {
   width: 160px;
   height: 160px;

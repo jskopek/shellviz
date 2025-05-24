@@ -132,7 +132,7 @@ function App() {
 	/* / Handle auto-scrolling */
 
 	return (
-		<main className="">
+		<main id="shellviz-app-root" className="">
 			{/* center image using tailwind */}
 			<div className="fixed bottom-2 left-2 z-10">
 				<div className={`w-4 h-4 rounded-full  bg-${{ 'connecting': 'blue', 'connected': 'green', 'updating': 'yellow', 'error': 'red' }[status]}-500 shadow ms-auto`} title={status} onClick={() => { clearEntries(); }}>
@@ -153,17 +153,11 @@ function App() {
 					</Entry>
 				))}
 
-				{!entries.length && (status === 'connecting') && (
-					<div className="flex items-center justify-center h-screen">
+				{!entries.length && (
+					<div className="flex items-center justify-center absolute top-0 left-0 w-full h-full">
 						<div className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-gray-400 rounded-full mx-auto" role="status" aria-label="loading">
 							<span className="sr-only">Loading...</span>
 						</div>
-					</div>
-				)}
-
-				{!entries.length && (status === 'connected') && (
-					<div className="flex items-center justify-center text-sm text-gray-400 h-screen">
-						Waiting for data...
 					</div>
 				)}
 			</div>
