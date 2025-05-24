@@ -4,6 +4,7 @@
 // Utility imports (always available)
 import { toJsonSafe, splitArgsAndOptions, getStackTrace } from './utils.js';
 import ShellvizServer from './server.js';
+import LocalServer from './local-server.js';
 import { SHELLVIZ_PORT, SHELLVIZ_SHOW_URL, SHELLVIZ_URL } from './config.js';
 
 class ShellvizClient {
@@ -37,14 +38,17 @@ class ShellvizClient {
       // If using a remote URL and can't connect, throw an error
       throw new Error(`Cannot connect to server at ${this.baseUrl}`);
     } else if (!exists && isBrowser && isLocalhost) {
-      // Browser environment, can't start server, fall back to browser widget
-      console.log('Server not available, falling back to browser widget mode');
-      this._fallbackToBrowserWidget = true;
+      // Browser environment, can't start server, fall back to local server
+      console.log('Server not available, starting LocalServer');
+      this.localServer = new LocalServer(this.baseUrl);
+      this.localServer.start();
       this.existingServerFound = true; // Prevent further server checks
       
-      // Initialize global data for React app to detect embedded mode
-      if (!this._localEntries) this._localEntries = [];
-      window.__shellvizLocalData = this._localEntries;
+      // Auto-show widget when using local server
+      if (!this._browserWidgetShown) {
+        this.renderInBrowser();
+        this._browserWidgetShown = true;
+      }
       
       return;
     } else {
@@ -67,19 +71,6 @@ class ShellvizClient {
       await this._ensureServer();
     }
     
-    // If in browser and server is not available, automatically show widget and use client-side storage
-    if (this._fallbackToBrowserWidget) {
-      // Auto-show widget on first send if not already shown
-      if (!this._browserWidgetShown) {
-        this.renderInBrowser();
-        this._browserWidgetShown = true;
-      }
-      
-      // Store data locally for the widget to display
-      this._storeDataLocally(data, { id, view, append });
-      return;
-    }
-    
     await fetch(`${this.baseUrl}/api/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -88,82 +79,10 @@ class ShellvizClient {
     if (wait) await this.wait();
   }
 
-  _storeDataLocally(data, options) {
-    // Store data in a local array that the widget can access
-    if (!this._localEntries) this._localEntries = [];
-    
-    const entry = {
-      id: options.id || 'default',
-      data: data,
-      view: options.view || 'log',
-      timestamp: Date.now(),
-      append: options.append || false
-    };
-    
-    if (options.append && this._localEntries.length > 0) {
-      const lastEntry = this._localEntries[this._localEntries.length - 1];
-      if (lastEntry.id === entry.id && lastEntry.view === entry.view) {
-        // Append to existing entry
-        if (Array.isArray(lastEntry.data) && Array.isArray(data)) {
-          lastEntry.data = lastEntry.data.concat(data);
-        } else {
-          lastEntry.data = data;
-        }
-        lastEntry.timestamp = entry.timestamp;
-      } else {
-        this._localEntries.push(entry);
-      }
-    } else {
-      this._localEntries.push(entry);
-    }
-    
-    // Make data available globally for the embedded React app
-    window.__shellvizLocalData = this._localEntries;
-    
-    // Dispatch custom event for the React app to listen to
-    window.dispatchEvent(new CustomEvent('shellviz:dataUpdate', {
-      detail: { entries: this._localEntries, newEntry: entry }
-    }));
-    
-    // Update any existing widget display
-    this._updateWidgetDisplay();
-  }
-
-  _updateWidgetDisplay() {
-    // Update the fallback UI or React widget with latest data
-    const fallbackElement = document.getElementById('fallback-data');
-    if (fallbackElement && this._localEntries.length > 0) {
-      const latest = this._localEntries[this._localEntries.length - 1];
-      const timestamp = new Date(latest.timestamp).toLocaleTimeString();
-      const entry = `[${timestamp}] ${latest.view} (${latest.id}): ${JSON.stringify(latest.data, null, 2)}`;
-      fallbackElement.innerHTML = entry + '\n\n' + fallbackElement.innerHTML;
-    }
-    
-    // If React widget is loaded, we could trigger an update here
-    // For now, we'll rely on the fallback display
-  }
-
   async clear() {
     if (typeof window === 'undefined') {
       await this._ensureServer();
     }
-    
-    if (this._fallbackToBrowserWidget) {
-      // Clear local data
-      this._localEntries = [];
-      window.__shellvizLocalData = [];
-      
-      // Dispatch clear event
-      window.dispatchEvent(new CustomEvent('shellviz:dataClear'));
-      
-      // Update fallback UI
-      const fallbackElement = document.getElementById('fallback-data');
-      if (fallbackElement) {
-        fallbackElement.innerHTML = 'No data yet...';
-      }
-      return;
-    }
-    
     await fetch(`${this.baseUrl}/api/clear`, { method: 'DELETE' });
   }
 
@@ -403,55 +322,14 @@ class ShellvizClient {
       document.head.appendChild(style);
     }
 
-    // Create a global interface for the React app to communicate with the client
-    window.__shellvizInterface = {
-      getData: () => this._localEntries || [],
-      clearData: () => {
-        this._localEntries = [];
-        window.__shellvizLocalData = [];
-        this._updateWidgetDisplay();
-      },
-      deleteEntry: (entryId) => {
-        if (this._localEntries) {
-          this._localEntries = this._localEntries.filter(e => e.id !== entryId);
-          window.__shellvizLocalData = this._localEntries;
-          this._updateWidgetDisplay();
-        }
-      }
-    };
-
     // Inject and execute JavaScript
     const jsContent = embeddedAssets.getEmbeddedJS();
     if (jsContent) {
       const script = document.createElement('script');
-      
-      // Add some debugging and initialization code before the React bundle
-      const initCode = `
-        console.log('Initializing embedded ShellViz with container:', document.getElementById('root'));
-        console.log('Initial data:', window.__shellvizLocalData);
-        
-        // Flag to indicate we're in embedded widget mode
-        window.__shellvizEmbeddedMode = true;
-        
-        // Override console.log for the embedded app to help with debugging (only if not already done)
-        if (!window.__embeddedLog) {
-          const originalLog = console.log;
-          window.__embeddedLog = (...args) => {
-            originalLog('[EMBEDDED]', ...args);
-          };
-        }
-      `;
-      
-      script.textContent = initCode + '\n' + jsContent;
+      script.textContent = jsContent;
       
       script.onload = () => {
         console.log('ShellViz React app loaded from embedded assets');
-        // Try to trigger a render update
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('shellviz:dataUpdate', {
-            detail: { entries: this._localEntries || [], newEntry: null }
-          }));
-        }, 100);
       };
       script.onerror = () => {
         console.error('Failed to execute embedded JavaScript');
@@ -516,12 +394,6 @@ class ShellvizClient {
       <div style="padding: 20px; text-align: center; color: #666; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;">
         <h3 style="margin: 0 0 15px 0; color: #333;">ShellViz Widget</h3>
         <p style="margin: 0 0 10px 0; font-size: 14px;">React app unavailable</p>
-        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left;">
-          <h4 style="margin: 0 0 10px 0; font-size: 12px; color: #666;">Current Data:</h4>
-          <div id="fallback-data" style="font-family: monospace; font-size: 11px; color: #333; max-height: 300px; overflow-y: auto;">
-            No data yet...
-          </div>
-        </div>
         <p style="font-size: 11px; color: #999; margin-top: 15px;">
           Error: ${typeof errorInfo === 'string' ? errorInfo : 'Asset loading failed'}
         </p>
@@ -531,26 +403,6 @@ class ShellvizClient {
         </button>
       </div>
     `;
-    
-    // Set up fallback data display
-    this._setupFallbackDataDisplay();
-  }
-
-  _setupFallbackDataDisplay = () => {
-    // Override send method to also update fallback UI
-    const originalSend = this.send.bind(this);
-    this.send = async (data, options = {}) => {
-      // Call original send
-      await originalSend(data, options);
-      
-      // Update fallback UI if it exists
-      const fallbackElement = document.getElementById('fallback-data');
-      if (fallbackElement) {
-        const timestamp = new Date().toLocaleTimeString();
-        const entry = `[${timestamp}] ${options.view || 'log'}: ${JSON.stringify(data, null, 2)}`;
-        fallbackElement.innerHTML = entry + '\n\n' + fallbackElement.innerHTML;
-      }
-    };
   }
 
   _getAssetBaseUrl = () => {

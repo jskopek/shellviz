@@ -1,8 +1,8 @@
 import './App.scss';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Entry from './components/Entry';
 
-const VERSION = '0.1.0';
+const VERSION = '0.1.1';
 
 function App() {
 	// get the hostname and port from the URL
@@ -14,119 +14,20 @@ function App() {
 	}
 
 	const [entries, setEntries] = useState([]);
-
 	const [status, setStatus] = useState('connecting') // 'connecting', 'connected', 'updating', 'error'
-	
-	// Use ref to avoid stale closures in polling
-	const entriesRef = useRef(entries);
-	entriesRef.current = entries;
-	
-	// Detect embedded mode immediately - don't wait for server check
-	const [isEmbedded, setIsEmbedded] = useState(() => {
-		const embedded = window.__shellvizLocalData !== undefined;
-		if (embedded) {
-			console.log('Embedded mode detected immediately');
-		}
-		return embedded;
-	});
 	
 	function deleteEntry({ entry, setEntries }) {
 		setEntries((entries) => entries.filter((e) => e.id !== entry.id));
-		
-		if (isEmbedded) {
-			// In embedded mode, also remove from local storage
-			if (window.__shellvizLocalData) {
-				window.__shellvizLocalData = window.__shellvizLocalData.filter((e) => e.id !== entry.id);
-			}
-		} else {
-			// Normal server mode
-			fetch(`http://${hostname}:${port}/api/delete/${entry.id}`, { method: 'DELETE', });
-		}
+		fetch(`http://${hostname}:${port}/api/delete/${entry.id}`, { method: 'DELETE', });
 	}
 	
 	function clearEntries() {
 		setEntries([]);
-		
-		if (isEmbedded) {
-			// Clear local data in embedded mode
-			if (window.__shellvizLocalData) {
-				window.__shellvizLocalData = [];
-			}
-		} else {
-			// Normal server mode
-			fetch(`http://${hostname}:${port}/api/clear`, { method: 'DELETE' });
-		}
+		fetch(`http://${hostname}:${port}/api/clear`, { method: 'DELETE' });
 	}
 
-	// Set up embedded event listeners FIRST - before any server checks
 	useEffect(() => {
-		if (isEmbedded) {
-			console.log('Setting up embedded mode event listeners');
-			
-			// Try polling approach for more reliability
-			let pollInterval;
-			let lastDataLength = 0;
-			let lastDataString = '';
-			
-			const pollForData = () => {
-				const currentData = window.__shellvizLocalData || [];
-				const currentDataString = JSON.stringify(currentData);
-				if (currentData.length !== lastDataLength || currentDataString !== lastDataString) {
-					console.log('Polling detected data change:', currentData.length, 'entries');
-					console.log('Setting entries via polling to:', currentData);
-					setEntries([...currentData]); // Force new array reference
-					lastDataLength = currentData.length;
-					lastDataString = currentDataString;
-				}
-			};
-			
-			// Poll every 100ms for data changes
-			pollInterval = setInterval(pollForData, 100);
-			
-			// Also keep the event listeners as backup
-			const handleDataUpdate = (event) => {
-				console.log('Event: Received data update:', event.detail);
-				console.log('Event: Setting entries to:', event.detail.entries);
-				// Force new array reference to trigger re-render
-				setEntries([...event.detail.entries]);
-			};
-
-			const handleDataClear = () => {
-				console.log('Event: Received data clear');
-				setEntries([]);
-			};
-
-			// Listen for custom events from the client
-			window.addEventListener('shellviz:dataUpdate', handleDataUpdate);
-			window.addEventListener('shellviz:dataClear', handleDataClear);
-			
-			// Load any existing data immediately
-			if (window.__shellvizLocalData && window.__shellvizLocalData.length > 0) {
-				console.log('Loading existing local data:', window.__shellvizLocalData);
-				setEntries([...window.__shellvizLocalData]); // Force new array reference
-			}
-			
-			setStatus('connected');
-
-			// Cleanup
-			return () => {
-				if (pollInterval) clearInterval(pollInterval);
-				window.removeEventListener('shellviz:dataUpdate', handleDataUpdate);
-				window.removeEventListener('shellviz:dataClear', handleDataClear);
-			};
-		}
-	}, [isEmbedded]);
-
-	// Only try server connection if not in embedded mode
-	useEffect(() => {
-		if (isEmbedded) {
-			console.log('Skipping server connection - in embedded mode');
-			return;
-		}
-		
 		console.log(`Shellviz Client v${VERSION} initializing on http://${hostname}:${port}`);
-		
-		// Try to load from server
 		fetch(`http://${hostname}:${port}/api/entries`)
 			.then(res => res.json())
 			.then(data => {
@@ -134,25 +35,13 @@ function App() {
 				setStatus('connected');
 			})
 			.catch(err => {
-				console.log('Server not available, checking for embedded mode...');
-				// Server not available, check if we can switch to embedded mode
-				if (window.__shellvizLocalData !== undefined) {
-					console.log('Switching to embedded mode after server failed');
-					setIsEmbedded(true);
-				} else {
-					console.error('No server and no embedded data available:', err);
-					setStatus('error');
-				}
+				console.error('Failed to connect to server:', err);
+				setStatus('error');
 			});
-	}, [hostname, port, isEmbedded]);
+	}, [hostname, port])
 
-	// Set up websocket connection (only if not embedded)
+	// set up websocket connection
 	useEffect(() => {
-		if (isEmbedded) {
-			return; // Skip WebSocket in embedded mode
-		}
-		
-		// Normal mode: WebSocket connection
 		let ws;
 		let retryTimeout;
 		let retryInterval = 1000;  // Initial retry interval for websocket
@@ -207,7 +96,7 @@ function App() {
 			if (ws) ws.close();
 			clearTimeout(retryTimeout);
 		};
-	}, [hostname, port, isEmbedded]);
+	}, [hostname, port]);
 
 	/* Handle auto-scrolling */
 	const [atBottom, setAtBottom] = useState(true);
@@ -254,7 +143,7 @@ function App() {
 		<main className="">
 			{/* center image using tailwind */}
 			<div className="fixed bottom-2 left-2 z-10">
-				<div className={`w-4 h-4 rounded-full  bg-${{ 'connecting': 'blue', 'connected': 'green', 'updating': 'yellow', 'error': 'red' }[status]}-500 shadow ms-auto`} title={isEmbedded ? 'embedded mode' : status} onClick={() => { clearEntries(); }}>
+				<div className={`w-4 h-4 rounded-full  bg-${{ 'connecting': 'blue', 'connected': 'green', 'updating': 'yellow', 'error': 'red' }[status]}-500 shadow ms-auto`} title={status} onClick={() => { clearEntries(); }}>
 					<span className="bg-blue-500 bg-green-500 bg-yellow-500" /> {/* ensure all colors are loaded */}
 				</div>
 			</div>
@@ -282,7 +171,7 @@ function App() {
 
 				{!entries.length && (status === 'connected') && (
 					<div className="flex items-center justify-center text-sm text-gray-400 h-screen">
-						{isEmbedded ? 'Waiting for data... (embedded mode)' : 'Waiting for data...'}
+						Waiting for data...
 					</div>
 				)}
 			</div>
