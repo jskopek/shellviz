@@ -53,7 +53,7 @@ Shellviz has an optional drop-in logging handler that can automatically initiali
 LOGGING = {
     'handlers': {
         'shellviz': {
-            'class': 'shellviz.django_logging.ShellvizHandler',
+            'class': 'shellviz.django.logging.ShellvizHandler',
             #...
         },
     }

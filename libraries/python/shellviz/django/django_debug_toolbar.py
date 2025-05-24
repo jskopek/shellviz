@@ -2,7 +2,7 @@ from debug_toolbar.panels import Panel
 from django.template import engines
 from django.conf import settings
 from . import _global_shellviz
-from .utils_html import get_local_ip
+from .utils.html import get_local_ip
 import importlib.resources as resources
 import os
 
@@ -13,7 +13,7 @@ class ShellvizPanel(Panel):
     Usage:
     DJANGO_TOOLBAR_PANELS = [
         # ...
-        'shellviz.django_debug_toolbar.ShellvizPanel',
+        'shellviz.django.django_debug_toolbar.ShellvizPanel',
         # ...
     ]
     """

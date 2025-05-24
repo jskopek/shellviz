@@ -1,4 +1,4 @@
-from asyncio import StreamReader, StreamWriter
+from asyncio import StreamReader, StreamWriter, IncompleteReadError
 from dataclasses import dataclass
 import json
 import mimetypes
@@ -32,13 +32,44 @@ class HttpRequest:
 
 async def parse_request(reader: StreamReader) -> HttpRequest:
     """
-    Returns an HttpRequest instance with data from the provided StreamReader instance initiated from an `asyncio.start_server` request
+    Robustly parse an HTTP request from the provided StreamReader.
+    Reads headers fully, determines Content-Length, and reads the correct body size.
+    Returns an HttpRequest instance.
     """
-    request = await reader.read(1024)
-    headers, _, body = request.decode().partition("\r\n\r\n")
-    request_line = headers.splitlines()[0]
-    method, path, _ = request_line.split()
-    return HttpRequest(method, path, body if body else None)
+    headers_bytes = b''
+    while True:
+        chunk = await reader.readuntil(b'\n')
+        headers_bytes += chunk
+        if b'\r\n\r\n' in headers_bytes:
+            break
+        # Protect against malicious clients sending headers forever
+        if len(headers_bytes) > 32 * 1024:
+            raise ValueError('HTTP headers too large')
+    headers_str, _, rest = headers_bytes.partition(b'\r\n\r\n')
+    headers_text = headers_str.decode(errors='replace')
+    header_lines = headers_text.split('\r\n')
+    if not header_lines or len(header_lines[0].split()) < 2:
+        raise ValueError('Malformed HTTP request line')
+    request_line = header_lines[0]
+    method, path, *_ = request_line.split()
+    # Parse headers
+    headers = {}
+    for line in header_lines[1:]:
+        if not line.strip():
+            continue
+        if ':' in line:
+            k, v = line.split(':', 1)
+            headers[k.strip().lower()] = v.strip()
+    content_length = int(headers.get('content-length', '0'))
+    # The remainder after \r\n\r\n may contain part/all of the body
+    body_bytes = rest
+    to_read = content_length - len(body_bytes)
+    if to_read > 0:
+        more = await reader.readexactly(to_read)
+        body_bytes += more
+    body = body_bytes.decode(errors='replace') if content_length > 0 else None
+    return HttpRequest(method=method, path=path, body=body)
+
 
 
 async def write_response(writer: StreamWriter, status_code: int=200, status_message: str='OK', content_type: str=None, content: str=None) -> None:
@@ -158,10 +189,10 @@ def print_qr(url):
 
 
 
-def send_request(path: str, body: Optional[Union[str, dict]] = None, port: Optional[int] = 5544, method: Optional[str] = 'GET', ip_address: Optional[str] = '127.0.0.1') -> Union[str, bool]:
+def send_request(path: str, body: Optional[Union[str, dict]] = None, port: Optional[int] = 5544, method: Optional[str] = 'GET', ip_address: Optional[str] = '127.0.0.1', timeout: Optional[int] = 1) -> Union[str, bool]:
     """
     Sends an HTTP request to the local server and returns the response
-    If a response is received, returns a decoded value of that response. If an error is raised, returns False
+    If a response is received, returns a decoded value of that response
 
     :param path: The path to send the request to
     :param body: The body of the request; if a dict is provided, it will be converted to a JSON string
@@ -172,22 +203,94 @@ def send_request(path: str, body: Optional[Union[str, dict]] = None, port: Optio
     Example:
         send_request('/path', {'key': 'value'}, port=8080, method='POST')
     """
-    try:
-        with socket.create_connection((ip_address, port), timeout=1) as sock:
-            headers = [
-                f'{method} {path} HTTP/1.1',
-                f'Host: {ip_address}'
-            ]
-            if body:
-                if isinstance(body, dict):
-                    body = json.dumps(body)
-                    headers.append('Content-Type: application/json')
-                headers.append(f'Content-Length: {len(body)}')
-                request = '\r\n'.join(headers) + '\r\n\r\n' + body
+    with socket.create_connection((ip_address, port), timeout=timeout) as sock:
+        headers = [
+            f'{method} {path} HTTP/1.1',
+            f'Host: {ip_address}'
+        ]
+        if body:
+            if isinstance(body, dict):
+                body = json.dumps(body)
+                headers.append('Content-Type: application/json')
+            headers.append(f'Content-Length: {len(body)}')
+            request = '\r\n'.join(headers) + '\r\n\r\n' + body
+        else:
+            request = '\r\n'.join(headers) + '\r\n\r\n'
+        sock.sendall(request.encode())
+        response = sock.recv(1024)
+        return response.decode()
+
+
+
+class BufferedStreamReader:
+    """
+    Wraps an asyncio.StreamReader, returning bytes from an initial buffer first, then from the stream.
+    """
+    def __init__(self, initial_bytes, reader):
+        self._buffer = initial_bytes
+        self._reader = reader
+
+    async def read(self, n=-1):
+        if self._buffer:
+            if n == -1 or n >= len(self._buffer):
+                data, self._buffer = self._buffer, b''
+                if n == -1:
+                    rest = await self._reader.read()
+                    return data + rest
+                else:
+                    rest = await self._reader.read(n - len(data)) if n > len(data) else b''
+                    return data + rest
             else:
-                request = '\r\n'.join(headers) + '\r\n\r\n'
-            sock.sendall(request.encode())
-            response = sock.recv(1024)
-            return response.decode()
-    except Exception as e:
-        return False
+                data, self._buffer = self._buffer[:n], self._buffer[n:]
+                return data
+        else:
+            return await self._reader.read(n)
+
+    async def readexactly(self, n):
+        chunks = []
+        while n > 0:
+            chunk = await self.read(n)
+            if not chunk:
+                raise IncompleteReadError(b''.join(chunks), n)
+            chunks.append(chunk)
+            n -= len(chunk)
+        return b''.join(chunks)
+
+    async def readuntil(self, separator=b'\n'):
+        # Only used for header parsing
+        line = b''
+        while True:
+            c = await self.read(1)
+            if not c:
+                raise IncompleteReadError(line, len(separator))
+            line += c
+            if line.endswith(separator):
+                break
+        return line
+
+    def at_eof(self):
+        return not self._buffer and self._reader.at_eof()
+
+    # Add more methods as needed (e.g., readline) for compatibility
+
+    # For compatibility with parse_request expecting a StreamReader
+    def __getattr__(self, name):
+        return getattr(self._reader, name)
+
+    async def __aiter__(self):
+        while not self.at_eof():
+            chunk = await self.read(1024)
+            if not chunk:
+                break
+            yield chunk
+
+    # Optionally, implement other StreamReader methods as needed
+
+    async def close(self):
+        if hasattr(self._reader, 'close'):
+            await self._reader.close()
+
+    # For compatibility with some code
+    def feed_eof(self):
+        if hasattr(self._reader, 'feed_eof'):
+            self._reader.feed_eof()

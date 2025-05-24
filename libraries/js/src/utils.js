@@ -151,9 +151,4 @@ function getStackTrace(locals = null, options = {}) {
     return frames;
 }
 
-module.exports = {
-  appendData,
-  toJsonSafe,
-  splitArgsAndOptions,
-  getStackTrace
-};
+export { appendData, toJsonSafe, splitArgsAndOptions, getStackTrace };

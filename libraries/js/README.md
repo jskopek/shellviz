@@ -106,43 +106,75 @@ The package supports both CommonJS and ES Modules, so you can use either `requir
 
 To deploy the package to npm:
 
-1. Make sure you have an npm account and are logged in:
+### 🔐 1. Authenticate with npm
+Make sure you have an npm account and are logged in:
 ```bash
 npm login
 ```
 
-2. Update the version in `package.json` if needed:
+---
+
+### 🔁 2. Bump the version
+
+#### ✅ For a stable release:
+Use one of the following depending on the type of change:
 ```bash
-npm version patch  # for bug fixes
-npm version minor  # for new features
-npm version major  # for breaking changes
+npm version patch  # e.g., 1.0.0 → 1.0.1 (bug fixes)
+npm version minor  # e.g., 1.0.0 → 1.1.0 (new features, backwards-compatible)
+npm version major  # e.g., 1.0.0 → 2.0.0 (breaking changes)
 ```
 
-3. Build the package:
+#### 🧪 For a beta/alpha/pre-release version:
+Use the `--preid` flag to specify the pre-release tag:
+
+Start from a stable version:
+```bash
+npm version prerelease --preid=beta   # e.g., 1.0.0 → 1.0.1-beta.0
+```
+
+Or from an existing beta:
+```bash
+npm version prerelease --preid=beta   # e.g., 1.0.1-beta.0 → 1.0.1-beta.1
+```
+
+You can also combine with `minor` or `major` if needed:
+```bash
+npm version minor --preid=beta   # e.g., 1.0.1 → 1.1.0-beta.0
+npm version major --preid=beta   # e.g., 1.1.5 → 2.0.0-beta.0
+```
+
+---
+
+### 🧱 3. Build the package
+Build and verify your output:
 ```bash
 npm run build
-npm run pack
+npm pack   # creates a tarball to inspect before publishing
 ```
 
-4. Publish to npm:
+---
+
+### 🚀 4. Publish to npm
+
+#### For stable releases:
 ```bash
 npm publish
 ```
 
-The package will be automatically built before publishing thanks to the `prepublishOnly` script in `package.json`.
-
-To publish a beta/alpha version:
+#### For beta/pre-release versions:
+Publish under a separate tag to avoid affecting the `latest` version:
 ```bash
 npm publish --tag beta
-# or
-npm publish --tag alpha
 ```
 
-Users can then install specific versions:
+This allows users to explicitly opt-in:
 ```bash
 npm install shellviz@beta
-# or
-npm install shellviz@alpha
 ```
 
+You can also use other tags like `alpha`, `next`, or `experimental`.
+
+You can promote a tested beta to latest later using:
+```bash
+npm dist-tag add shellviz@1.1.0-beta.3 latest
 

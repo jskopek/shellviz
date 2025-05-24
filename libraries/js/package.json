@@ -1,38 +1,34 @@
 {
   "name": "shellviz",
-  "version": "0.2.13",
+  "type": "module",
+  "version": "0.2.15-beta.0",
   "description": "Visualization toolkit for shell scripts and command-line tools",
-  "main": "./build/node.cjs",
-  "module": "./build/node.js",
-  "browser": "./build/browser.mjs",
-  "types": "./build/node.d.ts",
-  "unpkg": "./build/browser.umd.js",
-  "jsdelivr": "./build/browser.umd.js",
+  "types": "./build/client.d.ts",
+  "unpkg": "./build/browser_client.umd.js",
+  "jsdelivr": "./build/browser_client.umd.js",
   "exports": {
     ".": {
       "browser": {
-        "import": "./build/browser.mjs",
-        "require": "./build/browser.umd.js",
-        "default": "./build/browser.umd.js"
+        "import": "./build/browser_client.mjs",
+        "require": "./build/browser_client.umd.js"
       },
-      "import": "./build/node.js",
-      "require": "./build/node.cjs",
-      "types": "./build/node.d.ts",
-      "default": "./build/node.cjs"
-    },
-    "./browser": {
-      "import": "./build/browser.mjs",
-      "require": "./build/browser.umd.js",
-      "default": "./build/browser.umd.js"
+      "import": "./build/node_client.js",
+      "require": "./build/node_client.cjs"
     }
   },
   "files": [
     "build"
   ],
+  "browser": {
+    "./src/server.js": "./src/browser_server_shim.js"
+  },
   "scripts": {
-    "build:node": "node prepare_dist.cjs",
-    "build:browser": "esbuild ./src/browser.js --bundle --format=esm --platform=browser --outfile=build/browser.mjs --banner:js=\"/* eslint-disable */\" && esbuild ./src/browser.js --bundle --format=iife --global-name=shellviz --platform=browser --outfile=build/browser.umd.js --banner:js=\"/* eslint-disable */\"",
-    "build": "npm run build:node && npm run build:browser",
+    "build:node:client:cjs": "esbuild ./src/client.js --bundle --platform=node --format=cjs --outfile=build/node_client.cjs",
+    "build:node:client:esm": "esbuild ./src/client.js --bundle --external:ws --platform=node --format=esm --outfile=build/node_client.js",
+    "build:browser:esm": "esbuild ./src/client.js --bundle --platform=browser --format=esm --outfile=build/browser_client.mjs --banner:js=\"/* eslint-disable */\"",
+    "build:browser:umd": "esbuild ./src/client.js --bundle --platform=browser --format=iife --global-name=shellviz --outfile=build/browser_client.umd.js --banner:js=\"/* eslint-disable */\"",
+    "build": "npm-run-all --sequential build:node:client:cjs build:node:client:esm build:browser:esm build:browser:umd",
+    "postbuild": "node scripts/postbuild.js",
     "pack": "npm run build && npm pack --pack-destination=dist"
   },
   "dependencies": {
@@ -41,6 +37,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.25.4",
+    "npm-run-all": "^4.1.5",
     "typescript": "^5.3.3"
   },
   "author": "Jean-Marc Skopek <jskopek@gmail.com>",
