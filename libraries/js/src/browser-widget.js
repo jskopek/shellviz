@@ -191,6 +191,15 @@ class BrowserWidget {
 
   async _loadReactApp(container) {
     try {
+      // Set global configuration for the React app
+      window.__shellvizConfig = {
+        port: this.client.port,
+        baseUrl: this.client.baseUrl,
+        hostname: this.client.baseUrl.includes('localhost') ? 'localhost' : 
+                 this.client.baseUrl.includes('127.0.0.1') ? '127.0.0.1' :
+                 new URL(this.client.baseUrl).hostname
+      };
+      
       // First try to load embedded assets
       const embeddedAssets = await this._tryLoadEmbeddedAssets();
       

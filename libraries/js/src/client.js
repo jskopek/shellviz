@@ -6,7 +6,7 @@ import { toJsonSafe, splitArgsAndOptions, getStackTrace } from './utils.js';
 import ShellvizServer from './server.js';
 import LocalServer from './local-server.js';
 import BrowserWidget from './browser-widget.js';
-import { SHELLVIZ_PORT, SHELLVIZ_SHOW_URL, SHELLVIZ_URL } from './config.js';
+import { SHELLVIZ_PORT, SHELLVIZ_URL } from './config.js';
 
 class ShellvizClient {
   constructor(opts = {}) {

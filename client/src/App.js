@@ -5,10 +5,14 @@ import Entry from './components/Entry';
 const VERSION = '0.1.1';
 
 function App() {
-	// get the hostname and port from the URL
-	const hostname = window.location.hostname;
-	let port = parseInt(new URLSearchParams(window.location.search).get('port')) || (parseInt(window.location.port) || 5544)
-	if (port === 3000) {
+	// Check for global configuration from widget, otherwise use URL-based detection
+	const config = window.__shellvizConfig || {};
+	
+	// get the hostname and port from config or URL
+	const hostname = config.hostname || window.location.hostname;
+	let port = config.port || parseInt(new URLSearchParams(window.location.search).get('port')) || (parseInt(window.location.port) || 5544);
+	
+	if (port === 3000 && !config.port) {
 		console.warn('Development port detected (3000). Using default websocket port 5544. To override, add ?port=XXXX to the URL');
 		port = 5544;
 	}
@@ -28,6 +32,7 @@ function App() {
 
 	useEffect(() => {
 		console.log(`Shellviz Client v${VERSION} initializing on http://${hostname}:${port}`);
+		
 		fetch(`http://${hostname}:${port}/api/entries`)
 			.then(res => res.json())
 			.then(data => {
@@ -38,7 +43,7 @@ function App() {
 				console.error('Failed to connect to server:', err);
 				setStatus('error');
 			});
-	}, [hostname, port])
+	}, [hostname, port, config])
 
 	// set up websocket connection
 	useEffect(() => {
@@ -96,7 +101,7 @@ function App() {
 			if (ws) ws.close();
 			clearTimeout(retryTimeout);
 		};
-	}, [hostname, port]);
+	}, [hostname, port, config]);
 
 	/* Handle auto-scrolling */
 	const [atBottom, setAtBottom] = useState(true);
