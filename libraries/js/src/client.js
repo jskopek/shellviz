@@ -81,7 +81,16 @@ class ShellvizClient {
     const value = [[safeData, Date.now() / 1000]];
     this.send(value, { id, view: 'log', append: true });
   }
-  table = (data, id = null, append = false) => { this.send(data, { id, view: 'table', append }); }
+  table = (data, id = null, append = false) => { 
+    // Format data for table view: expects array of arrays
+    // If user passes a single array (one row), wrap it in another array
+    let formattedData = data;
+    if (Array.isArray(data) && data.length > 0 && !Array.isArray(data[0])) {
+      // Single row: [1, 2, 3] becomes [[1, 2, 3]]
+      formattedData = [data];
+    }
+    this.send(formattedData, { id, view: 'table', append }); 
+  }
   json = (data, id = null, append = false) => { this.send(data, { id, view: 'json', append }); }
   markdown = (data, id = null, append = false) => { this.send(data, { id, view: 'markdown', append }); }
   progress = (data, id = null, append = false) => { this.send(data, { id, view: 'progress', append }); }
