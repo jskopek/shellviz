@@ -209,7 +209,7 @@ class ShellvizClient {
     }
 
     // Check if widget already exists
-    if (document.getElementById('shellviz-widget')) {
+    if (document.getElementById('shellviz-widget') || document.getElementById('shellviz-panel')) {
       console.warn('ShellViz widget already exists');
       return;
     }
@@ -329,8 +329,17 @@ class ShellvizClient {
         // Close button handler
         document.getElementById('shellviz-close').addEventListener('click', (e) => {
           e.stopPropagation();
-          widgetPanel.remove();
+          
+          // Clean up properly
+          if (widgetPanel) {
+            widgetPanel.remove();
+          }
+          
+          // Reset state
           isExpanded = false;
+          widgetPanel = null;
+          
+          // Show bubble again
           bubble.style.display = 'flex';
         });
 
@@ -394,13 +403,55 @@ class ShellvizClient {
       document.head.appendChild(style);
     }
 
+    // Create a global interface for the React app to communicate with the client
+    window.__shellvizInterface = {
+      getData: () => this._localEntries || [],
+      clearData: () => {
+        this._localEntries = [];
+        window.__shellvizLocalData = [];
+        this._updateWidgetDisplay();
+      },
+      deleteEntry: (entryId) => {
+        if (this._localEntries) {
+          this._localEntries = this._localEntries.filter(e => e.id !== entryId);
+          window.__shellvizLocalData = this._localEntries;
+          this._updateWidgetDisplay();
+        }
+      }
+    };
+
     // Inject and execute JavaScript
     const jsContent = embeddedAssets.getEmbeddedJS();
     if (jsContent) {
       const script = document.createElement('script');
-      script.textContent = jsContent;
+      
+      // Add some debugging and initialization code before the React bundle
+      const initCode = `
+        console.log('Initializing embedded ShellViz with container:', document.getElementById('root'));
+        console.log('Initial data:', window.__shellvizLocalData);
+        
+        // Flag to indicate we're in embedded widget mode
+        window.__shellvizEmbeddedMode = true;
+        
+        // Override console.log for the embedded app to help with debugging (only if not already done)
+        if (!window.__embeddedLog) {
+          const originalLog = console.log;
+          window.__embeddedLog = (...args) => {
+            originalLog('[EMBEDDED]', ...args);
+          };
+        }
+      `;
+      
+      script.textContent = initCode + '\n' + jsContent;
+      
       script.onload = () => {
         console.log('ShellViz React app loaded from embedded assets');
+        // Try to trigger a render update
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('shellviz:dataUpdate', {
+            detail: { entries: this._localEntries || [], newEntry: null }
+          }));
+        }, 100);
       };
       script.onerror = () => {
         console.error('Failed to execute embedded JavaScript');

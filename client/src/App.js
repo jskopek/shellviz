@@ -1,5 +1,5 @@
 import './App.scss';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Entry from './components/Entry';
 
 const VERSION = '0.1.0';
@@ -16,7 +16,19 @@ function App() {
 	const [entries, setEntries] = useState([]);
 
 	const [status, setStatus] = useState('connecting') // 'connecting', 'connected', 'updating', 'error'
-	const [isEmbedded, setIsEmbedded] = useState(false); // Track if we're in embedded mode
+	
+	// Use ref to avoid stale closures in polling
+	const entriesRef = useRef(entries);
+	entriesRef.current = entries;
+	
+	// Detect embedded mode immediately - don't wait for server check
+	const [isEmbedded, setIsEmbedded] = useState(() => {
+		const embedded = window.__shellvizLocalData !== undefined;
+		if (embedded) {
+			console.log('Embedded mode detected immediately');
+		}
+		return embedded;
+	});
 	
 	function deleteEntry({ entry, setEntries }) {
 		setEntries((entries) => entries.filter((e) => e.id !== entry.id));
@@ -46,10 +58,75 @@ function App() {
 		}
 	}
 
+	// Set up embedded event listeners FIRST - before any server checks
 	useEffect(() => {
+		if (isEmbedded) {
+			console.log('Setting up embedded mode event listeners');
+			
+			// Try polling approach for more reliability
+			let pollInterval;
+			let lastDataLength = 0;
+			let lastDataString = '';
+			
+			const pollForData = () => {
+				const currentData = window.__shellvizLocalData || [];
+				const currentDataString = JSON.stringify(currentData);
+				if (currentData.length !== lastDataLength || currentDataString !== lastDataString) {
+					console.log('Polling detected data change:', currentData.length, 'entries');
+					console.log('Setting entries via polling to:', currentData);
+					setEntries([...currentData]); // Force new array reference
+					lastDataLength = currentData.length;
+					lastDataString = currentDataString;
+				}
+			};
+			
+			// Poll every 100ms for data changes
+			pollInterval = setInterval(pollForData, 100);
+			
+			// Also keep the event listeners as backup
+			const handleDataUpdate = (event) => {
+				console.log('Event: Received data update:', event.detail);
+				console.log('Event: Setting entries to:', event.detail.entries);
+				// Force new array reference to trigger re-render
+				setEntries([...event.detail.entries]);
+			};
+
+			const handleDataClear = () => {
+				console.log('Event: Received data clear');
+				setEntries([]);
+			};
+
+			// Listen for custom events from the client
+			window.addEventListener('shellviz:dataUpdate', handleDataUpdate);
+			window.addEventListener('shellviz:dataClear', handleDataClear);
+			
+			// Load any existing data immediately
+			if (window.__shellvizLocalData && window.__shellvizLocalData.length > 0) {
+				console.log('Loading existing local data:', window.__shellvizLocalData);
+				setEntries([...window.__shellvizLocalData]); // Force new array reference
+			}
+			
+			setStatus('connected');
+
+			// Cleanup
+			return () => {
+				if (pollInterval) clearInterval(pollInterval);
+				window.removeEventListener('shellviz:dataUpdate', handleDataUpdate);
+				window.removeEventListener('shellviz:dataClear', handleDataClear);
+			};
+		}
+	}, [isEmbedded]);
+
+	// Only try server connection if not in embedded mode
+	useEffect(() => {
+		if (isEmbedded) {
+			console.log('Skipping server connection - in embedded mode');
+			return;
+		}
+		
 		console.log(`Shellviz Client v${VERSION} initializing on http://${hostname}:${port}`);
 		
-		// Try to load from server first
+		// Try to load from server
 		fetch(`http://${hostname}:${port}/api/entries`)
 			.then(res => res.json())
 			.then(data => {
@@ -58,99 +135,78 @@ function App() {
 			})
 			.catch(err => {
 				console.log('Server not available, checking for embedded mode...');
-				// Server not available, check if we're in embedded mode
+				// Server not available, check if we can switch to embedded mode
 				if (window.__shellvizLocalData !== undefined) {
-					console.log('Embedded mode detected, using local data');
+					console.log('Switching to embedded mode after server failed');
 					setIsEmbedded(true);
-					setEntries(window.__shellvizLocalData || []);
-					setStatus('connected');
 				} else {
 					console.error('No server and no embedded data available:', err);
 					setStatus('error');
 				}
 			});
-	}, [hostname, port])
+	}, [hostname, port, isEmbedded]);
 
-	// Set up websocket connection OR embedded event listeners
+	// Set up websocket connection (only if not embedded)
 	useEffect(() => {
 		if (isEmbedded) {
-			// Embedded mode: listen for custom events
-			const handleDataUpdate = (event) => {
-				console.log('Received data update:', event.detail);
-				setEntries(event.detail.entries);
-			};
-
-			const handleDataClear = () => {
-				console.log('Received data clear');
-				setEntries([]);
-			};
-
-			// Listen for custom events from the client
-			window.addEventListener('shellviz:dataUpdate', handleDataUpdate);
-			window.addEventListener('shellviz:dataClear', handleDataClear);
-
-			// Cleanup
-			return () => {
-				window.removeEventListener('shellviz:dataUpdate', handleDataUpdate);
-				window.removeEventListener('shellviz:dataClear', handleDataClear);
-			};
-		} else {
-			// Normal mode: WebSocket connection
-			let ws;
-			let retryTimeout;
-			let retryInterval = 1000;  // Initial retry interval for websocket
-
-			const connectWebSocket = () => {
-				setStatus('connecting');
-				ws = new WebSocket("ws://" + hostname + ":" + port);
-
-				ws.onopen = function () {
-					// console.log("Connected to WebSocket server");
-					retryInterval = 1000;  // Reset the retry interval on a successful connection
-					setStatus('connected');
-				};
-
-				ws.onmessage = function (event) {
-					const entry = JSON.parse(event.data)
-
-					setEntries((entries) => {
-						// Update the entry if it already exists, otherwise add it
-						const entryMap = new Map(entries.map(e => [e.id, e]));
-						entryMap.set(entry.id, entry);
-						return Array.from(entryMap.values());
-					});
-
-					if (entry.data === '___clear___') {
-						// if a special ___clear___ event is sent, empty the messages
-						setEntries([]);
-					}
-				};
-
-				ws.onclose = function () {
-					// console.log("WebSocket connection closed. Reconnecting...");
-					// Retry with an increasing delay (exponential backoff)
-					retryTimeout = setTimeout(() => {
-						retryInterval = Math.min(retryInterval * 2, 10000);  // Double the retry interval, with a max of 10 seconds
-						connectWebSocket();
-					}, retryInterval);
-					setStatus('connecting');
-				};
-
-				ws.onerror = function (error) {
-					setStatus('error');
-					// console.error("WebSocket error:", error);
-					ws.close();
-				};
-			};
-
-			connectWebSocket();
-
-			// Cleanup function to close WebSocket and clear any retry timeouts when component unmounts
-			return () => {
-				if (ws) ws.close();
-				clearTimeout(retryTimeout);
-			};
+			return; // Skip WebSocket in embedded mode
 		}
+		
+		// Normal mode: WebSocket connection
+		let ws;
+		let retryTimeout;
+		let retryInterval = 1000;  // Initial retry interval for websocket
+
+		const connectWebSocket = () => {
+			setStatus('connecting');
+			ws = new WebSocket("ws://" + hostname + ":" + port);
+
+			ws.onopen = function () {
+				// console.log("Connected to WebSocket server");
+				retryInterval = 1000;  // Reset the retry interval on a successful connection
+				setStatus('connected');
+			};
+
+			ws.onmessage = function (event) {
+				const entry = JSON.parse(event.data)
+
+				setEntries((entries) => {
+					// Update the entry if it already exists, otherwise add it
+					const entryMap = new Map(entries.map(e => [e.id, e]));
+					entryMap.set(entry.id, entry);
+					return Array.from(entryMap.values());
+				});
+
+				if (entry.data === '___clear___') {
+					// if a special ___clear___ event is sent, empty the messages
+					setEntries([]);
+				}
+			};
+
+			ws.onclose = function () {
+				// console.log("WebSocket connection closed. Reconnecting...");
+				// Retry with an increasing delay (exponential backoff)
+				retryTimeout = setTimeout(() => {
+					retryInterval = Math.min(retryInterval * 2, 10000);  // Double the retry interval, with a max of 10 seconds
+					connectWebSocket();
+				}, retryInterval);
+				setStatus('connecting');
+			};
+
+			ws.onerror = function (error) {
+				setStatus('error');
+				// console.error("WebSocket error:", error);
+				ws.close();
+			};
+		};
+
+		connectWebSocket();
+
+		// Cleanup function to close WebSocket and clear any retry timeouts when component unmounts
+		return () => {
+			if (ws) ws.close();
+			clearTimeout(retryTimeout);
+		};
 	}, [hostname, port, isEmbedded]);
 
 	/* Handle auto-scrolling */
@@ -190,7 +246,10 @@ function App() {
 
 	/* / Handle auto-scrolling */
 
-
+	useEffect(() => {
+		console.log('entries updated', entries)
+	}, [entries])
+	console.log('about to render', entries)
 	return (
 		<main className="">
 			{/* center image using tailwind */}
