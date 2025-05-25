@@ -14,6 +14,10 @@
       },
       "import": "./build/node_client.js",
       "require": "./build/node_client.cjs"
+    },
+    "./embedded-assets": {
+      "import": "./build/embedded-assets.mjs",
+      "require": "./build/embedded-assets.mjs"
     }
   },
   "files": [
@@ -26,11 +30,12 @@
     "build:client": "cd ../../client && npm run build",
     "copy:client": "cp -r ../../client/build/* build/client_build/ 2>/dev/null || echo 'Client build not found, skipping...'",
     "embed:assets": "node scripts/embed-assets.js",
-    "build:node:client:cjs": "esbuild ./src/client.js --bundle --platform=node --format=cjs --outfile=build/node_client.cjs",
-    "build:node:client:esm": "esbuild ./src/client.js --bundle --external:ws --platform=node --format=esm --outfile=build/node_client.js",
-    "build:browser:esm": "esbuild ./src/client.js --bundle --platform=browser --format=esm --outfile=build/browser_client.mjs --banner:js=\"/* eslint-disable */\"",
-    "build:browser:umd": "esbuild ./src/client.js --bundle --platform=browser --format=iife --global-name=shellviz --outfile=build/browser_client.umd.js --banner:js=\"/* eslint-disable */\"",
-    "build": "npm-run-all --sequential build:client copy:client embed:assets build:node:client:cjs build:node:client:esm build:browser:esm build:browser:umd",
+    "build:embedded-assets": "esbuild ./src/embedded-assets.js --bundle --platform=browser --format=esm --outfile=build/embedded-assets.mjs --banner:js=\"/* eslint-disable */\"",
+    "build:node:client:cjs": "esbuild ./src/client.js --bundle --external:./embedded-assets.js --platform=node --format=cjs --outfile=build/node_client.cjs",
+    "build:node:client:esm": "esbuild ./src/client.js --bundle --external:ws --external:./embedded-assets.js --platform=node --format=esm --outfile=build/node_client.js",
+    "build:browser:esm": "esbuild ./src/client.js --bundle --external:./embedded-assets.js --platform=browser --format=esm --outfile=build/browser_client.mjs --banner:js=\"/* eslint-disable */\"",
+    "build:browser:umd": "esbuild ./src/client.js --bundle --external:./embedded-assets.js --platform=browser --format=iife --global-name=shellviz --outfile=build/browser_client.umd.js --banner:js=\"/* eslint-disable */\"",
+    "build": "npm-run-all --sequential build:client copy:client embed:assets build:embedded-assets build:node:client:cjs build:node:client:esm build:browser:esm build:browser:umd",
     "postbuild": "node scripts/postbuild.js",
     "pack": "npm run build && npm pack --pack-destination=dist"
   },
