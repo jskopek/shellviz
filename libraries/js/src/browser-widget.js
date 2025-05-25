@@ -457,13 +457,69 @@ class BrowserWidget {
 
   async _tryLoadEmbeddedAssets() {
     try {
-      const assets = await import('./embedded-assets.js');
+      // First try to load from the current module location (bundled)
+      const assets = await import('./embedded-assets.mjs');
       if (assets.hasEmbeddedAssets()) {
         return assets;
       }
     } catch (e) {
-      // Embedded assets not available
+      // Embedded assets not bundled, try to load externally
+      console.log('Embedded assets not bundled, attempting external load...');
     }
+
+    // Try to load from external URL (for when assets are split out)
+    try {
+      // Determine base URL for the library
+      const currentScript = document.currentScript;
+      const scriptSrc = currentScript ? currentScript.src : '';
+      console.log('scriptSrc', scriptSrc);
+      
+      const possibleUrls = [];
+      
+      // If we have a script source, try relative to that location
+      if (scriptSrc) {
+        try {
+          const baseUrl = new URL('./', scriptSrc).href;
+          console.log('baseUrl', baseUrl);
+          possibleUrls.push(
+            new URL('./embedded-assets.mjs', baseUrl).href
+          );
+        } catch (e) {
+          console.warn('Could not construct URLs relative to script:', e);
+        }
+      }
+      
+      // Always try relative to current page
+      possibleUrls.push(
+        './embedded-assets.mjs',
+        './build/embedded-assets.mjs',
+        '../build/embedded-assets.mjs',
+        // CDN locations (if using unpkg/jsdelivr) 
+        'https://unpkg.com/shellviz@latest/build/embedded-assets.mjs',
+        'https://cdn.jsdelivr.net/npm/shellviz@latest/build/embedded-assets.mjs'
+      );
+      
+      console.log('possibleUrls', possibleUrls);
+
+      for (const url of possibleUrls) {
+        try {
+          const assets = await import(url);
+          if (assets.hasEmbeddedAssets()) {
+            console.log(`✅ Loaded embedded assets from: ${url}`);
+            return assets;
+          }
+        } catch (urlError) {
+          console.error('Error loading embedded assets:', urlError);
+          // Continue to next URL
+          continue;
+        }
+      }
+    } catch (e) {
+      console.error('Error loading embedded assets:', e);
+      // External loading failed
+    }
+    
+    console.warn('⚠️ Could not load embedded assets. Widget will show fallback UI.');
     return null;
   }
 
@@ -531,7 +587,23 @@ class BrowserWidget {
 
   _showFallbackUI(container, errorInfo) {
     container.innerHTML = `
-      <div style="padding: 20px; text-align: center; color: #666;">Error: ${typeof errorInfo === 'string' ? errorInfo : 'Asset loading failed'}</div>
+      <div style="padding: 20px; text-align: center; color: #666; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;">
+        <h3 style="color: #333; margin-bottom: 10px;">⚠️ Shellviz Widget</h3>
+        <p style="margin-bottom: 15px;">Unable to load widget assets.</p>
+        ${typeof errorInfo === 'string' ? `<p style="font-size: 0.9em; color: #888;">${errorInfo}</p>` : ''}
+        <details style="margin-top: 15px; text-align: left;">
+          <summary style="cursor: pointer; color: #666;">💡 How to fix this</summary>
+          <div style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px; font-size: 0.85em;">
+            <p><strong>Option 1:</strong> Include embedded-assets.mjs alongside your main bundle</p>
+            <p><strong>Option 2:</strong> Ensure embedded-assets.mjs is accessible at one of these locations:</p>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+              <li>./embedded-assets.mjs (same directory as main script)</li>
+              <li>CDN: unpkg or jsdelivr</li>
+            </ul>
+            <p><strong>Option 3:</strong> Use a bundled version that includes all assets</p>
+          </div>
+        </details>
+      </div>
     `;
   }
 
