@@ -92,16 +92,17 @@
     </div>
 
     <!-- Load ShellViz client -->
+
     <script type="module">
         // For this demo, we'll load from the built browser client
         import * as shellviz from './libraries/js/build/browser_client.mjs';
         
         // Make it available globally for the demo buttons
-        window.shellviz = shellviz;
+        // window.shellviz = shellviz;
         
         // Also expose individual functions
         window.initWidget = () => {
-            shellviz.renderInBrowser();
+            shellviz.show();
         };
         
         window.removeWidget = () => {
