@@ -15,3 +15,5 @@ libraries/python/test*.py
 libraries/python/test_python_env
 __pycache__
 *.pyc
+
+.DS_Store

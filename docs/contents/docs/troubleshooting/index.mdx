@@ -1,0 +1,25 @@
+---
+title: Troubleshooting
+---
+
+## Browser can't connect to Shellviz
+Is your browser not able to load the Shellviz instance? The most common reason for this is the server prematurely shutting down. Shellviz runs a local web server as long as the `Shellviz()` instance is alive, but this server will be killed as soon as your instance is destroyed. 
+
+Try launching a python shell from your command line and initializing an instance of Shellviz from there. Make sure not to terminate the python shell before attempting your connection
+
+```python
+# run this code from within a `python` or `ipython` interactive shell
+import shellviz
+shellviz.Shellviz()
+# now, try connecting to the displayed url in your browser before terminating the interactive shell session
+```
+
+## Missing data
+The most likely cause of missing data is the Shellviz server terminating before it has been able to send data to the browser. To fix this, you can use the `wait()` command:
+
+```python
+sv = Shellviz()
+sv.wait()
+```
+
+You can learn more about the wait() command on the [waiting until data is viewed](/docs/getting-started#waiting-until-data-is-viewed) section of the Getting Started guide.

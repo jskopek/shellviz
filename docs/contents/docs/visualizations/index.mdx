@@ -1,0 +1,219 @@
+---
+title: Visualizations
+description: A list of all available visualizations in Shellviz
+---
+
+<Outlet path="/getting-started/components" />
+
+## Log
+```python
+from shellviz import log
+```
+Example:
+```python
+log('migrating users to newest version')
+log('migration complete')
+```
+![Log](/docs/log.png)
+
+## Table
+```python
+from shellviz import table
+```
+Example:
+```python
+table([['Name', 'Age'], ['Rafael', 30], ['Charlie', 53]])
+table([{'name': 'Rafael', 'age': 30}, {'name': 'Charlie', 'age': 53}])
+```
+![Table](/docs/table.png)
+
+## JSON
+```python
+from shellviz import json
+```
+Example:
+```python
+json([['Name', 'Age'], ['Rafael', 30], ['Charlie', 53]])
+json([{'name': 'Rafael', 'age': 30}, {'name': 'Charlie', 'age': 53}])
+```
+![JSON](/docs/json.png)
+
+## Card
+```python
+from shellviz import card
+```
+Example:
+```python
+card([['Name', 'Age'], ['Rafael', 30], ['Charlie', 53]])
+card([{'name': 'Rafael', 'age': 30}, {'name': 'Charlie', 'age': 53}])
+```
+![Card](/docs/card.png)
+
+## Markdown
+```python
+from shellviz import markdown
+```
+Example:
+```python
+markdown("It was a **cold** night, and all were fast asleep")
+```
+![Markdown](/docs/markdown.png)
+
+## Number
+```python
+from shellviz import number
+```
+Example:
+```python
+number(1032093)
+```
+![Number](/docs/number.png)
+
+## Progress
+```python
+from shellviz import progress
+```
+Example:
+```python
+progress(0.3)
+```
+![Progress](/docs/progress.png)
+
+
+## Bar
+```python
+from shellviz import bar
+```
+
+Example:
+```python
+bar([{
+    "country": "AD",
+    "hot dog": 105,
+    "burger": 129,
+    "sandwich": 37,
+    "kebab": 119,
+    "fries": 53,
+    "donut": 69,
+},
+{
+    "country": "AE",
+    "hot dog": 41,
+    "burger": 14,
+    "sandwich": 181,
+    "kebab": 166,
+    "fries": 36,
+    "donut": 105,
+}])
+```
+![Bar](/docs/bar.png)
+
+## Area
+```python
+from shellviz import area
+```
+
+Example:
+```python
+area([190,240,340])
+```
+
+![Pie](/docs/area.png)
+
+## Pie
+```python
+from shellviz import pie
+```
+
+Example:
+```python
+pie([
+    {"id": "java", "value": 204},
+    {"id": "hack", "value": 23},
+    {"id": "make", "value": 537},
+    {"id": "go", "value": 295},
+    {"id": "python", "value": 177},
+])
+```
+
+![Pie](/docs/pie.png)
+
+## Location
+```python
+from shellviz import location
+```
+Example:
+```python
+location({
+    "latitude": 48.858844,
+    "longitude": 2.294351,
+    "name": "Eiffel Tower, Paris"
+  })
+```
+![Location](/docs/location-1.png)
+
+```python
+location([
+  {
+    "latitude": 48.858844,
+    "longitude": 2.294351,
+    "name": "Eiffel Tower, Paris"
+  },
+  {
+    "latitude": 40.689247,
+    "longitude": -74.044502,
+    "name": "Statue of Liberty, New York"
+  },
+  {
+    "latitude": 27.175144,
+    "longitude": 78.042142,
+    "name": "Taj Mahal, India"
+  },
+  {
+    "latitude": -33.856784,
+    "longitude": 151.215297,
+    "name": "Sydney Opera House, Australia"
+  },
+  {
+    "latitude": 35.689487,
+    "longitude": 139.691711,
+    "name": "Tokyo Tower, Japan"
+  },
+  {
+    "latitude": 51.500729,
+    "longitude": -0.124625,
+    "name": "Big Ben, London"
+  },
+  {
+    "latitude": 41.902784,
+    "longitude": 12.496366,
+    "name": "Colosseum, Rome"
+  },
+  {
+    "latitude": 37.819929,
+    "longitude": -122.478255,
+    "name": "Golden Gate Bridge, San Francisco"
+  },
+  {
+    "latitude": -22.951916,
+    "longitude": -43.210487,
+    "name": "Christ the Redeemer, Rio de Janeiro"
+  },
+  {
+    "latitude": 30.328611,
+    "longitude": 35.441944,
+    "name": "Petra, Jordan"
+  }
+])
+```
+![Location](/docs/location-2.png)
+
+## Raw
+```python
+from shellviz import raw
+```
+Example:
+```python
+raw({'one': 'thing'})
+```
+![Raw](/docs/raw.png)
