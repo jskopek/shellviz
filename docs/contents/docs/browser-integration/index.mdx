@@ -1,0 +1,516 @@
+---
+title: Browser Integration
+---
+
+Shellviz provides seamless browser integration that allows you to embed visualizations directly in web pages. Whether you're building web applications, dashboards, or just want to add quick data visualization to your HTML pages, Shellviz makes it easy.
+
+## Quick Start
+
+### CDN Installation
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shellviz Browser Example</title>
+</head>
+<body>
+    <script src="https://unpkg.com/shellviz"></script>
+    <script>
+        const { log, table, show } = shellviz;
+        
+        // Show the floating widget
+        show();
+        
+        // Send data to visualization
+        log('Hello from the browser!');
+        table([['Name', 'Value'], ['Test', 123]]);
+    </script>
+</body>
+</html>
+```
+
+
+### ES Modules
+```html
+<script type="module">
+    import { log, table, show } from 'https://unpkg.com/shellviz/dist/browser.mjs';
+    
+    show();
+    log('Hello from ES modules!');
+</script>
+```
+
+### Using with Build Tools (Webpack, Vite, etc.)
+```bash
+npm install shellviz
+```
+
+```javascript
+import { log, table, show } from 'shellviz';
+
+show();
+log('Hello from bundled application!');
+```
+
+## Browser Widget
+
+The browser widget is a floating, resizable panel that displays your Shellviz visualizations directly in the browser window.
+
+### Showing the Widget
+```javascript
+import { show } from 'shellviz';
+
+// Display the floating widget
+show();
+```
+
+
+
+### Widget Features
+- **Floating Panel**: Non-intrusive overlay that doesn't affect your page layout
+- **Resizable**: Drag handles to resize width and height
+- **Persistent**: Remembers size and expansion state across page reloads
+- **Collapsible**: Click the chevron to minimize to a small bubble
+- **Auto-show**: Automatically appears when data is first sent (in client-side mode)
+
+### Widget Positioning
+The widget appears in the bottom-right corner by default and includes:
+- Orange circular bubble (when collapsed)
+- Expandable panel with embedded Shellviz interface
+- Resize handles on top and left edges
+- Floating chevron for easy collapsing
+
+## How Browser Integration Works
+
+### Client-Side Server Simulation
+When running in the browser, Shellviz uses `ShellvizServerInBrowser` which:
+
+1. **Mimics the Server API**: Implements the same interface as the Node.js server
+2. **Intercepts Network Calls**: Hijacks `fetch()` calls to the server URL
+3. **Runs Entirely In-Browser**: No external server needed - everything happens client-side
+4. **Embedded Visualization**: Works with an embedded React app for real-time data visualization
+
+```javascript
+// These calls work entirely in the browser
+log('Browser logging');
+table([['Browser', 'Version'], ['Chrome', '91']]);
+// No network requests are made - all handled locally
+```
+
+### Network Call Interception
+The browser server works by replacing the global `fetch` function:
+```javascript
+// Original fetch calls to http://localhost:5544/api/* 
+// are intercepted and handled by ShellvizServerInBrowser
+window.fetch = function (url, options) {
+    if (url.startsWith(shellvizServerInBrowser.baseUrl)) {
+        return shellvizServerInBrowser.handleApiCall(url, options);
+    }
+    return originalFetch.call(this, url, options);
+};
+```
+
+## Configuration
+
+### Window Variables (Browser)
+Configure Shellviz before importing by setting global window variables:
+```html
+<script>
+    // Set configuration before importing Shellviz
+    window.SHELLVIZ_PORT = 8080;
+    window.SHELLVIZ_URL = "https://my-shellviz-server.com";
+</script>
+<script src="https://unpkg.com/shellviz"></script>
+<script>
+    const { log } = shellviz;
+    // Will use the window variables set above
+    log("Hello from browser!");
+</script>
+```
+
+### ES Module Configuration
+```html
+<script type="module">
+    // Set before importing
+    window.SHELLVIZ_PORT = 8080;
+    window.SHELLVIZ_URL = "https://my-server.com";
+    
+    import { ShellvizClient } from 'https://unpkg.com/shellviz/dist/browser.mjs';
+    
+    // Will use the window variables
+    const sv = new ShellvizClient();
+    sv.log("Hello world!");
+</script>
+```
+
+### Constructor Parameters
+Override configuration directly:
+```javascript
+import { ShellvizClient } from 'shellviz';
+
+const client = new ShellvizClient({
+    port: 8080,
+    url: 'http://my-remote-server.com'
+});
+
+client.show();
+client.log('Custom configuration');
+```
+
+### Configuration Hierarchy
+Settings are resolved in this priority order:
+1. **Constructor parameters** (highest priority)
+2. **Window Variables** (`window.SHELLVIZ_*`)
+3. **Default Values** (port: 5544)
+
+### Available Options
+- `SHELLVIZ_PORT` - Port number (default: 5544)
+- `SHELLVIZ_URL` - Custom server URL (overrides port-based URL)
+
+### Boolean Values
+For boolean window variables, these values are considered `true`:
+- `true` (boolean), `"true"` (string)
+- `"1"` (string), `"yes"` (string)
+
+All other values are considered `false`.
+
+### Configuration Examples
+
+#### Connecting to Different Environments
+```html
+<script>
+    // Development
+    if (location.hostname === 'localhost') {
+        window.SHELLVIZ_PORT = 5544;
+        window.SHELLVIZ_URL = null; // Use default localhost
+    }
+    // Production
+    else {
+        window.SHELLVIZ_PORT = 8080;
+        window.SHELLVIZ_URL = "https://shellviz.myapp.com";
+    }
+</script>
+<script src="https://unpkg.com/shellviz"></script>
+```
+
+#### Build Tool Configuration
+When using webpack, vite, or other build tools:
+```javascript
+import { ShellvizClient } from 'shellviz';
+
+const config = {
+    port: process.env.SHELLVIZ_PORT || 5544,
+    url: process.env.SHELLVIZ_URL || null
+};
+
+const client = new ShellvizClient(config);
+client.show();
+```
+
+### Configuration Troubleshooting
+
+#### Common Issues
+- **Window variables not recognized**: Ensure they're set before importing Shellviz
+- **Boolean values not recognized**: Use `true`/`false` (boolean) or `"true"`/`"false"` (string)
+- **URL connection failed**: Check if the remote server is running and accessible
+- **Widget not appearing**: Verify `show()` is called after client creation
+
+#### Debugging Configuration
+Check your current configuration:
+```javascript
+// In browser console or your code
+console.log('Window variables:', {
+    SHELLVIZ_PORT: window.SHELLVIZ_PORT,
+    SHELLVIZ_URL: window.SHELLVIZ_URL
+});
+
+// After creating client
+const client = new shellviz.ShellvizClient();
+console.log(`Using port: ${client.port}`);
+console.log(`Using URL: ${client.baseUrl}`);
+```
+
+
+
+## Usage Patterns
+
+### Real-time Data Streaming
+```html
+<script src="https://unpkg.com/shellviz"></script>
+<script>
+    const { log, progress, number, show } = shellviz;
+    show();
+    
+    // Simulate real-time data updates
+    let count = 0;
+    setInterval(() => {
+        count++;
+        number(count, 'counter');
+        progress(Math.sin(Date.now() / 1000) * 0.5 + 0.5, 'wave');
+        log(`Update ${count}`, 'updates');
+    }, 1000);
+</script>
+```
+
+### API Response Visualization
+```html
+<script src="https://unpkg.com/shellviz"></script>
+<script>
+    const { json, table, card, show } = shellviz;
+    show();
+    
+    async function fetchAndVisualize() {
+        try {
+            const response = await fetch('https://api.example.com/data');
+            const data = await response.json();
+            
+            // Show raw response
+            json(data, 'api_response');
+            
+            // Show processed table
+            if (data.items) {
+                const tableData = data.items.map(item => [
+                    item.name, item.value, item.status
+                ]);
+                table([['Name', 'Value', 'Status'], ...tableData], 'items');
+            }
+            
+            // Show summary
+            card({
+                total: data.items?.length || 0,
+                timestamp: new Date().toLocaleString()
+            }, 'summary');
+            
+        } catch (error) {
+            log('Error fetching data:', error.message, 'errors');
+        }
+    }
+    
+    fetchAndVisualize();
+</script>
+```
+
+### Form Data Analysis
+```html
+<form id="dataForm">
+    <input type="text" name="name" placeholder="Name">
+    <input type="number" name="value" placeholder="Value">
+    <button type="submit">Submit</button>
+</form>
+
+<script src="https://unpkg.com/shellviz"></script>
+<script>
+    const { table, log, show } = shellviz;
+    show();
+    
+    const submissions = [];
+    
+    document.getElementById('dataForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const entry = {
+            name: formData.get('name'),
+            value: parseInt(formData.get('value')),
+            timestamp: new Date().toLocaleString()
+        };
+        
+        submissions.push(entry);
+        
+        // Update table with all submissions
+        const tableData = submissions.map(s => [s.name, s.value, s.timestamp]);
+        table([['Name', 'Value', 'Time'], ...tableData], 'submissions');
+        
+        log(`Added: ${entry.name} = ${entry.value}`, 'activity');
+        
+        e.target.reset();
+    });
+</script>
+```
+
+
+### Chart Visualization
+```html
+<script src="https://unpkg.com/shellviz"></script>
+<script>
+    const { bar, pie, area, show } = shellviz;
+    show();
+    
+    // Sample data
+    const salesData = [
+        { name: 'Jan', value: 4000 },
+        { name: 'Feb', value: 3000 },
+        { name: 'Mar', value: 5000 },
+        { name: 'Apr', value: 4500 }
+    ];
+    
+    const categoryData = [
+        { name: 'Desktop', value: 45 },
+        { name: 'Mobile', value: 35 },
+        { name: 'Tablet', value: 20 }
+    ];
+    
+    // Display charts
+    bar(salesData, 'monthly_sales');
+    pie(categoryData, 'device_categories');
+    
+    // Animated area chart
+    const areaData = [];
+    let time = 0;
+    setInterval(() => {
+        areaData.push({
+            x: time++,
+            y: Math.sin(time / 10) * 50 + 100 + Math.random() * 20
+        });
+        
+        // Keep only last 50 points
+        if (areaData.length > 50) {
+            areaData.shift();
+        }
+        
+        area(areaData, 'live_data');
+    }, 200);
+</script>
+```
+
+
+## Integration with Web Frameworks
+
+### React Integration
+```jsx
+import React, { useEffect, useRef } from 'react';
+import { log, table, show } from 'shellviz';
+
+function DataVisualization({ data }) {
+    const shownRef = useRef(false);
+    
+    useEffect(() => {
+        // Show widget once
+        if (!shownRef.current) {
+            show();
+            shownRef.current = true;
+        }
+        
+        // Update visualization when data changes
+        if (data) {
+            table(data, 'react_data');
+            log('Data updated from React', 'react_logs');
+        }
+    }, [data]);
+    
+    return <div>Check the Shellviz widget for visualization!</div>;
+}
+```
+
+### Vue Integration
+```typescript
+<template>
+    <div>
+        <button @click="updateData">Update Data</button>
+        <p>Check the Shellviz widget for visualization!</p>
+    </div>
+</template>
+
+<script>
+import { log, table, show } from 'shellviz';
+
+export default {
+    mounted() {
+        show();
+        this.updateData();
+    },
+    methods: {
+        updateData() {
+            const data = [
+                ['Name', 'Value'],
+                ['Vue', Math.floor(Math.random() * 100)],
+                ['Shellviz', Math.floor(Math.random() * 100)]
+            ];
+            
+            table(data, 'vue_data');
+            log('Data updated from Vue', 'vue_logs');
+        }
+    }
+}
+</script>
+```
+
+### Angular Integration
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { log, table, show } from 'shellviz';
+
+@Component({
+  selector: 'app-data-viz',
+  template: `
+    <button (click)="updateData()">Update Data</button>
+    <p>Check the Shellviz widget for visualization!</p>
+  `
+})
+export class DataVizComponent implements OnInit {
+  
+  ngOnInit() {
+    show();
+    this.updateData();
+  }
+  
+  updateData() {
+    const data = [
+      ['Framework', 'Score'],
+      ['Angular', Math.floor(Math.random() * 100)],
+      ['Shellviz', Math.floor(Math.random() * 100)]
+    ];
+    
+    table(data, 'angular_data');
+    log('Data updated from Angular', 'angular_logs');
+  }
+}
+```
+
+## Connecting to Remote Servers
+
+You can also connect your browser client to a remote Shellviz server:
+
+```html
+<script>
+    window.SHELLVIZ_URL = "https://my-shellviz-server.herokuapp.com";
+</script>
+<script src="https://unpkg.com/shellviz"></script>
+<script>
+    const { log, table } = shellviz;
+    
+    // This will send data to the remote server
+    log('Hello from browser to remote server!');
+    table([['Client', 'Server'], ['Browser', 'Remote']]);
+</script>
+```
+
+
+## Troubleshooting
+
+### Widget Not Appearing
+- Make sure to call `show()` after importing Shellviz
+- Check browser console for any JavaScript errors
+- Verify the script is loaded correctly
+
+### Data Not Updating
+- Check if there are any network errors in browser console
+- Verify the correct server URL is being used
+- Make sure the server is running and accessible
+
+### Styling Conflicts
+- The widget uses high-specificity CSS to avoid conflicts
+- Widget content is contained within `[data-shellviz="true"]` elements
+- Custom styles can be overridden if needed
+
+### Performance Considerations
+- Large datasets may impact browser performance
+- Consider using `clear()` periodically for long-running visualizations
+- The widget automatically limits displayed data for performance
+
+## Security Considerations
+
+- Browser mode runs entirely client-side - no data is sent over the network by default
+- When connecting to remote servers, ensure they use HTTPS in production
+- Be cautious about displaying sensitive data in browser-based visualizations
+- The widget respects Content Security Policy (CSP) when properly configured
