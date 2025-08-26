@@ -5,6 +5,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Footer } from "@/components/footer";
 import "@/styles/globals.css";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Shellviz",
@@ -19,6 +20,27 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script
+          src="https://unpkg.com/shellviz@0.5.0-beta.0"
+          strategy="beforeInteractive"
+        />
+        <Script
+          id="shellviz-init"
+          strategy="afterInteractive"
+        >
+          {`
+            const { log, table, show } = shellviz;
+            
+            // Show the floating widget
+            show();
+            
+            // Send data to visualization
+            log('Hello from the browser!');
+            table([['Name', 'Value'], ['Test', 123]]);
+          `}
+        </Script>
+      </head>
       <body
         className={`${GeistSans.variable} ${GeistMono.variable} font-regular antialiased`}
         suppressHydrationWarning
