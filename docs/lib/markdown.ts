@@ -148,7 +148,7 @@ export async function getAllChilds(pathString: string) {
 }
 
 // for copying the code in pre
-const preProcess = () => (tree: any) => {
+export const preProcess = () => (tree: any) => {
   visit(tree, (node) => {
     if (node?.type === "element" && node?.tagName === "pre") {
       const [codeEl] = node.children;
@@ -158,7 +158,7 @@ const preProcess = () => (tree: any) => {
   });
 };
 
-const postProcess = () => (tree: any) => {
+export const postProcess = () => (tree: any) => {
   visit(tree, "element", (node) => {
     if (node?.type === "element" && node?.tagName === "pre") {
       node.properties["raw"] = node.raw;
