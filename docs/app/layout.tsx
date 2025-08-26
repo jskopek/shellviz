@@ -25,21 +25,6 @@ export default function RootLayout({
           src="https://unpkg.com/shellviz@0.5.0-beta.0"
           strategy="beforeInteractive"
         />
-        <Script
-          id="shellviz-init"
-          strategy="afterInteractive"
-        >
-          {`
-            const { log, table, show } = shellviz;
-            
-            // Show the floating widget
-            show();
-            
-            // Send data to visualization
-            log('Hello from the browser!');
-            table([['Name', 'Value'], ['Test', 123]]);
-          `}
-        </Script>
       </head>
       <body
         className={`${GeistSans.variable} ${GeistMono.variable} font-regular antialiased`}
