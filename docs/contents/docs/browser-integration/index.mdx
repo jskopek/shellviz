@@ -14,7 +14,7 @@ Shellviz provides seamless browser integration that allows you to embed visualiz
     <title>Shellviz Browser Example</title>
 </head>
 <body>
-    <script src="https://unpkg.com/shellviz"></script>
+    <script src="https://unpkg.com/shellviz@0.5.0-beta.0"></script>
     <script>
         const { log, table, show } = shellviz;
         
@@ -29,11 +29,12 @@ Shellviz provides seamless browser integration that allows you to embed visualiz
 </html>
 ```
 
+<Note type='warning'>The @0.5.0-beta.0 modifier can be removed once version 0.5 is released</Note>
 
 ### ES Modules
 ```html
 <script type="module">
-    import { log, table, show } from 'https://unpkg.com/shellviz/dist/browser.mjs';
+    import { log, table, show } from 'https://unpkg.com/shellviz@0.5.0-beta.0/dist/browser.mjs';
     
     show();
     log('Hello from ES modules!');
