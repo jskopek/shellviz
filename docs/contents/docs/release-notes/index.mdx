@@ -2,26 +2,38 @@
 title: Release Notes
 ---
 
-## Recent Releases
-- 0.3.2
-    - November 19, 2024
-    - Added `clear()` command, which allows the Shellviz canvas to be programatically cleared
-    - Adding `append` argument, which causes data to appended to existing values rather than overwriting previous data
-    - Adding the `visualization` argument, which allows explicit visualization selection
-- 0.3.1
-    - November 15, 2024
-    - Fixing client code bundling in 0.3.0 release
-- 0.3.0
-    - November 15, 2024
-    - Complete rewrite of Shellviz that relies on a local server rather than a hosted Server
-- 0.2.0
-    - June 7, 2023
-- 0.1.0 - 0.1.7
-    - June 27, 2017 to April 12, 2023
-    - Original version of Shellviz, which relied on a downloadable client-side application that would run the server.
+### v0.5.0 (Upcoming)
 
+- Preparing for a new embeddable version of Shellviz that can be integrated into any website, web app, or notebook
 
-## Wishlist
-Here's a list of what to expect in future releases of Shellviz:
-- **Filter your data**: Filter tables and log files to only show filtered data. Initialize or update filters from the command line
-- **Progressive Web App**: Ideally, Shellviz can be installed as a PWA on a mobile device or desktop, complete with offline support. This would make it even easier to launch the Shellviz client.
+### v0.4.0
+
+*Released: November 21, 2024*
+
+- Added the ability to clear all messages.
+- Added a download button for JSON and table views.
+- The client can now connect to a port specified in the URL.
+- The python library can now append data to existing entries.
+
+### v0.3.0
+
+*Released: November 15, 2024*
+
+- The python library can now be run as a standalone server.
+- The client can now load existing entries from the server.
+- Added a websocket server to push updates to the client.
+- Added the ability to print a QR code with the server URL.
+
+### v0.2.0
+
+*Released: June 7, 2023*
+
+- Initial prototype of a local server.
+- The server can send data to the client.
+- The server is multithreaded.
+
+### v0.1.0 - 0.1.7
+
+*Released: June 27, 2017 to April 12, 2023*
+
+- Original version of Shellviz, which relied on a downloadable client-side application that would run the server.
