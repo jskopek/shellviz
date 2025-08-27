@@ -7,13 +7,17 @@ description: A list of all available visualizations in Shellviz
 
 # Logs
 
-<CodeExample
-code="shellviz.log('migrating users to newest version');shellviz.log('migration complete')"
-displayCode={`from shellviz import log
+<CodeRunner code="shellviz.log('migrating users to newest version');shellviz.log('migration complete')">
+  <CodeExample language="python">
+from shellviz import log
 log('migrating users to newest version')
-log('migration complete')`}
-language="python"
-/>
+log('migration complete')
+  </CodeExample>
+  <CodeExample language="javascript">
+shellviz.log('migrating users to newest version');
+shellviz.log('migration complete');
+  </CodeExample>
+</CodeRunner>
 
 ![Log](/docs/log.png)
 

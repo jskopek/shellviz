@@ -1,8 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { PlayIcon } from "lucide-react";
+import React, { Children } from "react";
 import Copy from "./copy";
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import python from 'react-syntax-highlighter/dist/esm/languages/prism/python';
@@ -21,35 +19,27 @@ SyntaxHighlighter.registerLanguage('typescript', typescript);
 SyntaxHighlighter.registerLanguage('bash', bash);
 SyntaxHighlighter.registerLanguage('json', json);
 
-interface CodeExampleFinalProps {
-  code: string; // Code to execute
-  displayCode: string; // Code to display
+interface CodeExampleProps {
   language?: string;
+  children: React.ReactNode;
+  hideControls?: boolean;
 }
 
-export default function CodeExampleFinal({ code, displayCode, language = "javascript" }: CodeExampleFinalProps) {
-  const [isRunning, setIsRunning] = useState(false);
-  const [hasRun, setHasRun] = useState(false);
+function CodeExample({ language = "javascript", children, hideControls = false }: CodeExampleProps) {
   const { theme } = useTheme();
+  
+  // Convert children to string
+  const code = React.isValidElement(children) 
+    ? children.props.children || ''
+    : typeof children === 'string'
+    ? children.trim()
+    : Array.isArray(children)
+    ? Children.toArray(children).map(child => 
+        typeof child === 'string' ? child : 
+        React.isValidElement(child) ? child.props.children || '' : String(child)
+      ).join('')
+    : String(children || '').trim();
 
-  const runCode = async () => {
-    if (typeof window === "undefined" || !window.shellviz) {
-      console.error("Shellviz not available");
-      return;
-    }
-
-    setIsRunning(true);
-    setHasRun(true);
-
-    try {
-      console.log('Executing code:', code);
-      eval(code);
-    } catch (error) {
-      console.error("Error executing code:", error);
-    } finally {
-      setIsRunning(false);
-    }
-  };
 
   // Use theme-appropriate style
   const syntaxTheme = theme === 'dark' ? vscDarkPlus : vs;
@@ -109,23 +99,12 @@ export default function CodeExampleFinal({ code, displayCode, language = "javasc
   };
 
   return (
-    <div className="my-5 relative">
-      <div className="absolute top-3 right-2.5 z-10 sm:block hidden flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={runCode}
-          disabled={isRunning}
-          className="h-8 px-2"
-        >
-          {isRunning ? (
-            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <PlayIcon className="w-4 h-4" />
-          )}
-        </Button>
-        <Copy content={displayCode} />
-      </div>
+    <div className={hideControls ? "" : "my-5 relative"}>
+      {!hideControls && (
+        <div className="absolute top-3 right-2.5 z-10 sm:block hidden">
+          <Copy content={code} />
+        </div>
+      )}
       
       <div className="relative">
         <SyntaxHighlighter
@@ -150,15 +129,14 @@ export default function CodeExampleFinal({ code, displayCode, language = "javasc
             style: {}
           }}
         >
-          {displayCode}
+          {code}
         </SyntaxHighlighter>
       </div>
-      
-      {hasRun && (
-        <div className="mt-2 text-sm text-muted-foreground">
-          ✓ Code executed in Shellviz
-        </div>
-      )}
     </div>
   );
 }
+
+CodeExample.displayName = 'CodeExample';
+
+export { CodeExample };
+export default CodeExample;

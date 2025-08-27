@@ -18,7 +18,8 @@ import { Stepper, StepperItem } from "@/components/markdown/stepper";
 import Image from "@/components/markdown/image";
 import Link from "@/components/markdown/link";
 import Outlet from "@/components/markdown/outlet";
-import CodeExample from "@/components/markdown/code-example";
+import { CodeExample } from "@/components/markdown/code-example";
+import { CodeRunner } from "@/components/markdown/code-runner";
 
 // add custom components
 const components = {
@@ -34,6 +35,7 @@ const components = {
   a: Link,
   Outlet,
   CodeExample,
+  CodeRunner,
 };
 
 async function parseMdx<Frontmatter>(rawMdx: string) {
