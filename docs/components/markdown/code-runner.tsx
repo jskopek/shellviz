@@ -34,11 +34,11 @@ export function CodeRunner({ code, children }: CodeRunnerProps) {
     }
   };
 
-  // Find all CodeExample children - use language prop as identifier since displayName doesn't work with lazy components
+  // Find all CodeExample children - prioritize code prop detection
   const codeExamples: React.ReactElement[] = [];
   Children.forEach(children, (child) => {
-    if (isValidElement(child) && child.props && child.props.language) {
-      // If it has a language prop, it's a CodeExample
+    if (isValidElement(child) && child.props && (child.props.code || child.props.language)) {
+      // If it has a code or language prop, it's a CodeExample
       codeExamples.push(child);
     }
   });
@@ -49,9 +49,15 @@ export function CodeRunner({ code, children }: CodeRunnerProps) {
   const getActiveCode = () => {
     if (hasMultipleTabs && codeExamples[activeTab]) {
       const activeExample = codeExamples[activeTab];
+      if (activeExample.props.code) {
+        return activeExample.props.code.trim();
+      }
       const children = activeExample.props.children;
       return typeof children === 'string' ? children.trim() : String(children || '').trim();
     } else if (codeExamples[0]) {
+      if (codeExamples[0].props.code) {
+        return codeExamples[0].props.code.trim();
+      }
       const children = codeExamples[0].props.children;
       return typeof children === 'string' ? children.trim() : String(children || '').trim();
     }
@@ -110,7 +116,7 @@ export function CodeRunner({ code, children }: CodeRunnerProps) {
         ) : (
           <>
             {Children.map(children, (child) => {
-              if (isValidElement(child) && child.props && child.props.language) {
+              if (isValidElement(child) && child.props && (child.props.code || child.props.language)) {
                 return cloneElement(child, { hideControls: true } as any);
               }
               return child;

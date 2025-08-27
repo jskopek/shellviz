@@ -21,24 +21,16 @@ SyntaxHighlighter.registerLanguage('json', json);
 
 interface CodeExampleProps {
   language?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  code?: string;
   hideControls?: boolean;
 }
 
-function CodeExample({ language = "javascript", children, hideControls = false }: CodeExampleProps) {
+function CodeExample({ language = "javascript", children, code, hideControls = false }: CodeExampleProps) {
   const { theme } = useTheme();
   
-  // Convert children to string
-  const code = React.isValidElement(children) 
-    ? children.props.children || ''
-    : typeof children === 'string'
-    ? children.trim()
-    : Array.isArray(children)
-    ? Children.toArray(children).map(child => 
-        typeof child === 'string' ? child : 
-        React.isValidElement(child) ? child.props.children || '' : String(child)
-      ).join('')
-    : String(children || '').trim();
+  // Prefer code prop over children for reliability
+  const codeContent = code || (typeof children === 'string' ? children.trim() : String(children || '').trim());
 
 
   // Use theme-appropriate style
@@ -102,7 +94,7 @@ function CodeExample({ language = "javascript", children, hideControls = false }
     <div className={hideControls ? "" : "my-5 relative"}>
       {!hideControls && (
         <div className="absolute top-3 right-2.5 z-10 sm:block hidden">
-          <Copy content={code} />
+          <Copy content={codeContent} />
         </div>
       )}
       
@@ -129,7 +121,7 @@ function CodeExample({ language = "javascript", children, hideControls = false }
             style: {}
           }}
         >
-          {code}
+          {codeContent}
         </SyntaxHighlighter>
       </div>
     </div>
