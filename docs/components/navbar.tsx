@@ -12,7 +12,7 @@ import { GithubIcon } from "lucide-react";
 export const NAVLINKS = [
   {
     title: "Documentation",
-    href: `/docs${page_routes[0].href}`,
+    href: `${page_routes[0].href}`,
   },
   
 ];

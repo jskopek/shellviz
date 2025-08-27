@@ -4,7 +4,6 @@ import { Navbar } from "@/components/navbar";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Footer } from "@/components/footer";
-import { Leftbar } from "@/components/leftbar";
 import "@/styles/globals.css";
 import Script from "next/script";
 
@@ -39,10 +38,7 @@ export default function RootLayout({
         >
           <Navbar />
           <main className="sm:container mx-auto w-[90vw] h-auto scroll-smooth">
-            <div className="flex items-start gap-8">
-              <Leftbar key="leftbar" />
-              <div className="flex-[5.25]">{children}</div>
-            </div>
+            {children}
           </main>
           {/* <Footer /> */}
         </ThemeProvider>
