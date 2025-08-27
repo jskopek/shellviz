@@ -6,14 +6,15 @@ description: A list of all available visualizations in Shellviz
 <Outlet path="/getting-started/components" />
 
 # Logs
-```python
-from shellviz import log
-```
-Example:
-```python
+
+<CodeExample
+code="shellviz.log('migrating users to newest version');shellviz.log('migration complete')"
+displayCode={`from shellviz import log
 log('migrating users to newest version')
-log('migration complete')
-```
+log('migration complete')`}
+language="python"
+/>
+
 ![Log](/docs/log.png)
 
 # Tables
