@@ -1,33 +1,17 @@
 ---
-title: JavaScript Library
+title: Node.js / Next.js / React
 ---
 
-The Shellviz JavaScript library provides powerful data visualization capabilities for both **Node.js** and **browser** environments. With identical APIs across platforms, you can easily visualize data from server-side scripts, web applications, or directly in the browser.
+The Shellviz JavaScript library provides powerful data visualization capabilities for Node.js environments. For client-side browser usage, see the [Client-side JS](/integration/client-side-js) guide.
 
 ## Installation
 
-### Node.js
 ```bash
 npm install shellviz
 ```
 
-### Browser (CDN)
-```html
-<script src="https://unpkg.com/shellviz@0.5.0-beta.0"></script>
-```
-
-<Note type='warning'>The @0.5.0-beta.0 modifier can be removed once version 0.5 is released</Note>
-
-### Browser (ES Modules)
-```html
-<script type="module">
-import { log, table, show } from 'https://unpkg.com/shellviz@0.5.0-beta.0/dist/browser.mjs';
-</script>
-```
-
 ## Quick Start
 
-### Node.js Usage
 ```javascript
 import { log, table, json } from 'shellviz';
 
@@ -43,34 +27,11 @@ table([
 ]);
 
 // Show JSON data
-json({ 
+json({
     message: 'Welcome to Shellviz',
     timestamp: new Date().toISOString(),
     data: [1, 2, 3, 4, 5]
 });
-```
-
-### Browser Usage
-```html
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Shellviz Browser Example</title>
-</head>
-<body>
-    <script src="https://unpkg.com/shellviz"></script>
-    <script>
-        const { log, table, show } = shellviz;
-        
-        // Show the floating widget
-        show();
-        
-        // Send data to visualization
-        log('Hello from the browser!');
-        table([['Name', 'Value'], ['Test', 123]]);
-    </script>
-</body>
-</html>
 ```
 
 ## Core Functions
@@ -210,7 +171,7 @@ await wait();
 
 ## Configuration
 
-### Environment Variables (Node.js)
+### Environment Variables
 Configure Shellviz via environment variables:
 ```bash
 # Set port to 8080
@@ -259,14 +220,14 @@ All other values are considered `false`.
 
 ## Advanced Usage
 
-### Server Mode (Node.js only)
+### Server Mode
 Create a standalone Shellviz server:
 ```javascript
 import ShellvizServer from 'shellviz/server';
 
-const server = new ShellvizServer({ 
-    port: 8080, 
-    showUrl: true 
+const server = new ShellvizServer({
+    port: 8080,
+    showUrl: true
 });
 ```
 
@@ -290,90 +251,6 @@ const client = new ShellvizClient({
     url: "https://shellviz.mycompany.com"
 });
 client.log("Data from remote client");
-```
-
-### Configuration Examples
-
-#### Development vs Production
-```javascript
-// config.js
-const config = {
-    development: {
-        port: 5544,
-        showUrl: true,
-        url: null
-    },
-    production: {
-        port: 8080,
-        showUrl: false,
-        url: "https://viz.myapp.com"
-    }
-};
-
-const env = process.env.NODE_ENV || 'development';
-const shellvizConfig = config[env];
-
-const sv = new ShellvizClient(shellvizConfig);
-```
-
-#### Docker Configuration
-```dockerfile
-# Dockerfile
-ENV SHELLVIZ_PORT=8080
-ENV SHELLVIZ_SHOW_URL=false
-ENV SHELLVIZ_URL="http://shellviz.internal:8080"
-```
-
-### Accessing Configuration Values
-```javascript
-import { SHELLVIZ_PORT, SHELLVIZ_SHOW_URL, SHELLVIZ_URL } from 'shellviz/config';
-
-// These will be null if not set via process.env
-console.log(SHELLVIZ_PORT);      // e.g., 8080 or null
-console.log(SHELLVIZ_SHOW_URL);  // e.g., false or null  
-console.log(SHELLVIZ_URL);       // e.g., "https://my-server.com" or null
-```
-
-### Configuration Troubleshooting
-
-#### Common Issues
-- **Environment variables not loaded**: Verify variable names (must be `SHELLVIZ_*`) and restart your application
-- **Boolean values not recognized**: Use `"true"`/`"false"` strings or boolean values
-- **URL connection failed**: Check if the server is running and accessible at the specified URL
-- **Port conflicts**: Try a different port number if 5544 is already in use
-
-#### Debugging Configuration
-Check your current configuration:
-```javascript
-import { ShellvizClient } from 'shellviz';
-
-const client = new ShellvizClient();
-console.log(`Using port: ${client.port}`);
-console.log(`Using URL: ${client.baseUrl}`);
-
-// Verify environment variables
-console.log('Environment:', {
-    SHELLVIZ_PORT: process.env.SHELLVIZ_PORT,
-    SHELLVIZ_SHOW_URL: process.env.SHELLVIZ_SHOW_URL,
-    SHELLVIZ_URL: process.env.SHELLVIZ_URL
-});
-```
-
-## Browser-Specific Features
-
-### Widget Display
-Show the floating visualization widget:
-```javascript
-import { show } from 'shellviz';
-show();
-```
-
-### No Server Required
-In browser environments, Shellviz can work entirely client-side without needing a separate server:
-```javascript
-// This works entirely in the browser
-log('Client-side logging');
-table([['Browser', 'Version'], ['Chrome', '91']]);
 ```
 
 ## Error Handling

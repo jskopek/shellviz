@@ -9,11 +9,21 @@ export type EachRoute = {
 
 export const ROUTES: EachRoute[] = [
   { title: "Introduction", href: "/introduction" },
-  { title: "Getting Started", href: "/getting-started", },
-  { title: "JavaScript Library", href: "/javascript-library", },
-  { title: "Python Library", href: "/python-library", },
-  { title: "Browser Integration", href: "/browser-integration", },
-  { title: "Visualizations", href: "/visualizations", items: [
+  { title: "Getting Started", href: "/getting-started" },
+  {
+    title: "Integration",
+    href: "/integration",
+    items: [
+      { title: "Django", href: "/django" },
+      { title: "Python", href: "/python" },
+      { title: "Node / Next / React", href: "/node-next-react" },
+      { title: "Client-side JS", href: "/client-side-js" },
+    ],
+  },
+  {
+    title: "Visualizations",
+    href: "/visualizations",
+    items: [
       { title: "Log", href: "#log" },
       { title: "Table", href: "#table" },
       { title: "JSON", href: "#json" },
@@ -25,12 +35,12 @@ export const ROUTES: EachRoute[] = [
       { title: "Area", href: "#area" },
       { title: "Pie", href: "#pie" },
       { title: "Location", href: "#location" },
-      { title: "Raw", href: "#raw" }
+      { title: "Raw", href: "#raw" },
     ],
   },
-  { title: "Troubleshooting", href: "/troubleshooting", },
-  { title: "Release Notes", href: "/release-notes", },
-]
+  { title: "Troubleshooting", href: "/troubleshooting" },
+  { title: "Release Notes", href: "/release-notes" },
+];
 
 type Page = { title: string; href: string };
 
