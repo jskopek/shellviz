@@ -76,7 +76,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 |-------------------------------|----------------------------------------------------------|
 | MDX Support                   | Write interactive documentation with MDX.                |
 | Nested Pages                  | Organize content in a nested, hierarchical structure.    |
-| Blog Section                  | Include a dedicated blog section.                        |
+
 | Table of Contents             | Auto-generated TOC for easy navigation.                  |
 | Pagination                    | Split content across multiple pages.                     |
 | Syntax Highlighting           | Highlight code for better readability.                   |
