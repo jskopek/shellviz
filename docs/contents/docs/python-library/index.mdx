@@ -10,11 +10,6 @@ Install Shellviz with pip:
 pip install shellviz
 ```
 
-For QR code support (optional):
-```bash
-pip install shellviz qrcode
-```
-
 ## Quick Start
 
 ### Basic Usage
@@ -203,6 +198,58 @@ show_url()
 # Shellviz running on http://127.0.0.1:5544
 ```
 
+## Configuration
+
+### Available Options
+- `SHELLVIZ_PORT` - Port number (default: 5544)
+- `SHELLVIZ_SHOW_URL` - Show URL on startup (default: True)
+- `SHELLVIZ_URL` - Custom server URL (overrides port-based URL)
+
+
+### Configuration Options
+Shellviz can be configured in three ways, with constructor arguments taking highest precedence:
+
+#### Constructor Arguments (Highest Priority)
+Pass configuration directly when initializing Shellviz:
+```python
+from shellviz import Shellviz
+
+sv = Shellviz(
+    port=9000, 
+    show_url=False,
+    url="https://my-server.com"
+)
+```
+
+#### Django Settings (Medium Priority)
+If you're using Django, add these to your `settings.py`:
+```python
+# settings.py
+SHELLVIZ_PORT = 8080
+SHELLVIZ_SHOW_URL = False
+SHELLVIZ_URL = "https://my-custom-domain.com"
+```
+
+#### Environment Variables (Lowest Priority)
+Set configuration via environment variables:
+```bash
+export SHELLVIZ_PORT=8080
+export SHELLVIZ_SHOW_URL=false
+export SHELLVIZ_URL="https://my-remote-shellviz.com"
+```
+
+## Advanced Usage
+
+### Displaying on a second screen
+
+
+
+For QR code support (optional):
+```bash
+pip install shellviz qrcode
+```
+
+
 #### `show_qr_code()`
 Display QR code for mobile access (requires `qrcode` package)
 ```python
@@ -213,114 +260,7 @@ show_qr_code()
 #  ... QR code continues ...
 ```
 
-## Configuration
 
-### Environment Variables
-Configure Shellviz via environment variables:
-```bash
-# Set port to 8080
-export SHELLVIZ_PORT=8080
-
-# Disable URL display on startup
-export SHELLVIZ_SHOW_URL=false
-
-# Use a custom URL
-export SHELLVIZ_URL="https://my-remote-shellviz.com"
-
-# Run your Python script
-python my_script.py
-```
-
-### Constructor Parameters
-Override settings directly in code:
-```python
-from shellviz import Shellviz
-
-# Custom configuration
-sv = Shellviz(
-    port=9000, 
-    show_url=False,
-    url="https://my-server.com"
-)
-
-sv.log('Custom configuration message')
-```
-
-### Django Settings
-If you're using Django, add these to your `settings.py`:
-```python
-# settings.py
-SHELLVIZ_PORT = 8080
-SHELLVIZ_SHOW_URL = False
-SHELLVIZ_URL = "https://my-custom-domain.com"
-```
-
-### Configuration Hierarchy
-Settings are resolved in this priority order:
-1. **Constructor parameters** (highest priority)
-2. **Django Settings** (if Django is available and configured)  
-3. **Environment Variables**
-4. **Default Values** (show_url: True, port: 5544, url: None)
-
-### Available Options
-- `SHELLVIZ_PORT` - Port number (default: 5544)
-- `SHELLVIZ_SHOW_URL` - Show URL on startup (default: True)
-- `SHELLVIZ_URL` - Custom server URL (overrides port-based URL)
-
-### Boolean Values
-For boolean environment variables, these values are considered `true`:
-- `true`, `1`, `yes`, `on`
-
-All other values are considered `false`.
-
-### Accessing Configuration Values
-```python
-from shellviz.config import SHELLVIZ_PORT, SHELLVIZ_SHOW_URL, SHELLVIZ_URL
-
-# These will be None if not set via Django/env vars
-print(SHELLVIZ_PORT)      # e.g., 8080 or None
-print(SHELLVIZ_SHOW_URL)  # e.g., False or None  
-print(SHELLVIZ_URL)       # e.g., "https://my-server.com" or None
-```
-
-### Configuration Troubleshooting
-
-#### Common Issues
-- **Environment variables not loaded**: Verify variable names (must be `SHELLVIZ_*`) and restart your application
-- **Boolean values not recognized**: Use `true`, `1`, `yes`, or `on` (case-sensitive)
-- **URL connection failed**: Check if the server is running and accessible at the specified URL
-- **Port conflicts**: Try a different port number if 5544 is already in use
-- **Django settings not recognized**: Ensure Django is properly configured and settings are loaded
-
-#### Debugging Configuration
-Check your current configuration:
-```python
-from shellviz import Shellviz
-import os
-
-sv = Shellviz()
-print(f"Using port: {sv.port}")
-print(f"Using URL: {sv.base_url}")
-print(f"Show URL on start: {sv.show_url_on_start}")
-
-# Verify environment variables
-print("Environment variables:")
-print(f"SHELLVIZ_PORT: {os.getenv('SHELLVIZ_PORT')}")
-print(f"SHELLVIZ_SHOW_URL: {os.getenv('SHELLVIZ_SHOW_URL')}")
-print(f"SHELLVIZ_URL: {os.getenv('SHELLVIZ_URL')}")
-
-# Check Django settings (if using Django)
-try:
-    from django.conf import settings
-    print("Django settings:")
-    print(f"SHELLVIZ_PORT: {getattr(settings, 'SHELLVIZ_PORT', 'Not set')}")
-    print(f"SHELLVIZ_SHOW_URL: {getattr(settings, 'SHELLVIZ_SHOW_URL', 'Not set')}")
-    print(f"SHELLVIZ_URL: {getattr(settings, 'SHELLVIZ_URL', 'Not set')}")
-except ImportError:
-    print("Django not available")
-```
-
-## Advanced Usage
 
 ### Multiple Instances
 ```python
@@ -340,60 +280,6 @@ from shellviz import Shellviz
 # Connect to remote Shellviz instance
 sv = Shellviz(url="https://shellviz.mycompany.com")
 sv.log("Data from remote client")
-```
-
-### Configuration Examples
-
-#### Development vs Production
-```python
-import os
-from shellviz import Shellviz
-
-# Environment-based configuration
-if os.getenv('ENVIRONMENT') == 'production':
-    sv = Shellviz(
-        port=8080,
-        show_url=False,
-        url="https://viz.myapp.com"
-    )
-else:
-    sv = Shellviz(
-        port=5544,
-        show_url=True  # Show URL for easy access in development
-    )
-```
-
-#### Docker Configuration
-```dockerfile
-# Dockerfile
-ENV SHELLVIZ_PORT=8080
-ENV SHELLVIZ_SHOW_URL=false
-ENV SHELLVIZ_URL="http://shellviz.internal:8080"
-```
-
-#### Kubernetes Configuration
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: shellviz-config
-data:
-  SHELLVIZ_PORT: "8080"
-  SHELLVIZ_SHOW_URL: "false"
-  SHELLVIZ_URL: "https://shellviz.myapp.com"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-spec:
-  template:
-    spec:
-      containers:
-      - name: app
-        envFrom:
-        - configMapRef:
-            name: shellviz-config
 ```
 
 ## Django Integration

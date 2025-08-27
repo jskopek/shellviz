@@ -485,33 +485,3 @@ You can also connect your browser client to a remote Shellviz server:
     table([['Client', 'Server'], ['Browser', 'Remote']]);
 </script>
 ```
-
-
-## Troubleshooting
-
-### Widget Not Appearing
-- Make sure to call `show()` after importing Shellviz
-- Check browser console for any JavaScript errors
-- Verify the script is loaded correctly
-
-### Data Not Updating
-- Check if there are any network errors in browser console
-- Verify the correct server URL is being used
-- Make sure the server is running and accessible
-
-### Styling Conflicts
-- The widget uses high-specificity CSS to avoid conflicts
-- Widget content is contained within `[data-shellviz="true"]` elements
-- Custom styles can be overridden if needed
-
-### Performance Considerations
-- Large datasets may impact browser performance
-- Consider using `clear()` periodically for long-running visualizations
-- The widget automatically limits displayed data for performance
-
-## Security Considerations
-
-- Browser mode runs entirely client-side - no data is sent over the network by default
-- When connecting to remote servers, ensure they use HTTPS in production
-- Be cautious about displaying sensitive data in browser-based visualizations
-- The widget respects Content Security Policy (CSP) when properly configured
