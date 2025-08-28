@@ -15,8 +15,6 @@ log('migration complete')`} />
 shellviz.log('migration complete');`} />
 </CodeRunner>
 
-![Log](/docs/log.png)
-
 # Tables
 
 JSON data can be examined in two ways: as a color-coded, collapsible view, and as a series of cards that can be searched or filtered.
@@ -29,8 +27,6 @@ table([{'name': 'Rafael', 'age': 30}, {'name': 'Charlie', 'age': 53}])`} />
 table([['Name', 'Age'], ['Rafael', 30], ['Charlie', 53]]);
 table([{name: 'Rafael', age: 30}, {name: 'Charlie', age: 53}]);`} />
 </CodeRunner>
-
-![Table](/docs/table.png)
 
 <CodeRunner code="shellviz.table([{ year: '1945', sightings: 6 }, { year: '1946', sightings: 8 }, { year: '1947', sightings: 34 }, { year: '1948', sightings: 8 }, { year: '1949', sightings: 15 }]);">
   <CodeExample language="python" code={`from shellviz import table
@@ -51,8 +47,6 @@ json([['Name', 'Age'], ['Rafael', 30], ['Charlie', 53]]);
 json([{name: 'Rafael', age: 30}, {name: 'Charlie', age: 53}]);`} />
 </CodeRunner>
 
-![JSON](/docs/json.png)
-
 # Cards
 
 <CodeRunner code="shellviz.card([['Name', 'Age'], ['Rafael', 30], ['Charlie', 53]])">
@@ -63,8 +57,6 @@ card([{'name': 'Rafael', 'age': 30}, {'name': 'Charlie', 'age': 53}])`} />
 card([['Name', 'Age'], ['Rafael', 30], ['Charlie', 53]]);
 card([{name: 'Rafael', age: 30}, {name: 'Charlie', age: 53}]);`} />
 </CodeRunner>
-
-![Card](/docs/card.png)
 
 # Text
 Show data as raw values with no formatting
@@ -82,8 +74,6 @@ markdown("# This is some Markdown\nAnd this is some **strong** text\nAnd a list:
 markdown("It was a **cold** night, and all were fast asleep");`} />
 </CodeRunner>
 
-![Markdown](/docs/markdown.png)
-
 ## Number
 
 Numbers can be visualized with a dedicated layout that resizes to fit the provided number:
@@ -94,8 +84,6 @@ number(1032093)`} />
   <CodeExample language="javascript" code={`import { number } from 'shellviz';
 number(1032093);`} />
 </CodeRunner>
-
-![Number](/docs/number.png)
 
 ## Progress
 Show a progress bar displaying 0-100% value. Can parse a wide variety of text, including strings, integers, and 0.0-1.0 floats.
@@ -156,8 +144,6 @@ bar([{
 }]);`} />
 </CodeRunner>
 
-![Bar](/docs/bar.png)
-
 ## Area
 
 <CodeRunner code="shellviz.area([190, 240, 340])">
@@ -166,8 +152,6 @@ area([190, 240, 340])`} />
   <CodeExample language="javascript" code={`import { area } from 'shellviz';
 area([190, 240, 340]);`} />
 </CodeRunner>
-
-![Pie](/docs/area.png)
 
 ## Pie
 
@@ -190,8 +174,6 @@ pie([
 ]);`} />
 </CodeRunner>
 
-![Pie](/docs/pie.png)
-
 # Location
 
 <CodeRunner code="shellviz.location({ latitude: 48.858844, longitude: 2.294351, name: 'Eiffel Tower, Paris' })">
@@ -208,8 +190,6 @@ location({
     name: "Eiffel Tower, Paris"
   });`} />
 </CodeRunner>
-
-![Location](/docs/location-1.png)
 
 <CodeRunner code="shellviz.location([{ latitude: 48.858844, longitude: 2.294351, name: 'Eiffel Tower, Paris' }, { latitude: 40.689247, longitude: -74.044502, name: 'Statue of Liberty, New York' }, { latitude: 27.175144, longitude: 78.042142, name: 'Taj Mahal, India' }])">
   <CodeExample language="python" code={`location([
@@ -318,8 +298,6 @@ location({
 ]);`} />
 </CodeRunner>
 
-![Location](/docs/location-2.png)
-
 # Raw Data
 
 <CodeRunner code="shellviz.raw({ one: 'thing' })">
@@ -328,5 +306,3 @@ raw({'one': 'thing'})`} />
   <CodeExample language="javascript" code={`import { raw } from 'shellviz';
 raw({ one: 'thing' });`} />
 </CodeRunner>
-
-![Raw](/docs/raw.png)
