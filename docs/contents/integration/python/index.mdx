@@ -3,14 +3,14 @@ title: Python Library
 ---
 The Shellviz Python library provides powerful data visualization capabilities for Python scripts and applications. It creates a local web server that can receive and visualize data, making it perfect for data analysis, debugging, and monitoring applications.
 
-<Note>Are you using Django? Check out the dedicated [Django Integration](/integration/django) guide for specific features.</Note>
-
 ## Installation
 
 Install Shellviz with pip:
 ```bash
 pip install shellviz
 ```
+
+<Note>Are you using Django? Check out the dedicated [Django Integration](/integration/django) guide for specific features.</Note>
 
 ## Quick Start
 
@@ -39,11 +39,11 @@ sv.log('Custom instance message')
 sv.table([('Name', 'Value'), ('Custom', 123)])
 ```
 
-## Core Functions
+## Functions
 
-### Data Visualization Functions
+### Debugging
+`log(*data, id=None)`
 
-#### `log(*data, id=None)`
 Display log messages with timestamps
 ```python
 log('Simple message')
@@ -55,7 +55,30 @@ log('First message', id='process')
 log('Second message', id='process')  # Appends to 'process' log
 ```
 
-#### `table(data, id=None, append=False)`
+`json(data, id=None, append=False)`
+
+Display JSON data with interactive explorer
+```python
+json({'user': 'alice', 'preferences': {'theme': 'dark'}})
+json([1, 2, 3, 4, 5])
+json({'timestamp': time.time()}, id='status')
+```
+
+`stack(id=None)`
+
+Display current call stack with local variables
+```python
+def process_data():
+    result = calculate_something()
+    stack()  # Shows current call stack with local variables
+```
+
+### Visualization
+
+
+
+`table(data, id=None, append=False)`
+
 Display tabular data
 ```python
 # List of tuples/lists
@@ -68,27 +91,21 @@ table(['Alice', 30, 'Engineer'])
 table([('Charlie', 28)], id='users', append=True)
 ```
 
-#### `json(data, id=None, append=False)`
-Display JSON data with interactive explorer
-```python
-json({'user': 'alice', 'preferences': {'theme': 'dark'}})
-json([1, 2, 3, 4, 5])
-json({'timestamp': time.time()}, id='status')
-```
 
-#### `markdown(text, id=None, append=False)`
+`markdown(text, id=None, append=False)`
+
 Render markdown content
 ```python
 markdown('# Welcome to Shellviz\n\nThis is **bold** text.')
 markdown('''
-## Status Report
 - Task 1: ✅ Complete  
 - Task 2: ⏳ In Progress
 - Task 3: ❌ Failed
 ''')
 ```
 
-#### `progress(value, id=None, append=False)`
+`progress(value, id=None, append=False)`
+
 Show progress bars (0.0 to 1.0)
 ```python
 progress(0.0, id='migration')
@@ -98,7 +115,8 @@ progress(0.5, id='migration')
 progress(1.0, id='migration')
 ```
 
-#### `number(value, id=None, append=False)`
+`number(value, id=None, append=False)`
+
 Display large numbers with formatting
 ```python
 number(42)
@@ -106,7 +124,8 @@ number(1337, id='score')
 number(999999, id='total_users')
 ```
 
-#### `card(data, id=None, append=False)`
+`card(data, id=None, append=False)`
+
 Display card-style information
 ```python
 card({'title': 'Server Status', 'value': 'Online', 'color': 'green'})
@@ -114,9 +133,8 @@ card('Quick info message')
 card({'user_count': 1234, 'active_sessions': 56})
 ```
 
-### Chart Functions
+`bar(data, id=None, append=False)`
 
-#### `bar(data, id=None, append=False)`
 Create bar charts
 ```python
 bar([
@@ -126,7 +144,8 @@ bar([
 ])
 ```
 
-#### `area(data, id=None, append=False)`
+`area(data, id=None, append=False)`
+
 Create area charts
 ```python
 area([
@@ -136,7 +155,8 @@ area([
 ])
 ```
 
-#### `pie(data, id=None, append=False)`
+`pie(data, id=None, append=False)`
+
 Create pie charts
 ```python
 pie([
@@ -146,9 +166,8 @@ pie([
 ])
 ```
 
-### Utility Functions
+`location(coordinates, id=None, append=False)`
 
-#### `location(coordinates, id=None, append=False)`
 Display location data on maps
 ```python
 location({'lat': 40.7128, 'lng': -74.0060, 'name': 'New York City'})
@@ -158,35 +177,33 @@ location([
 ])
 ```
 
-#### `raw(data, id=None, append=False)`
+`raw(data, id=None, append=False)`
+
 Display raw data without formatting
 ```python
 raw('Plain text content')
 raw('<h1>HTML content</h1>')
 ```
 
-#### `stack(id=None)`
-Display current call stack with local variables
-```python
-def process_data():
-    result = calculate_something()
-    stack()  # Shows current call stack with local variables
-```
+### Utility
 
-#### `clear()`
+`clear()`
+
 Clear all visualizations
 ```python
 clear()
 ```
 
-#### `wait()`
+`wait()`
+
 Wait for data to be displayed (prevents script from exiting)
 ```python
 log('Processing complete')
 wait()  # Script will pause until data is viewed in browser
 ```
 
-#### `show_url()`
+`show_url()`
+
 Display the server URL
 ```python
 show_url()
@@ -195,16 +212,17 @@ show_url()
 
 ## Configuration
 
-### Available Options
+**Available Options**
+
 - `SHELLVIZ_PORT` - Port number (default: 5544)
 - `SHELLVIZ_SHOW_URL` - Show URL on startup (default: True)
 - `SHELLVIZ_URL` - Custom server URL (overrides port-based URL)
 
 
-### Configuration Options
+** Configuration Options **
 Shellviz can be configured in two ways, with constructor arguments taking highest precedence:
 
-#### Constructor Arguments (Highest Priority)
+**Constructor Arguments (Highest Priority)**
 Pass configuration directly when initializing Shellviz:
 ```python
 from shellviz import Shellviz
@@ -216,7 +234,7 @@ sv = Shellviz(
 )
 ```
 
-#### Environment Variables (Lowest Priority)
+**Environment Variables (Lowest Priority)**
 Set configuration via environment variables:
 ```bash
 export SHELLVIZ_PORT=8080
@@ -236,7 +254,7 @@ shellviz
 shellviz --port 8080
 ```
 
-### Piping Data
+**Piping Data**
 Pipe data directly to Shellviz:
 ```bash
 # Pipe log message
@@ -249,12 +267,13 @@ cat data.json | shellviz json
 cat data.csv | shellviz table
 ```
 
-### CLI Options
+**CLI Options**
 - `--port`: Port number
 - `--show-url`: Show URL on startup
 - `--url`: Custom server URL
 
-### CLI Examples
+**CLI Examples**
+
 ```bash
 # Log system processes
 ps aux | shellviz table
