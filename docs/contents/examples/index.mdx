@@ -1,0 +1,127 @@
+# Examples
+## Progress Tracking
+```python
+import time
+from shellviz import progress, log
+
+total_items = 1000
+for i in range(total_items):
+    # Process item
+    process_item(i)
+    
+    # Update progress
+    if i % 10 == 0:  # Update every 10 items
+        progress(i / total_items, id='processing')
+        log(f'Processed {i}/{total_items} items', id='status')
+
+progress(1.0, id='processing')
+log('Processing complete!', id='status')
+```
+
+## Performance Dashboard
+```python
+import psutil
+import time
+from shellviz import progress, pie, log
+
+while True:
+    # System metrics
+    progress(psutil.cpu_percent(), id='cpu_usage')
+    progress(psutil.virtual_memory().percent, id='memory_usage')
+    
+    # Disk usage by partition
+    disk_data = []
+    for partition in psutil.disk_partitions():
+        try:
+            usage = psutil.disk_usage(partition.mountpoint)
+            disk_data.append({
+                'name': partition.device,
+                'value': usage.percent
+            })
+        except PermissionError:
+            continue
+    
+    pie(disk_data, id='disk_usage')
+    log(f'System check at {time.strftime("%H:%M:%S")}', id='monitoring')
+    
+    time.sleep(5)
+```
+
+
+## API Response Analysis
+```python
+import requests
+from shellviz import json, table, card
+
+response = requests.get('https://api.example.com/users')
+data = response.json()
+
+# Show raw response
+json(data, id='api_response')
+
+# Extract and show user table
+if 'users' in data:
+    user_table = []
+    for user in data['users']:
+        user_table.append([user['name'], user['email'], user['created_at']])
+    
+    table([['Name', 'Email', 'Created']] + user_table, id='users')
+
+# Show summary stats
+card({
+    'total_users': len(data.get('users', [])),
+    'response_time': f'{response.elapsed.total_seconds():.2f}s',
+    'status_code': response.status_code
+}, id='summary')
+```
+
+## Error Handling
+
+```python
+try:
+    result = risky_operation()
+    log('Success:', result)
+except Exception as e:
+    log('Error occurred:', str(e), id='errors')
+    stack()  # Show call stack for debugging
+```
+
+
+
+## Displaying on a second screen
+
+For QR code support (optional):
+```bash
+pip install shellviz qrcode
+```
+
+**`show_qr_code()`**
+
+Display QR code for mobile access (requires `qrcode` package)
+```python
+show_qr_code()
+#  ██████████████  ██        ████      ██████████████
+#  ██          ██  ██  ████████████    ██          ██
+#  ██  ██████  ██  ██  ██  ████  ████  ██  ██████  ██
+#  ... QR code continues ...
+```
+
+## Multiple Instances
+```python
+from shellviz import Shellviz
+
+sv1 = Shellviz(port=5000)
+sv2 = Shellviz(port=6000)
+
+sv1.log('sending to the first server')
+sv2.log('sending to the second server')
+```
+
+## Remote Server Connection
+```python
+from shellviz import Shellviz
+
+# Connect to remote Shellviz instance
+sv = Shellviz(url="https://shellviz.mycompany.com")
+sv.log("Data from remote client")
+```

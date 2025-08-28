@@ -14,8 +14,8 @@ export const ROUTES: EachRoute[] = [
     title: "Integration",
     href: "/integration",
     items: [
-      { title: "Django", href: "/django" },
       { title: "Python", href: "/python" },
+      { title: "Django", href: "/django" },
       { title: "Node / Next / React", href: "/node-next-react" },
       { title: "Client-side JS", href: "/client-side-js" },
     ],
@@ -35,6 +35,7 @@ export const ROUTES: EachRoute[] = [
       { title: "Raw", href: "#raw-data" },
     ],
   },
+  { title: "Examples", href: "/examples" },
   { title: "Troubleshooting", href: "/troubleshooting" },
   { title: "Release Notes", href: "/release-notes" },
 ];
