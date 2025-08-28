@@ -3,53 +3,48 @@ title: Getting Started
 ---
 
 ## Installation
-Installing Shellviz is quick and easy. Simply use pip to add it to your project folder. Shellviz is lightweight, runs locally, and requires no additional dependencies.
 
-```bash
-pip install shellviz
-```
-
-
-## Launching Shellviz
-The easiest way to initialize Shellviz is importing and calling the visualization methods directly:
-
-
-<CodeRunner code="shellviz.clear();shellviz.log('hello world');shellviz.markdown('pretty **cool**!')">
-<CodeExample language="python" code={`from shellviz import log, markdown
-log('hello world')
-# Shellviz serving on http://192.168.86.124:5544
-markdown('pretty **cool**!')`} />
+<CodeRunner>
+<CodeExample language="python" code={`pip install shellviz`}/>
+<CodeExample language="javascript" code={`npm install shellviz`}/>
 </CodeRunner>
 
 
-```python
-from shellviz import log, markdown
+## Send data to Shellviz
+The easiest way to initialize Shellviz is importing and calling any of the visualization methods directly:
+
+
+<CodeRunner code="shellviz.clear();shellviz.log('hello world');shellviz.json({'type': 'fruit', 'name': 'pear'})">
+<CodeExample language="python" code={`from shellviz import log, json
 log('hello world')
 # Shellviz serving on http://192.168.86.124:5544
-markdown('pretty **cool**!')
-```
+json({'type': 'fruit', 'name': 'pear'})
+`} />
+<CodeExample language="javascript" code={`import { log, json } from 'shellviz'
+log('hello world')
+// Shellviz serving on http://192.168.86.124:5544
+json({'type': 'fruit', 'name': 'pear'})`} />
 
-The first method will initialize a global Shellviz instance that will output connection data. If you would like Shellviz to run locally, or you would like to adjust the parameters, you can initialize it directly:
+</CodeRunner>
 
-```python
-from shellviz import Shellviz
-sv = Shellviz(port=3333, show_url=False)
-sv.log('hello world')
-```
+The first method call to Shellviz will initialize a global instance that will output connection data. You can also [start the Shellviz server manually](/getting-started#initializing-shellviz-manually) if you would like additional control. 
 
-Launch the Shellviz instance by pointing your browser to the URL, by default [http://127.0.0.1:5544](http://127.0.0.1:5544). You should see your Shellviz instance instance running in front of you (if not, check out our [troubleshooting](/troubleshooting) guide).
+<CodeRunner code="shellviz.table([['cell 1.1','cell 1.2'],['cell 2.1', 'cell 2.2']])">
+<CodeExample language="python" code={`from shellviz import table
+table([['cell 1.1','cell 1.2'],['cell 2.1', 'cell 2.2']])`}/>
+<CodeExample language="javascript" code={`import { table } from 'shellviz';
+table([['cell 1.1','cell 1.2'],['cell 2.1', 'cell 2.2']])`}/>
+</CodeRunner>
 
-## Send data to Shellviz
-The easiest way to send data to Shellviz is by calling the visualization method with the data you wish to send as your first argument
-```python
-table([['cell 1.1','cell 1.2'],['cell 2.1', 'cell 2.2']])
-```
-You can also call the `send` method, which will try to use the visualization Shellviz thinks is best for the data:
-```python
-send('https://media2.giphy.com/media/10kABVanhwykJW/200w.gif')
-```
+There are many different visualization options available. For a full list, check out the [visualizations](/visualization) documentation.
 
-<Note type='warning'>Shellviz supports text, numbers, lists, and dicts, but currently has limited support for more complex data types such as Decimal() or date() instances. I hope to improve this soon!</Note>
+
+## Launch Shellviz
+Open Shellviz by pointing your browser to the URL printed in your console (*127.0.0.1:5544* by default). You should see your Shellviz instance instance running in front of you (if not, check out our [troubleshooting](/troubleshooting) guide).
+
+You can also embed a widget version of Shellviz on your site that lives on the bottom right of your page. Try clicking the "Run" button on the above code - it should launch in the widget.
+
+
 
 ## Updating existing values
 You can update existing values by specifying an `id` value. If an existing visualization has a matching id, its value will be updated:
@@ -107,6 +102,17 @@ show_qr_code()
 #  ██  ██████  ██  ██  ██  ████  ████  ██  ██████  ██
 #              .... qr code continues ...
 ```
+
+## Initializing Shellviz Manually
+If you would like Shellviz to run locally, or you would like to adjust the parameters, you can initialize it directly:
+
+
+```python
+from shellviz import Shellviz
+sv = Shellviz(port=3333, show_url=False)
+sv.log('hello world')
+```
+
 
 
 ## Running multiple instances
