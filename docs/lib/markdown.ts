@@ -66,10 +66,25 @@ export type BaseMdxFrontmatter = {
   description: string;
 };
 
+async function readFileFromHybridPath(slug: string): Promise<string> {
+  const path1 = path.join(process.cwd(), "/contents/", `${slug}.mdx`);
+  try {
+    return await fs.readFile(path1, "utf-8");
+  } catch (e) {
+    // ignore and try next path
+  }
+
+  const path2 = path.join(process.cwd(), "/contents/", slug, "index.mdx");
+  try {
+    return await fs.readFile(path2, "utf-8");
+  } catch (e) {
+    throw new Error(`File not found for slug: ${slug}`);
+  }
+}
+
 export async function getDocsForSlug(slug: string) {
   try {
-    const contentPath = getDocsContentPath(slug);
-    const rawMdx = await fs.readFile(contentPath, "utf-8");
+    const rawMdx = await readFileFromHybridPath(slug);
     return await parseMdx<BaseMdxFrontmatter>(rawMdx);
   } catch (err) {
     console.log(err);
@@ -77,8 +92,7 @@ export async function getDocsForSlug(slug: string) {
 }
 
 export async function getDocsTocs(slug: string) {
-  const contentPath = getDocsContentPath(slug);
-  const rawMdx = await fs.readFile(contentPath, "utf-8");
+  const rawMdx = await readFileFromHybridPath(slug);
   // captures between ## - #### can modify accordingly
   const headingsRegex = /^(#{2,4})\s(.+)$/gm;
   let match;
@@ -109,10 +123,6 @@ function sluggify(text: string) {
   return slug.replace(/[^a-z0-9-]/g, "");
 }
 
-function getDocsContentPath(slug: string) {
-  return path.join(process.cwd(), "/contents/", `${slug}/index.mdx`);
-}
-
 function justGetFrontmatterFromMD<Frontmatter>(rawMd: string): Frontmatter {
   return matter(rawMd).data as Frontmatter;
 }
@@ -132,17 +142,11 @@ export async function getAllChilds(pathString: string) {
 
   return await Promise.all(
     page_routes_copy.map(async (it) => {
-      const totalPath = path.join(
-        process.cwd(),
-        "/contents/",
-        prevHref,
-        it.href,
-        "index.mdx"
-      );
-      const raw = await fs.readFile(totalPath, "utf-8");
+      const fullHref = `${prevHref}${it.href}`;
+      const raw = await readFileFromHybridPath(fullHref.substring(1));
       return {
         ...justGetFrontmatterFromMD<BaseMdxFrontmatter>(raw),
-        href: `${prevHref}${it.href}`,
+        href: fullHref,
       };
     })
   );
