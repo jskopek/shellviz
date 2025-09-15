@@ -44,7 +44,7 @@ class ShellvizHandler(logging.Handler):
             log_id: The ID to use for the log entries in Shellviz
         """
         super().__init__(level)
-        self.shellviz = shellviz_instance or _global_shellviz()
+        self.shellviz = shellviz_instance or _global_shellviz(show_url=False)
         self.log_id = log_id
         
     def emit(self, record: logging.LogRecord) -> None:

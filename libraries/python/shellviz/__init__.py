@@ -3,11 +3,11 @@ from typing import Optional
 
 # Global instance of Shellviz
 _global_shellviz_instance = None
-def _global_shellviz():
+def _global_shellviz(show_url: bool = True):
     global _global_shellviz_instance
     if not _global_shellviz_instance:
         # print("Shellviz: No instance found. Creating new instance.")
-        _global_shellviz_instance = Shellviz()
+        _global_shellviz_instance = Shellviz(show_url=show_url)
     return _global_shellviz_instance
 
 # Convenience methods for quickly interacting with a global shellviz instance
