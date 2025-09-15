@@ -115,7 +115,7 @@ class ShellvizServer:
         request = await parse_request(reader)
 
         # Compiled python package will have a `dist` folder in the same directory as the package; this can be overridden by setting the `SHELLVIZ_CLIENT_DIST_PATH` environment variable
-        CLIENT_DIST_PATH = os.environ.get('CLIENT_DIST_PATH', os.path.join(os.path.dirname(__file__), 'client_build')) 
+        CLIENT_DIST_PATH = os.environ.get('CLIENT_DIST_PATH', os.path.join(os.path.dirname(__file__), 'static', 'shellviz')) 
 
         # Handle OPTIONS requests for CORS preflight
         if request.method == 'OPTIONS':

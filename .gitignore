@@ -6,7 +6,7 @@ libraries/js/dist
 libraries/js/test-web
 
 # Python
-libraries/python/shellviz/client_build
+libraries/python/shellviz/static
 libraries/python/dist
 libraries/python/test*.py
 libraries/python/test_python_env

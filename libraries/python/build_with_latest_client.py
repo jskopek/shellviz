@@ -15,7 +15,7 @@ def run_client_build():
 def copy_client_files():
     root_dir = Path(__file__).parent.parent.parent
     client_dist = root_dir / "client" / "build"
-    package_dir = root_dir / "libraries" / "python" / "shellviz" / "client_build"
+    package_dir = root_dir / "libraries" / "python" / "shellviz" / "static" / "shellviz"
     # empty the package dir before copying
     if package_dir.exists():
         shutil.rmtree(package_dir)
@@ -52,7 +52,9 @@ if __name__ == "__main__":
     print("Copying client files...")
     copy_client_files()
     print("Running poetry build...")
-    toggle_rule_in_gitignore("libraries/python/shellviz/client_build", "../../.gitignore") # This is a bit of a hack, as the poetry build stage seems to be ignorning files and folders that are in the .gitignore file.
+    root_dir = Path(__file__).parent.parent.parent
+    gitignore_path = root_dir / ".gitignore"
+    toggle_rule_in_gitignore("libraries/python/shellviz/static/shellviz", gitignore_path) # This is a bit of a hack, as the poetry build stage seems to be ignorning files and folders that are in the .gitignore file.
     run_poetry_build()
-    toggle_rule_in_gitignore("libraries/python/shellviz/client_build", "../../.gitignore") # This is a bit of a hack, as the poetry build stage seems to be ignorning files and folders that are in the .gitignore file.
+    toggle_rule_in_gitignore("libraries/python/shellviz/static/shellviz", gitignore_path) # This is a bit of a hack, as the poetry build stage seems to be ignorning files and folders that are in the .gitignore file.
     print("Done!")

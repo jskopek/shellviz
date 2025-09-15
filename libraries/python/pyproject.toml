@@ -6,6 +6,8 @@ authors = ["Jean-Marc Skopek <jskopek@gmail.com>"]
 readme = "README.md"
 include = [
     "shellviz/dist",
+    "shellviz/templates",
+    "shellviz/static",
 ]
 
 [tool.poetry.dependencies]
