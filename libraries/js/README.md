@@ -100,6 +100,21 @@ cd test-web
 npm install ../../build/shellviz-x.x.x.tgz
 ```
 
+Alternatively, to test during development you can do the following:
+
+```html
+<!-- Add this to the website you wish to test the client-side instance in -->
+<script src="http://localhost:4005/build/browser_client.umd.js"></script>```
+
+and compile and serve the client & js library:
+
+```bash
+npm run build
+python -m http.server 4005```
+
+This isn't the optimal way of developing, as you will need to re-build on each change. We should have a better solution in place soon
+
+
 The package supports both CommonJS and ES Modules, so you can use either `require()` or `import` syntax in your code.
 
 ## Deploying
