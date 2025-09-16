@@ -1,5 +1,7 @@
-// for page navigation & to sort on leftbar
+import { faTerminal, faTable, faJson, faCard, faText, faProgress, faChart, faLocation, faRaw, faFile, faMapLocation, faChartSimple, faBarsProgress, faHashtag, faColumns, faCode, faGlobe } from "@fortawesome/free-solid-svg-icons";
+import { faJs, faNodeJs, faPython, faReact } from "@fortawesome/free-brands-svg-icons";
 
+// for page navigation & to sort on leftbar
 export type EachRoute = {
   title: string;
   href: string;
@@ -14,25 +16,25 @@ export const ROUTES: EachRoute[] = [
     title: "Integration",
     href: "/integration",
     items: [
-      { title: "Python", href: "/python" },
-      { title: "Django", href: "/django" },
-      { title: "Node / Next / React", href: "/node-next-react" },
-      { title: "Client-side JS", href: "/client-side-js" },
+      { title: "Django", href: "/django", icon: faGlobe },
+      { title: "Python", href: "/python", icon: faPython },
+      { title: "Node / Next / React", href: "/node-next-react", icon: faReact },
+      { title: "Client-side JS", href: "/client-side-js", icon: faJs },
     ],
   },
   {
     title: "Visualizations",
     href: "/visualizations",
     items: [
-      { title: "Logs", href: "#logs" },
-      { title: "Tables", href: "#tables" },
-      { title: "JSON", href: "#json" },
-      { title: "Cards", href: "#cards" },
-      { title: "Text", href: "#text" },
-      { title: "Progress", href: "#progress" },
-      { title: "Charts", href: "#charts" },
-      { title: "Location", href: "#location" },
-      { title: "Raw", href: "#raw-data" },
+      { title: "Logs", href: "#logs", icon: faTerminal },
+      { title: "Tables", href: "#tables", icon: faTable },
+      { title: "JSON", href: "#json", icon: faCode },
+      { title: "Cards", href: "#cards", icon: faColumns },
+      { title: "Text", href: "#text", icon: faHashtag },
+      { title: "Progress", href: "#progress", icon: faBarsProgress },
+      { title: "Charts", href: "#charts", icon: faChartSimple },
+      { title: "Location", href: "#location", icon: faMapLocation },
+      { title: "Raw", href: "#raw-data", icon: faFile },
     ],
   },
   { title: "Examples", href: "/examples" },

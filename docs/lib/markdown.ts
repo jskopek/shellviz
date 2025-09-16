@@ -20,6 +20,7 @@ import Link from "@/components/markdown/link";
 import Outlet from "@/components/markdown/outlet";
 import { CodeExample } from "@/components/markdown/code-example";
 import { CodeRunner } from "@/components/markdown/code-runner";
+import VizHeading from "@/components/markdown/viz-heading";
 
 // add custom components
 const components = {
@@ -36,6 +37,7 @@ const components = {
   Outlet,
   CodeExample,
   CodeRunner,
+  VizHeading,
 };
 
 async function parseMdx<Frontmatter>(rawMdx: string) {
