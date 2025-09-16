@@ -22,6 +22,9 @@ export function CodeRunner({ code, children, showCopy = false }: CodeRunnerProps
       return;
     }
 
+    // always show the code in the shellviz
+    window.shellviz.show(true);
+
     setIsRunning(true);
     setHasRun(true);
 
@@ -90,7 +93,7 @@ export function CodeRunner({ code, children, showCopy = false }: CodeRunnerProps
       
       <div className="relative">
         <div className="absolute top-3 right-2.5 z-10 sm:block hidden flex gap-2">
-          <Button
+          {code && <Button
             variant="outline"
             size="sm"
             onClick={runCode}
@@ -100,7 +103,10 @@ export function CodeRunner({ code, children, showCopy = false }: CodeRunnerProps
             {isRunning ? (
               <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
             ) : (
-              <PlayIcon className="w-4 h-4" />
+                <div className="flex items-center gap-2">
+                  <PlayIcon className="w-4 h-4" />
+                  <span>Run</span>
+                </div>
             )}
           </Button>}
           {showCopy && <Copy content={getActiveCode()} />}
