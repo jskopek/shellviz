@@ -1,6 +1,5 @@
 ---
 title: Visualizations
-description: A list of all available visualizations in Shellviz
 ---
 
 <VizHeading slug="logs">Logs</VizHeading>
@@ -34,6 +33,7 @@ table([{ year: "1945", sightings: 6 }, { year: "1946", sightings: 8 }, { year: "
 </CodeRunner>
 
 <VizHeading slug="json">JSON</VizHeading>
+
 Objects can be visualized using the interactive JSON explorer. This allows you to collapse and expand JSON objects and copy sub-sections
 
 <CodeRunner code="shellviz.json([['Name', 'Age'], ['Rafael', 30], ['Charlie', 53]])">
@@ -57,12 +57,8 @@ card([{name: 'Rafael', age: 30}, {name: 'Charlie', age: 53}]);`} />
 </CodeRunner>
 
 <VizHeading slug="text">Text</VizHeading>
-Show data as raw values with no formatting
 
 ## Markdown
-
-Preview text. Will format with markdown
-
 <CodeRunner code="shellviz.markdown('It was a **cold** night, and all were fast asleep')">
   <CodeExample language="python" code={`from shellviz import markdown
 markdown("# This is some Markdown\nAnd this is some **strong** text\nAnd a list:\n- First item\n- Second item")
@@ -72,8 +68,8 @@ markdown("# This is some Markdown\nAnd this is some **strong** text\nAnd a list:
 markdown("It was a **cold** night, and all were fast asleep");`} />
 </CodeRunner>
 
-## Number
 
+## Numbers
 Numbers can be visualized with a dedicated layout that resizes to fit the provided number:
 
 <CodeRunner code="shellviz.number(1032093)">
@@ -83,7 +79,8 @@ number(1032093)`} />
 number(1032093);`} />
 </CodeRunner>
 
-<VizHeading slug="progress" level={2}>Progress</VizHeading>
+<VizHeading slug="progress">Progress</VizHeading>
+
 Show a progress bar displaying 0-100% value. Can parse a wide variety of text, including strings, integers, and 0.0-1.0 floats.
 
 <CodeRunner code="shellviz.progress(0.75)">
