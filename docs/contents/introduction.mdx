@@ -8,37 +8,29 @@ Whether you're working with **Python scripts**, **Node.js applications**, or **c
 
 ## Quick Examples
 
-### Python
-```python
-from shellviz import log, table, json
-log('my first shellviz command')
+Click the "Run" button to see your first Shellviz call in action:
+
+<CodeRunner code='shellviz.log("my first shellviz command");shellviz.table([["Alice", 25, 5.6], ["Bob", 30, 5.9], ["Charlie", 22, 5.7]]);shellviz.json({"name": "Alicez", "age": 25, "height": 5.6})'>
+<CodeExample language="python" code={`from shellviz import log, table, json
+log("my first shellviz command")
 # Shellviz serving on http://192.168.86.124:5544
 table([("Alice", 25, 5.6), ("Bob", 30, 5.9), ("Charlie", 22, 5.7)])
 json({"name": "Alice", "age": 25, "height": 5.6})
-```
-
-### JavaScript/Node.js
-```javascript
-import { log, table, json } from 'shellviz';
+`}/>
+<CodeExample language="javascript" code={`import { log, table, json } from 'shellviz';
 log('hello from Node.js');
 table([['Name', 'Age'], ['Alice', 30], ['Bob', 25]]);
 json({ message: 'JavaScript visualization!' });
-```
-
-### Browser/Client-Side
-```html
-<script src="https://unpkg.com/shellviz"></script>
+`}/>
+<CodeExample language="html" code={`<script src="https://unpkg.com/shellviz"></script>
 <script>
 const { log, show } = shellviz;
 show(); // Display floating widget
 log('hello from the browser');
 </script>
-```
+`}/>
+</CodeRunner>
 
-Launch the local web server (or use the browser widget), and you'll see this:
-![Console output](/docs/intro-1.png)
-
-It's great at displaying complex data, but there's a lot more you can do with Shellviz!
 
 ## Features
 
