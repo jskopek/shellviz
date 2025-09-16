@@ -72,6 +72,43 @@ DEBUG_TOOLBAR_PANELS = [
 ]
 ```
 
+## Generic Timing Mixin
+
+Shellviz includes a `TimingMixin` that automatically logs timing information for ALL method calls on any class. Simply inherit from `TimingMixin` and all your methods will be automatically timed:
+
+```python
+# For Django CBVs
+from django.views.generic import ListView
+from shellviz.django import TimingMixin
+
+class ProjectListView(TimingMixin, ListView):
+    model = Project
+    # ... other view configuration
+
+# For any custom class
+class MyCustomClass(TimingMixin):
+    def method_one(self):
+        # This will be automatically timed
+        pass
+    
+    def method_two(self):
+        # This will also be automatically timed
+        pass
+```
+
+The mixin automatically intercepts and times ALL method calls, with timestamps relative to the start of the first method call.
+
+Example output in Shellviz:
+```
+timing_ProjectListView: dispatch: 0.000s
+timing_ProjectListView: get_queryset: 0.101s
+timing_ProjectListView: get_context_data: 0.102s
+timing_ProjectListView: render_to_response: 0.150s
+
+timing_MyCustomClass: method_one: 0.100s
+timing_MyCustomClass: method_two: 0.150s
+```
+
 # Build
 
 Bundling and deploying Shellviz is straightforward. To automate the process of building the client, copying the necessary files, and compiling the Python package, use the provided `build_with_latest_client.py` script:
