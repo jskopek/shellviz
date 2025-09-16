@@ -144,7 +144,19 @@ export function stack(locals = null, id = null) { return _global().stack(locals,
 export function show(expandWidget = false) { return _global().show(expandWidget); }
 export function Shellviz() { return _global(); }
 
-// if (typeof window !== 'undefined') {
-//   console.log('shellviz', _global());
-//   window.shellviz = _global();
-// }
+// Initialize and show Shellviz when the DOM is loaded
+if (typeof window !== 'undefined') {
+  const initShellviz = () => {
+    if (window.__shellvizInitDone) return;
+    window.__shellvizInitDone = true;
+    window.shellviz = _global();
+    window.shellviz.show();
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initShellviz, { once: true });
+  } else {
+    // DOM already parsed
+    initShellviz();
+  }
+}
