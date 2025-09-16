@@ -17,7 +17,6 @@ import Note from "@/components/markdown/note";
 import { Stepper, StepperItem } from "@/components/markdown/stepper";
 import Image from "@/components/markdown/image";
 import Link from "@/components/markdown/link";
-import Outlet from "@/components/markdown/outlet";
 import { CodeExample } from "@/components/markdown/code-example";
 import { CodeRunner } from "@/components/markdown/code-runner";
 import VizHeading from "@/components/markdown/viz-heading";
@@ -34,7 +33,6 @@ const components = {
   StepperItem,
   img: Image,
   a: Link,
-  Outlet,
   CodeExample,
   CodeRunner,
   VizHeading,
