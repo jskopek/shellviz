@@ -45,6 +45,17 @@ json([['Name', 'Age'], ['Rafael', 30], ['Charlie', 53]]);
 json([{name: 'Rafael', age: 30}, {name: 'Charlie', age: 53}]);`} />
 </CodeRunner>
 
+<VizHeading slug="stack">Stack</VizHeading>
+
+```python
+try:
+    result = risky_operation()
+    log('Success:', result)
+except Exception as e:
+    log('Error occurred:', str(e), id='errors')
+    stack()  # Show call stack for debugging
+```
+
 <VizHeading slug="cards">Cards</VizHeading>
 
 <CodeRunner code="shellviz.card([['Name', 'Age'], ['Rafael', 30], ['Charlie', 53]])">

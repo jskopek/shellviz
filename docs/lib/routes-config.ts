@@ -1,10 +1,12 @@
-import { faTerminal, faTable, faJson, faCard, faText, faProgress, faChart, faLocation, faRaw, faFile, faMapLocation, faChartSimple, faBarsProgress, faHashtag, faColumns, faCode, faGlobe } from "@fortawesome/free-solid-svg-icons";
-import { faJs, faNodeJs, faPython, faReact } from "@fortawesome/free-brands-svg-icons";
+import { faTerminal, faTable, faFile, faMapLocation, faChartSimple, faBarsProgress, faHashtag, faColumns, faCode, faGlobe, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
+import { faJs, faPython, faReact } from "@fortawesome/free-brands-svg-icons";
+import type { IconProp } from "@fortawesome/fontawesome-svg-core";
 
 // for page navigation & to sort on leftbar
 export type EachRoute = {
   title: string;
   href: string;
+  icon?: IconProp;
   noLink?: true; // noLink will create a route segment (section) but cannot be navigated
   items?: EachRoute[];
 };
@@ -29,6 +31,7 @@ export const ROUTES: EachRoute[] = [
       { title: "Logs", href: "#logs", icon: faTerminal },
       { title: "Tables", href: "#tables", icon: faTable },
       { title: "JSON", href: "#json", icon: faCode },
+      { title: "Stack", href: "#stack", icon: faLayerGroup },
       { title: "Cards", href: "#cards", icon: faColumns },
       { title: "Text", href: "#text", icon: faHashtag },
       { title: "Progress", href: "#progress", icon: faBarsProgress },
