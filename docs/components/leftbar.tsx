@@ -5,7 +5,7 @@ import {
   SheetHeader,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Logo, NavMenu } from "./navbar";
+import { Logo } from "./navbar";
 import { Button } from "./ui/button";
 import { AlignLeftIcon } from "lucide-react";
 import { DialogTitle } from "./ui/dialog";
@@ -38,10 +38,7 @@ export function SheetLeftbar() {
           </SheetClose>
         </SheetHeader>
         <div className="flex flex-col gap-4 overflow-y-auto">
-          <div className="flex flex-col gap-2.5 mt-3 mx-2 px-5">
-            <NavMenu isSheet />
-          </div>
-          <div className="mx-2 px-5">
+          <div className="mx-4">
             <DocsMenu isSheet />
           </div>
         </div>
