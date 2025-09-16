@@ -24,7 +24,7 @@ export default function VizHeading({
   const Tag = (level === 1 ? "h1" : level === 2 ? "h2" : "h3") as keyof JSX.IntrinsicElements;
 
   return (
-    <Tag id={slug} className="flex items-center gap-2 mt-10 mb-3 scroll-m-20">
+    <Tag id={slug} className="flex items-center gap-2 mt-5 mb-10 scroll-m-20 border-b border-gray-300 pb-2">
       {icon && <FontAwesomeIcon icon={icon} className="text-primary" />}
       <span>{resolvedTitle}</span>
     </Tag>
