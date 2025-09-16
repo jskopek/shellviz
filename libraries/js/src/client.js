@@ -107,11 +107,11 @@ class ShellvizClient {
   stack = (locals = null, id = null) => { this.send(getStackTrace(locals), { id, view: 'stack' }); }
 
   // Render in browser function - creates a floating widget with the ShellViz React client
-  show = () => {
+  show = (expandWidget = false) => {
     if (!this.browserWidget) {
       this.browserWidget = new BrowserWidget(this);
     }
-    this.browserWidget.show();
+    this.browserWidget.show(expandWidget);
   }
 }
 
@@ -141,7 +141,7 @@ export function card(data, id = null, append = false) { return _global().card(da
 export function location(data, id = null, append = false) { return _global().location(data, id, append); }
 export function raw(data, id = null, append = false) { return _global().raw(data, id, append); }
 export function stack(locals = null, id = null) { return _global().stack(locals, id); }
-export function show() { return _global().show(); }
+export function show(expandWidget = false) { return _global().show(expandWidget); }
 export function Shellviz() { return _global(); }
 
 // if (typeof window !== 'undefined') {

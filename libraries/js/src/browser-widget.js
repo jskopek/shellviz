@@ -13,24 +13,25 @@ class BrowserWidget {
     
     // Load saved preferences
     this.preferences = this._loadPreferences();
+
+    this.show();
   }
 
-  show() {
+  show(expandWidget = false) {
+    console.log('about to show widget', expandWidget);
     if (typeof window === 'undefined') {
       console.warn('BrowserWidget can only be used in a browser environment');
       return;
     }
 
-    if (this.isVisible) {
-      console.warn('BrowserWidget is already visible');
-      return;
+    if (!this.isVisible) {
+      // only create the bubble if it's not visible
+      this._createBubble();
+      this.isVisible = true;
     }
-
-    this._createBubble();
-    this.isVisible = true;
     
     // If the user had the panel expanded when they last used it, expand it automatically
-    if (this.preferences.isExpanded) {
+    if (this.preferences.isExpanded || expandWidget) {
       this._expandWidget();
     }
   }

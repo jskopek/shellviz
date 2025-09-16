@@ -11,7 +11,7 @@ declare global {
       bar: (data: any[], id?: string, append?: boolean) => void;
       area: (data: any[], id?: string, append?: boolean) => void;
       pie: (data: any[], id?: string, append?: boolean) => void;
-      show: () => void;
+      show: (expandWidget?: boolean | undefined) => void;
     };
   }
 }
