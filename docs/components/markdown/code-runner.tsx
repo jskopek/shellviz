@@ -8,9 +8,10 @@ import Copy from "./copy";
 interface CodeRunnerProps {
   code: string;
   children: React.ReactNode;
+  showCopy?: boolean;
 }
 
-export function CodeRunner({ code, children }: CodeRunnerProps) {
+export function CodeRunner({ code, children, showCopy = false }: CodeRunnerProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [hasRun, setHasRun] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -101,8 +102,8 @@ export function CodeRunner({ code, children }: CodeRunnerProps) {
             ) : (
               <PlayIcon className="w-4 h-4" />
             )}
-          </Button>
-          <Copy content={getActiveCode()} />
+          </Button>}
+          {showCopy && <Copy content={getActiveCode()} />}
         </div>
 
         {hasMultipleTabs ? (
