@@ -22,7 +22,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <Script
-          src="https://unpkg.com/shellviz@0.5.0-beta.0"
+          src="https://unpkg.com/shellviz@0.5.0-beta.3"
+          // src="http://localhost:4005/build/browser_client.umd.js"
           strategy="beforeInteractive"
         />
       </head>

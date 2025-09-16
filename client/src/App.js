@@ -2,7 +2,7 @@ import './App.scss';
 import { useEffect, useState } from 'react';
 import Entry from './components/Entry';
 
-const VERSION = '0.5.0-beta.0';
+const VERSION = '0.5.0-beta.3';
 
 function App() {
 	// Check for global configuration from widget, otherwise use URL-based detection

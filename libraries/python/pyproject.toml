@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "shellviz"
-version = "0.5.0b2"
+version = "0.5.0b3"
 description = ""
 authors = ["Jean-Marc Skopek <jskopek@gmail.com>"]
 readme = "README.md"
