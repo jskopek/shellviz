@@ -13,8 +13,8 @@ import os
 
 
 class ShellvizServer:
-    def __init__(self, port: int = 5544):
-        self.port = SHELLVIZ_PORT or port
+    def __init__(self, port: Optional[int] = None):
+        self.port = port if port is not None else SHELLVIZ_PORT
         
         self.entries = []  # store a list of all existing entries; client will show these entries on page load
         self.pending_entries = []  # store a list of all pending entries that have yet to be sent via websocket connection

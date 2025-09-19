@@ -5,26 +5,34 @@ from .utils_serialize import to_json_safe
 from .utils import get_stack_trace
 from .utils_html import send_request, print_qr, get_local_ip
 from .server import ShellvizServer
-from .config import SHELLVIZ_PORT, SHELLVIZ_SHOW_URL, SHELLVIZ_URL
+from .config import SHELLVIZ_PORT, SHELLVIZ_SHOW_URL, SHELLVIZ_URL, SHELLVIZ_AUTO_START
 
 class Shellviz:
-    def __init__(self, show_url: bool = True, port: int = 5544, url: Optional[str] = None):
-        self.port = SHELLVIZ_PORT or port
-        self.base_url = SHELLVIZ_URL or url or f'http://localhost:{self.port}'
-        self.show_url_on_start = SHELLVIZ_SHOW_URL if SHELLVIZ_SHOW_URL is not None else show_url
+    def __init__(self, show_url: Optional[bool] = None, port: Optional[int] = None, url: Optional[str] = None, auto_start: Optional[bool] = None):
+        """
+        Args:
+            show_url: Whether to show the URL on startup; defaults to SHELLVIZ_SHOW_URL
+            port: The port to use for the server; defaults to SHELLVIZ_PORT
+            url: The base URL to use for the server; defaults to SHELLVIZ_URL
+            auto_start: Whether to start the server automatically if it is not already running; defaults to SHELLVIZ_AUTO_START
+        """
+        self.port = port if port is not None else SHELLVIZ_PORT
+        self.base_url = url if url is not None else SHELLVIZ_URL
+        self.show_url_on_start = show_url if show_url is not None else SHELLVIZ_SHOW_URL
+        self.auto_start = auto_start if auto_start is not None else SHELLVIZ_AUTO_START
         
         # Try to connect to existing server
         try:
             send_request('/api/running', base_url=self.base_url)
         except ConnectionRefusedError:
             # Only start a server if we're using localhost (not a custom url)
-            if SHELLVIZ_URL is None and url is None:
-                self._start_local_server()
+            if self.auto_start:
+                self.start_server()
             else:
-                # If using a custom url and can't connect, raise an error
-                raise Exception(f'Cannot connect to server at {self.base_url}')
+                # If using a custom url and can't connect, print a warning
+                print(f'Shellviz cannot connect to server at {self.base_url}')
 
-    def _start_local_server(self):
+    def start_server(self):
         sv = ShellvizServer(port=self.port)
         sv.initialized_event.wait(timeout=10)  # wait up to 10 seconds for initialization
         if not sv.is_initialized:

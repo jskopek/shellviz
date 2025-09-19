@@ -1,6 +1,7 @@
 import logging
 from typing import Optional, Dict, Any
 from .. import _global_shellviz, Shellviz
+from ..config import SHELLVIZ_AUTO_START
 
 class ShellvizHandler(logging.Handler):
     """
@@ -71,7 +72,10 @@ class ShellvizHandler(logging.Handler):
                 log_entry.update(record.extra)
                 
             # Send to Shellviz using the log view
-            self.shellviz.log(log_entry, id=self.log_id)
+            try:
+                self.shellviz.log(log_entry, id=self.log_id)
+            except ConnectionRefusedError:
+                pass
             
         except Exception:
             self.handleError(record)
