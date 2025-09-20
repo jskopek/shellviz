@@ -1,0 +1,55 @@
+---
+title: Node.js / Next.js / React
+---
+
+The Shellviz JavaScript library provides powerful data visualization capabilities for Node.js environments. For client-side browser usage, see the [Client-side JS](/integration/client-side-js) guide.
+
+## Installation
+
+```bash
+npm install shellviz
+```
+
+## Quick Start
+
+```javascript
+import { log, table, json } from 'shellviz';
+
+// Start logging data
+log('Hello from Node.js!');
+// Shellviz serving on http://127.0.0.1:5544
+
+// Display tabular data
+table([
+    ['Name', 'Age', 'City'],
+    ['Alice', 30, 'New York'],
+    ['Bob', 25, 'San Francisco']
+]);
+
+// Show JSON data
+json({
+    message: 'Welcome to Shellviz',
+    timestamp: new Date().toISOString(),
+    data: [1, 2, 3, 4, 5]
+});
+```
+
+
+## Configuration
+
+**Available Options**
+- `SHELLVIZ_PORT` - Port number (default: 5544)
+- `SHELLVIZ_SHOW_URL` - Show URL on startup (default: true)
+- `SHELLVIZ_URL` - Custom server URL (overrides port-based URL)
+
+Shellviz can either be configured by specifying configuration during initialization:
+
+```javascript
+import { ShellvizClient } from 'shellviz';
+const client = new ShellvizClient({ port: 9000, url: "https://my-server.com" });
+```
+
+Alternatively, you can set configuration via environment variables:
+```bash
+export SHELLVIZ_PORT=8080
+```

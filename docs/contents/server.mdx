@@ -1,0 +1,83 @@
+## Initializing Server Manually
+If you would like Shellviz to run locally, or you would like to adjust the parameters, you can initialize it directly:
+
+
+```python
+from shellviz import Shellviz
+sv = Shellviz(port=3333, show_url=False)
+sv.log('hello world')
+```
+```javascript
+import ShellvizServer from 'shellviz/server';
+
+const server = new ShellvizServer({
+    port: 8080,
+    showUrl: true
+});
+```
+
+## Running multiple instances
+It is possible to run multiple instances of Shellviz by initializing instances with different ports:
+
+```python
+from shellviz import Shellviz
+
+sv1 = Shellviz(port=5000)
+sv2 = Shellviz(port=6000)
+
+sv1.log('sending to the first server')
+sv2.log('sending to the second server')
+```
+
+```javascript
+import { ShellvizClient } from 'shellviz';
+
+const analytics = new ShellvizClient({ port: 5544 });
+const debug = new ShellvizClient({ port: 5545 });
+
+analytics.table(analyticsData, 'metrics');
+debug.log('Debug information');
+```
+
+
+On initialization, the Shellviz instance makes a quick check to see if another instance is running on the specified port. If it is, the request will be forwarded to the original server.
+
+## Remote Server Connection
+
+By default, Shellviz serves data and connects to a local server running on `http://localhost:5544`. However, the client can be configured to send data and listen to a remote server.
+
+To send data to a remote server, initialize Shellviz with the `url` pointing to the remote url:
+```python
+from shellviz import Shellviz
+
+# Connect to remote Shellviz instance
+sv = Shellviz(url="https://shellviz.mycompany.com")
+sv.log("Data from remote client")
+```
+
+```javascript
+import { ShellvizClient } from 'shellviz';
+
+// Connect to remote Shellviz instance
+const client = new ShellvizClient({
+    url: "https://shellviz.mycompany.com"
+});
+client.log("Data from remote client");
+```
+
+
+The client-side can be configured to connect to a remote URL by setting the `SHELLVIZ_URL` variable:
+
+```html
+<script>
+SHELLVIZ_URL = 'https://shellviz.mycompany.com';
+</script>
+<script src="https://unpkg.com/shellviz">
+```
+
+Setting up a remote server is straightforward! Simply initialize a new instance of Shellviz - either via the CLI or a script - and make it publicly accessible:
+
+```bash
+> shellviz
+# serving on http://localhost:5544
+```

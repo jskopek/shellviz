@@ -1,40 +1,62 @@
 ---
-title: Django Integration
+title: Getting started with Django
 ---
 
-Shellviz offers first-class support for Django, allowing you to easily view logs and more complex data types.
-
-# Setup
-
-1. Install the shellviz package
-```pip install shellviz```
-
-2. Add shellviz to your django apps
-
-```python
-INSTALLED_APPS = [...
-'shellviz'
-...]
-```
-
-3. Add the shellviz bar to your templates
-Run the following script to add the shellviz card/popup in your browser
+First, add the shellviz widget to your templates:
 
 ```html
-{% load shellviz %}
-...
-{% shellviz_script %}
-</head>
+<script src="https://unpkg.com/shellviz"></script>
+```
+You should now see a widget - just like the one on this page - on the bottom right of your pages.
+
+Next, install the Python package:
+```bash
+pip install shellviz
 ```
 
-4. Configure shellviz as a logging handler to automatically receive logs
-If you would like Shellviz to automatically show logs, you may set up the dedicated handler
-Add Shellviz as a logging handler to view your application logs in the browser:
+That's it! You're ready to start visualizing data with Shellviz.
+
+## Logging Data
+You can now send logs and other [data visualizations](/visualizations) from Python to the browser:
+
+
+<CodeRunner code="shellviz.log('this will show up in the shellviz widget!');">
+```python
+from shellviz import log
+log('this will show up in the shellviz widget!')
+```
+</CodeRunner>
+
+Logs can accept multiple arguments. It can visualize strings, numbers, lists, dictionaries, and even Djagno model instances and queries:
+
+<CodeRunner code="shellviz.log('some text', 200, {'status': 200, 'num_responses': 20, 'execution_time': 540});">
+```python
+from shellviz import log
+log('some text', 200, {'status': 200, 'num_responses': 20, 'execution_time': 540})
+```
+</CodeRunner>
+
+## Visualizations
+You can use any of shellviz' [/visualizations](visualizations) in your Django codebase. These calls run alongside logging calls
+
+```python
+import logging
+from shellviz import table, json, progress
+
+logging.info('Migration started')
+progress(0)
+
+# ...
+logging.info('Migration complete')
+progress(1)
+```
+
+## Logging Handler
+Shellviz includes the `shellviz.django.logging.ShellvizHandler`, which allows it to be configured as an automated logging handler for Django apps:
+
 ```python
 # settings.py
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
     'handlers': {
         'shellviz': {
             'class': 'shellviz.django.logging.ShellvizHandler',
@@ -51,18 +73,14 @@ LOGGING = {
 }
 ```
 
-Now, any `logging` calls will show up in shellviz
-
-
-# Sending Data
-
-## Logging Data
-If shellviz is configured as a `LOGGING` handler, logging calls will automatically be shown in shellviz
+Now, `logging` calls will automatically be shown in shellviz:
 
 ```python
 import logging
+logging.info('This will appear in Shellviz')
+# .. you can also specify a custom logger
 logger = logging.getLogger('myapp')
-logger.info('This will appear in Shellviz')
+logger.info('So will this!')
 ```
 
 You can also use Shellviz's built-in [log visualization](../visualizations#logs) method, which adds support for several additional features such as passing several arguments, running multiple logging streams, and richer data visualization.
@@ -73,20 +91,6 @@ log('response', {'status': 200}, id='web_requests')
 log(order_instance, id='migration')
 ```
 
-## Visualizations
-You can use any of shellviz' [/visualizations](visualizations) in your Django codebase. These calls run alongside logging calls
-
-```python
-import logging
-from shellviz import table, json, progress
-
-logging.info('Migration started')
-progress(0)
-
-# ...
-logging.info('Migration complete')
-progress(1)
-```
 
 ## QuerySets and Models
 Shellviz can automatically encode Django QuerySet and Model instances:
@@ -137,18 +141,6 @@ timing_ProjectListView: render_to_response: 0.150s
 
 timing_MyCustomClass: method_one: 0.100s
 timing_MyCustomClass: method_two: 0.150s
-```
-
-## Debug Toolbar Integration
-You can integrate Shellviz directly into the [Django Debug Toolbar](https://django-debug-toolbar.readthedocs.io/en/latest/) for easy access:
-
-```python
-# settings.py
-DEBUG_TOOLBAR_PANELS = [
-    # ...
-    'shellviz.django.django_debug_toolbar.ShellvizPanel', 
-    # ...
-]
 ```
 
 ## Configuration

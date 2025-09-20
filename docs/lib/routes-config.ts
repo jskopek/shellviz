@@ -1,4 +1,4 @@
-import { faTerminal, faTable, faFile, faMapLocation, faChartSimple, faBarsProgress, faHashtag, faColumns, faCode, faGlobe, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
+import { faTerminal, faTable, faFile, faMapLocation, faChartSimple, faBarsProgress, faHashtag, faColumns, faCode, faGlobe, faLayerGroup, faServer, faPhone, faQrcode, faEdit, faPlus, faTrash, faMobile, faClock, faEye } from "@fortawesome/free-solid-svg-icons";
 import { faJs, faPython, faReact } from "@fortawesome/free-brands-svg-icons";
 import type { IconProp } from "@fortawesome/fontawesome-svg-core";
 
@@ -13,10 +13,9 @@ export type EachRoute = {
 
 export const ROUTES: EachRoute[] = [
   { title: "Introduction", href: "/introduction" },
-  { title: "Getting Started", href: "/getting-started" },
   {
-    title: "Integration",
-    href: "/integration",
+    title: "Getting Started",
+    href: "/getting-started", // note: redirects to /getting-started/django via next.config.mjs
     items: [
       { title: "Django", href: "/django", icon: faGlobe },
       { title: "Python", href: "/python", icon: faPython },
@@ -40,8 +39,20 @@ export const ROUTES: EachRoute[] = [
       { title: "Raw", href: "#raw-data", icon: faFile },
     ],
   },
-  { title: "Examples", href: "/examples" },
-  { title: "Troubleshooting", href: "/troubleshooting" },
+  {
+    title: "Advanced Usage",
+    href: "/advanced",
+    items: [
+      { title: "Replacing Values", href: "#replacing-existing-values", icon: faEdit },
+      { title: "Appending Data", href: "#appending-to-existing-data", icon: faPlus },
+      { title: "Clearing Data", href: "#clearing-data", icon: faTrash },
+      { title: "Command Line Interface", href: "#command-line-interface", icon: faTerminal },
+      { title: "Phone as Second Screen", href: "#using-your-phone-as-a-second-screen", icon: faMobile },
+      { title: "Waiting for User", href: "#waiting-until-data-is-viewed", icon: faClock },
+    ],
+  },
+  { title: "API Reference", href: "/api" },
+  { title: "Server", href: "/server" },
   { title: "Release Notes", href: "/release-notes" },
 ];
 

@@ -1,0 +1,126 @@
+## Replacing existing values
+You can update existing values by specifying an `id` value. If an existing visualization has a matching id, its value will be updated:
+
+```python
+progress(0.0, id='migration')
+table(migrated_users, id='migration_details')
+# ... continue migration ...
+progress(1.0, id='migration')
+table(migrated_users, id='migration_details')
+```
+
+## Appending to existing data
+You can append to existing values with the `append=True` argument. Most visualizations support this argument. You must specify an `id` value so Shellviz knows which visualization to update.
+
+```python
+table([('Joe', 10, 4.2)], id='migrated_users')
+table(('Jane', 44, 3.2), id='migrated_users', append=True)
+```
+
+The **log** command behaves a little differently from other commands; it appends data to the previous values by default, but you can set `append=False` to reset the existing log values.
+
+## Clearing data
+
+The Shellviz console can be programatically cleared by calling the `clear()` command. This erases any existing data and clears any active widgets.
+
+```python
+from shellviz import clear
+clear()
+```
+
+<Note>There is currently no way to remove an individual visualization, but you can approximate this by updating it with a blank string or list</Note>
+
+
+## Command Line Interface
+
+Shellviz can be run as a standalone server via the command line:
+```bash
+# Install Shellviz package
+pip install shellviz
+# Run shellviz directly from the CLI
+shellviz
+```
+
+In standalone mode, the server will listen for any data to be sent via the library and will serve the visualizer on the default http://localhost:5544 page.
+
+
+You can also send data directly to Shellviz via the command line:
+```bash
+# Pipe log message
+echo "Hello from CLI" | shellviz log
+# Pipe JSON data
+cat data.json | shellviz json
+# Pipe tabular data (CSV)
+cat data.csv | shellviz table
+```
+
+**Options:**
+- `--port`: Port number
+- `--show-url`: Show URL on startup
+- `--url`: Custom server URL
+
+**Examples:**
+
+```bash
+# Log system processes
+ps aux | shellviz table
+
+# Monitor file changes
+tail -f myapp.log | shellviz log --id "log_stream"
+```
+
+## Using your phone as a second screen
+
+Shellviz runs great as a second-screen experience on a phone. You can easily connect to your shellviz instance by scanning a QR code, which can be output alongside the connection string:
+
+![QR Code](/docs/qr.png)
+
+To enable this, you must install the optional `qrcode` python package: 
+
+```bash
+pip install qrcode
+```
+
+<Note>We don't include this by default because I wanted Shellviz to be written with zero dependencies, but it will detect if this package is installed and use it</Note>
+
+We show the QR code alongside the URL string on initialization if `show_url=True` is set, but it can also be generated on-demand:
+
+```python
+from shellviz import show_qr_code
+show_qr_code()
+#
+#  ██████████████  ██        ████      ██████████████
+#  ██          ██  ██  ████████████    ██          ██
+#  ██  ██████  ██  ██  ██  ████  ████  ██  ██████  ██
+#              .... qr code continues ...
+```
+
+## Waiting until data is viewed
+If your script finishes running before you connect to the Shellviz server, you won’t see the logged data. For example, this script won’t work as intended:
+
+```python
+# test_script.py
+from shellviz import log
+log('hello')
+# EOF
+```
+
+```javascript
+log('Processing...');
+await wait();
+```
+
+
+Why? The script terminates before Shellviz has a chance to render the data in your browser.
+
+To make sure your visualizations appear, use the `wait()` method. This pauses the script until all pending data is displayed in the browser:
+
+```python
+# test_script.py
+from shellviz import log, wait
+log('hello')
+wait()
+# EOF
+```
+
+Now your script will wait until all logged data is displayed before it exits.

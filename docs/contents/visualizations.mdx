@@ -4,6 +4,8 @@ title: Visualizations
 
 <VizHeading slug="logs">Logs</VizHeading>
 
+`log(*data, id=None)`
+
 <CodeRunner code="shellviz.log('migrating users to newest version');shellviz.log('migration complete')">
   <CodeExample language="python" code={`from shellviz import log
 log('migrating users to newest version')
@@ -12,7 +14,18 @@ log('migration complete')`} />
 shellviz.log('migration complete');`} />
 </CodeRunner>
 
+
+Display log messages with timestamps
+```javascript
+log('Simple message');
+log('Error occurred:', error, { id: 'errors' });
+log('Multiple', 'values', 'supported');
+```
+
+
 <VizHeading slug="tables">Tables</VizHeading>
+
+`table(data, id=None, append=False)`
 
 JSON data can be examined in two ways: as a color-coded, collapsible view, and as a series of cards that can be searched or filtered.
 
@@ -32,7 +45,33 @@ table([{ "year": "1945", "sightings": 6 }, { "year": "1946", "sightings": 8 }, {
 table([{ year: "1945", sightings: 6 }, { year: "1946", sightings: 8 }, { year: "1947", sightings: 34 }, { year: "1948", sightings: 8 }, { year: "1949", sightings: 15 }, { year: "1950", sightings: 25 }, { year: "1951", sightings: 20 }, { year: "1952", sightings: 48 }, { year: "1953", sightings: 34 }, { year: "1954", sightings: 50 }, { year: "1955", sightings: 31 }, { year: "1956", sightings: 38 }, { year: "1957", sightings: 67 }, { year: "1958", sightings: 40 }, { year: "1959", sightings: 47 }, { year: "1960", sightings: 64 }, { year: "1961", sightings: 39 }, { year: "1962", sightings: 55 }, { year: "1963", sightings: 75 }, { year: "1964", sightings: 77 }, { year: "1965", sightings: 167 }, { year: "1966", sightings: 169 }, { year: "1967", sightings: 178 }, { year: "1968", sightings: 183 }, { year: "1969", sightings: 138 }, { year: "1970", sightings: 126 }, { year: "1971", sightings: 110 }, { year: "1972", sightings: 146 }, { year: "1973", sightings: 209 }, { year: "1974", sightings: 241 }, { year: "1975", sightings: 279 }, { year: "1976", sightings: 246 }, { year: "1977", sightings: 239 }, { year: "1978", sightings: 301 }, { year: "1979", sightings: 221 }, { year: "1980", sightings: 211 }, { year: "1981", sightings: 146 }, { year: "1982", sightings: 182 }, { year: "1983", sightings: 132 }, { year: "1984", sightings: 172 }, { year: "1985", sightings: 192 }, { year: "1986", sightings: 173 }, { year: "1987", sightings: 193 }, { year: "1988", sightings: 203 }, { year: "1989", sightings: 220 }, { year: "1990", sightings: 217 }, { year: "1991", sightings: 210 }, { year: "1992", sightings: 228 }, { year: "1993", sightings: 285 }, { year: "1994", sightings: 381 }, { year: "1995", sightings: 1336 }, { year: "1996", sightings: 862 }, { year: "1997", sightings: 1248 }, { year: "1998", sightings: 1812 }, { year: "1999", sightings: 2906 }, { year: "2000", sightings: 2780 }, { year: "2001", sightings: 3105 }, { year: "2002", sightings: 3176 }, { year: "2003", sightings: 3896 }, { year: "2004", sightings: 4208 }, { year: "2005", sightings: 3996 }, { year: "2006", sightings: 3590 }, { year: "2007", sightings: 4195 }, { year: "2008", sightings: 4705 }, { year: "2009", sightings: 4297 }, { year: "2010", sightings: 2531 }]);`} />
 </CodeRunner>
 
+Display tabular data
+```javascript
+// Simple table
+table([['Name', 'Age'], ['Alice', 30], ['Bob', 25]]);
+
+// Single row (automatically wrapped)
+table(['Alice', 30, 'Engineer']);
+
+// Update existing table
+table([['Charlie', 28]], 'users', true); // append=true
+```
+
+```python
+# List of tuples/lists
+table([('Name', 'Age'), ('Alice', 30), ('Bob', 25)])
+
+# Single row (automatically wrapped)
+table(['Alice', 30, 'Engineer'])
+
+# Update existing table
+table([('Charlie', 28)], id='users', append=True)
+```
+
+
 <VizHeading slug="json">JSON</VizHeading>
+
+`json(data, id=None, append=False)`
 
 Objects can be visualized using the interactive JSON explorer. This allows you to collapse and expand JSON objects and copy sub-sections
 
@@ -45,7 +84,22 @@ json([['Name', 'Age'], ['Rafael', 30], ['Charlie', 53]]);
 json([{name: 'Rafael', age: 30}, {name: 'Charlie', age: 53}]);`} />
 </CodeRunner>
 
+Display JSON data with interactive explorer
+
+<CodeRunner>
+<CodeExample language="python" code={`from shellviz import json
+json({'user': 'alice', 'preferences': {'theme': 'dark'}})
+json([1, 2, 3, 4, 5])
+json({'timestamp': time.time()}, id='status')`} />
+<CodeExample language="javascript" code={`import { json } from shellviz;
+json({ user: 'alice', preferences: { theme: 'dark' } });
+json([1, 2, 3, 4, 5]);
+json({ timestamp: Date.now() }, 'status');`} />
+</CodeRunner>
+
 <VizHeading slug="stack">Stack</VizHeading>
+
+`stack(id=None)`
 
 ```python
 try:
@@ -56,7 +110,29 @@ except Exception as e:
     stack()  # Show call stack for debugging
 ```
 
+Display current call stack with local variables
+```javascript
+function processData() {
+    const result = calculateSomething();
+    stack({ result, timestamp: Date.now() });
+}
+```
+
+```javascript
+try {
+    // Your data processing
+    const result = processData();
+    log('Success:', result);
+} catch (error) {
+    log('Error occurred:', error.message, { id: 'errors' });
+    stack(); // Show call stack
+}
+```
+
+
 <VizHeading slug="cards">Cards</VizHeading>
+
+`card(data, id=None, append=False)`
 
 <CodeRunner code="shellviz.card([['Name', 'Age'], ['Rafael', 30], ['Charlie', 53]])">
   <CodeExample language="python" code={`from shellviz import card
@@ -67,9 +143,26 @@ card([['Name', 'Age'], ['Rafael', 30], ['Charlie', 53]]);
 card([{name: 'Rafael', age: 30}, {name: 'Charlie', age: 53}]);`} />
 </CodeRunner>
 
+Display card-style information
+
+```javascript
+card({ title: 'Server Status', value: 'Online', color: 'green' });
+card('Quick info message');
+```
+
+```python
+card({'title': 'Server Status', 'value': 'Online', 'color': 'green'})
+card('Quick info message')
+card({'user_count': 1234, 'active_sessions': 56})
+```
+
+
 <VizHeading slug="text">Text</VizHeading>
 
 ## Markdown
+
+`markdown(text, id=None, append=False)`
+
 <CodeRunner code="shellviz.markdown('It was a **cold** night, and all were fast asleep')">
   <CodeExample language="python" code={`from shellviz import markdown
 markdown("# This is some Markdown\nAnd this is some **strong** text\nAnd a list:\n- First item\n- Second item")
@@ -79,8 +172,26 @@ markdown("# This is some Markdown\nAnd this is some **strong** text\nAnd a list:
 markdown("It was a **cold** night, and all were fast asleep");`} />
 </CodeRunner>
 
+Render markdown content
+```javascript
+markdown('# Welcome to Shellviz\n\nThis is **bold** text.');
+markdown('## Status\n- Task 1: ✅ Complete\n- Task 2: ⏳ In Progress');
+```
+
+```python
+markdown('# Welcome to Shellviz\n\nThis is **bold** text.')
+markdown('''
+- Task 1: ✅ Complete  
+- Task 2: ⏳ In Progress
+- Task 3: ❌ Failed
+''')
+```
+
 
 ## Numbers
+
+`number(value, id=None, append=False)`
+
 Numbers can be visualized with a dedicated layout that resizes to fit the provided number:
 
 <CodeRunner code="shellviz.number(1032093)">
@@ -90,7 +201,22 @@ number(1032093)`} />
 number(1032093);`} />
 </CodeRunner>
 
+Display large numbers with formatting
+```javascript
+number(42);
+number(1337, 'score');
+number(999999, 'total_users');
+```
+```python
+number(42)
+number(1337, id='score')
+number(999999, id='total_users')
+```
+
+
 <VizHeading slug="progress">Progress</VizHeading>
+
+`progress(value, id=None, append=False)`
 
 Show a progress bar displaying 0-100% value. Can parse a wide variety of text, including strings, integers, and 0.0-1.0 floats.
 
@@ -105,9 +231,45 @@ progress("45%");
 progress(0.9);`} />
 </CodeRunner>
 
+Show progress bars (0.0 to 1.0)
+```javascript
+progress(0.5, 'migration');
+progress(0.75, 'upload');
+```
+
+```python
+progress(0.0, id='migration')
+# ... do work ...
+progress(0.5, id='migration')
+# ... do more work ...
+progress(1.0, id='migration')
+```
+
+
+```python
+import time
+from shellviz import progress, log
+
+total_items = 1000
+for i in range(total_items):
+    # Process item
+    process_item(i)
+    
+    # Update progress
+    if i % 10 == 0:  # Update every 10 items
+        progress(i / total_items, id='processing')
+        log(f'Processed {i}/{total_items} items', id='status')
+
+progress(1.0, id='processing')
+log('Processing complete!', id='status')
+```
+
+
 
 <VizHeading slug="charts">Charts</VizHeading>
 ## Bar
+
+`bar(data, id=None, append=False)`
 
 <CodeRunner code="shellviz.bar([{ country: 'AD', 'hot dog': 105, burger: 129, sandwich: 37, kebab: 119, fries: 53, donut: 69 }, { country: 'AE', 'hot dog': 41, burger: 14, sandwich: 181, kebab: 166, fries: 36, donut: 105 }])">
   <CodeExample language="python" code={`from shellviz import bar
@@ -150,7 +312,26 @@ bar([{
 }]);`} />
 </CodeRunner>
 
+Create bar charts
+```javascript
+bar([
+    { name: 'Jan', value: 100 },
+    { name: 'Feb', value: 150 },
+    { name: 'Mar', value: 200 }
+]);
+```
+
+```python
+bar([
+    {'name': 'Jan', 'value': 100},
+    {'name': 'Feb', 'value': 150},
+    {'name': 'Mar', 'value': 200}
+])
+```
+
 ## Area
+
+`area(data, id=None, append=False)`
 
 <CodeRunner code="shellviz.area([190, 240, 340])">
   <CodeExample language="python" code={`from shellviz import area
@@ -159,7 +340,26 @@ area([190, 240, 340])`} />
 area([190, 240, 340]);`} />
 </CodeRunner>
 
+Create area charts
+```javascript
+area([
+    { x: '2024-01', y: 100 },
+    { x: '2024-02', y: 150 },
+    { x: '2024-03', y: 200 }
+]);
+```
+
+```python
+area([
+    {'x': '2024-01', 'y': 100},
+    {'x': '2024-02', 'y': 150},
+    {'x': '2024-03', 'y': 200}
+])
+```
+
 ## Pie
+
+`pie(data, id=None, append=False)`
 
 <CodeRunner code="shellviz.pie([{ id: 'java', value: 204 }, { id: 'hack', value: 23 }, { id: 'make', value: 537 }, { id: 'go', value: 295 }, { id: 'python', value: 177 }])">
   <CodeExample language="python" code={`from shellviz import pie
@@ -180,7 +380,25 @@ pie([
 ]);`} />
 </CodeRunner>
 
+Create pie charts
+```javascript
+pie([
+    { name: 'Desktop', value: 45 },
+    { name: 'Mobile', value: 35 },
+    { name: 'Tablet', value: 20 }
+]);
+```
+```python
+pie([
+    {'name': 'Desktop', 'value': 45},
+    {'name': 'Mobile', 'value': 35},
+    {'name': 'Tablet', 'value': 20}
+])
+```
+
 <VizHeading slug="location">Location</VizHeading>
+
+`location(coordinates, id=None, append=False)`
 
 <CodeRunner code="shellviz.location({ latitude: 48.858844, longitude: 2.294351, name: 'Eiffel Tower, Paris' })">
   <CodeExample language="python" code={`from shellviz import location
@@ -304,7 +522,27 @@ location({
 ]);`} />
 </CodeRunner>
 
+Display location data on maps
+```javascript
+location({ lat: 40.7128, lng: -74.0060, name: 'New York City' });
+location([
+    { lat: 37.7749, lng: -122.4194, name: 'San Francisco' },
+    { lat: 34.0522, lng: -118.2437, name: 'Los Angeles' }
+]);
+```
+
+```python
+location({'lat': 40.7128, 'lng': -74.0060, 'name': 'New York City'})
+location([
+    {'lat': 37.7749, 'lng': -122.4194, 'name': 'San Francisco'},
+    {'lat': 34.0522, 'lng': -118.2437, 'name': 'Los Angeles'}
+])
+```
+
+
 <VizHeading slug="raw-data">Raw Data</VizHeading>
+
+`raw(data, id=None, append=False)`
 
 <CodeRunner code="shellviz.raw({ one: 'thing' })">
   <CodeExample language="python" code={`from shellviz import raw
@@ -312,3 +550,14 @@ raw({'one': 'thing'})`} />
   <CodeExample language="javascript" code={`import { raw } from 'shellviz';
 raw({ one: 'thing' });`} />
 </CodeRunner>
+
+Display raw data without formatting
+```javascript
+raw('Plain text content');
+raw('<h1>HTML content</h1>');
+```
+
+```python
+raw('Plain text content')
+raw('<h1>HTML content</h1>')
+```

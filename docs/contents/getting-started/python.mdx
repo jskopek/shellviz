@@ -1,0 +1,152 @@
+---
+title: Python Library
+---
+The Shellviz Python library provides powerful data visualization capabilities for Python scripts and applications. It creates a local web server that can receive and visualize data, making it perfect for data analysis, debugging, and monitoring applications.
+
+## Installation
+
+Install Shellviz with pip:
+```bash
+pip install shellviz
+```
+
+<Note>Are you using Django? Check out the dedicated [Django Integration](/integration/django) guide for specific features.</Note>
+
+## Send data to Shellviz
+The easiest way to initialize Shellviz is importing and calling any of the visualization methods directly:
+
+
+<CodeRunner code="shellviz.clear();shellviz.log('hello world');shellviz.json({'type': 'fruit', 'name': 'pear'})">
+```python
+from shellviz import log, json
+log('hello world')
+# Shellviz serving on http://192.168.86.124:5544
+json({'type': 'fruit', 'name': 'pear'})
+```
+</CodeRunner>
+
+The first method call to Shellviz will initialize a global instance that will output connection data. You can also [start the Shellviz server manually](/getting-started#initializing-shellviz-manually) if you would like additional control. 
+
+<CodeRunner code="shellviz.table([['cell 1.1','cell 1.2'],['cell 2.1', 'cell 2.2']])">
+```python
+from shellviz import table
+table([['cell 1.1','cell 1.2'],['cell 2.1', 'cell 2.2']])
+```
+</CodeRunner>
+
+There are many different visualization options available. For a full list, check out the [visualizations](/visualization) documentation.
+
+
+## Launch Shellviz
+Open Shellviz by pointing your browser to the URL printed in your console (*127.0.0.1:5544* by default). You should see your Shellviz instance instance running in front of you (if not, check out our [troubleshooting](/troubleshooting) guide).
+
+You can also embed a widget version of Shellviz on your site that lives on the bottom right of your page. Try clicking the "Run" button on the above code - it should launch in the widget.
+
+## Quick Start
+
+### Basic Usage
+```python
+from shellviz import log, table, json
+
+# Start logging data
+log('my first shellviz command')
+# Shellviz serving on http://127.0.0.1:5544
+
+# Display tabular data
+table([("Alice", 25, 5.6), ("Bob", 30, 5.9), ("Charlie", 22, 5.7)])
+
+# Show JSON data
+json({"name": "Alice", "age": 25, "height": 5.6})
+```
+
+### Custom Instance
+```python
+from shellviz import Shellviz
+
+# Create custom instance
+sv = Shellviz(port=3333, show_url=False)
+sv.log('Custom instance message')
+sv.table([('Name', 'Value'), ('Custom', 123)])
+```
+## Configuration
+
+**Available Options**
+
+- `SHELLVIZ_PORT` - Port number (default: 5544)
+- `SHELLVIZ_SHOW_URL` - Show URL on startup (default: True)
+- `SHELLVIZ_URL` - Custom server URL (overrides port-based URL)
+
+
+Shellviz can either be configured by specifying configuration during initialization:
+
+```python
+from shellviz import Shellviz
+sv = Shellviz(port=9000, show_url=False, url="https://my-server.com")
+```
+
+Alternatively, you can set configuration via environment variables:
+```bash
+export SHELLVIZ_PORT=8080
+```
+
+
+
+## Examples
+
+### Performance Dashboard
+```python
+import psutil
+import time
+from shellviz import progress, pie, log
+
+while True:
+    # System metrics
+    progress(psutil.cpu_percent(), id='cpu_usage')
+    progress(psutil.virtual_memory().percent, id='memory_usage')
+    
+    # Disk usage by partition
+    disk_data = []
+    for partition in psutil.disk_partitions():
+        try:
+            usage = psutil.disk_usage(partition.mountpoint)
+            disk_data.append({
+                'name': partition.device,
+                'value': usage.percent
+            })
+        except PermissionError:
+            continue
+    
+    pie(disk_data, id='disk_usage')
+    log(f'System check at {time.strftime("%H:%M:%S")}', id='monitoring')
+    
+    time.sleep(5)
+```
+
+![Dashboard](/content/dashboard.png)
+
+### API Response Analysis
+```python
+import requests
+from shellviz import json, table, card
+
+response = requests.get('https://api.example.com/users')
+data = response.json()
+
+# Show raw response
+json(data, id='api_response')
+
+# Extract and show user table
+if 'users' in data:
+    user_table = []
+    for user in data['users']:
+        user_table.append([user['name'], user['email'], user['created_at']])
+    
+    table([['Name', 'Email', 'Created']] + user_table, id='users')
+
+# Show summary stats
+card({
+    'total_users': len(data.get('users', [])),
+    'response_time': f'{response.elapsed.total_seconds():.2f}s',
+    'status_code': response.status_code
+}, id='summary')
+```
