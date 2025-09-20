@@ -34,7 +34,10 @@ export function CodeRunner({ code, children, showCopy = false }: CodeRunnerProps
     } catch (error) {
       console.error("Error executing code:", error);
     } finally {
-      setIsRunning(false);
+      // Ensure loading state lasts at least 100ms
+      setTimeout(() => {
+        setIsRunning(false);
+      }, 500);
     }
   };
 
@@ -92,12 +95,11 @@ export function CodeRunner({ code, children, showCopy = false }: CodeRunnerProps
       )}
       
       <div className="relative">
-        <div className="absolute top-3 right-2.5 z-10 sm:block hidden flex gap-2">
+        <div className="absolute top-3 right-2.5 z-20 sm:block hidden flex gap-2">
           {code && <Button
             variant="outline"
             size="sm"
             onClick={runCode}
-            disabled={isRunning}
             className="h-8 px-2"
           >
             {isRunning ? (
@@ -105,7 +107,7 @@ export function CodeRunner({ code, children, showCopy = false }: CodeRunnerProps
             ) : (
                 <div className="flex items-center gap-2">
                   <PlayIcon className="w-4 h-4" />
-                  <span>Run</span>
+                  <span>Run Example</span>
                 </div>
             )}
           </Button>}
@@ -131,12 +133,6 @@ export function CodeRunner({ code, children, showCopy = false }: CodeRunnerProps
           </>
         )}
       </div>
-
-      {hasRun && (
-        <div className="mt-2 text-sm text-muted-foreground">
-          ✓ Code executed in Shellviz
-        </div>
-      )}
     </div>
   );
 }
