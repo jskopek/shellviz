@@ -15,13 +15,7 @@ export const ROUTES: EachRoute[] = [
   { title: "Introduction", href: "/introduction" },
   {
     title: "Getting Started",
-    href: "/getting-started", // note: redirects to /getting-started/django via next.config.mjs
-    items: [
-      { title: "Django", href: "/django", icon: faGlobe },
-      { title: "Python", href: "/python", icon: faPython },
-      { title: "Node / Next / React", href: "/node-next-react", icon: faReact },
-      { title: "Client-side JS", href: "/client-side-js", icon: faJs },
-    ],
+    href: "/getting-started/django", 
   },
   {
     title: "Visualizations",

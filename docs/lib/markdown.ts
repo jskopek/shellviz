@@ -19,6 +19,7 @@ import Image from "@/components/markdown/image";
 import Link from "@/components/markdown/link";
 import { CodeExample } from "@/components/markdown/code-example";
 import { CodeRunner } from "@/components/markdown/code-runner";
+import { GettingStartedNav } from "@/components/getting-started-nav";
 import VizHeading from "@/components/markdown/viz-heading";
 
 // add custom components
@@ -36,6 +37,7 @@ const components = {
   CodeExample,
   CodeRunner,
   VizHeading,
+  GettingStartedNav,
 };
 
 async function parseMdx<Frontmatter>(rawMdx: string) {
@@ -111,10 +113,12 @@ export async function getDocsTocs(slug: string) {
 }
 
 export function getPreviousNext(path: string) {
-  const index = page_routes.findIndex(({ href }) => href == `/${path}`);
+  // Filter out anchor links (those with #) to only consider top-level navigation items
+  const topLevelRoutes = page_routes.filter(({ href }) => !href.includes("#"));
+  const index = topLevelRoutes.findIndex(({ href }) => href == `/${path}`);
   return {
-    prev: page_routes[index - 1],
-    next: page_routes[index + 1],
+    prev: topLevelRoutes[index - 1],
+    next: topLevelRoutes[index + 1],
   };
 }
 

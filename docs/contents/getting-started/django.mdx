@@ -1,20 +1,22 @@
 ---
 title: Getting started with Django
 ---
+<GettingStartedNav activeSlug="django" />
 
-First, add the shellviz widget to your templates:
+The Django library provides powerful data visualization capabilities for Django applications. It creates a local web server that can receive and visualize data, making it perfect for data analysis, debugging, and monitoring applications. It also includes built-in handlers that make it easy to pipe all logs into Shellviz, and supports visualizations of ORM queries and model instances.
 
-```html
-<script src="https://unpkg.com/shellviz"></script>
-```
-You should now see a widget - just like the one on this page - on the bottom right of your pages.
+## Installation
+Install the Python package:
 
-Next, install the Python package:
 ```bash
 pip install shellviz
 ```
 
-That's it! You're ready to start visualizing data with Shellviz.
+Then add the shellviz widget to your templates. You should now see a widget - just like the one on this page - on the bottom right of your pages.
+
+```html
+<script src="https://unpkg.com/shellviz"></script>
+```
 
 ## Logging Data
 You can now send logs and other [data visualizations](/visualizations) from Python to the browser:

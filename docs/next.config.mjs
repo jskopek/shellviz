@@ -8,16 +8,6 @@ const nextConfig = {
       },
     ],
   },
-
-  async redirects() {
-    return [
-      {
-        source: "/getting-started",
-        destination: "/getting-started/django",
-        permanent: false,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
