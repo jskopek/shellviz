@@ -25,7 +25,7 @@ export default function VizHeading({
 
   return (
     <Tag id={slug} className="flex items-center gap-2 mt-5 mb-10 scroll-m-20 border-b border-gray-300 pb-2">
-      {icon && <FontAwesomeIcon icon={icon} className="text-primary" />}
+      {icon && <FontAwesomeIcon icon={icon} className="text-primary w-4" size="sm" />}
       <span>{resolvedTitle}</span>
     </Tag>
   );

@@ -40,7 +40,11 @@ export default function SubLink({
         "text-primary font-medium bg-accent/80 dark:bg-secondary/60"
       )}
     >
-      {icon && <FontAwesomeIcon icon={icon} className="mr-2 w-4" size="sm" />}
+      {icon && (
+        <span className="inline-flex items-center mr-2 w-3 shrink-0">
+          <FontAwesomeIcon icon={icon} size="sm" />
+        </span>
+      )}
       {title}
     </Anchor>
   );
